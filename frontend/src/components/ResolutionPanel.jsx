@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { AlertTriangle, CheckCircle, ArrowUpCircle, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -47,7 +48,7 @@ export function ResolutionPanel({ alert, onResolved }) {
             <Button
               key={action.type}
               variant={action.variant}
-              className={`gap-2 ${action.cls || ''}`}
+              className={cn('gap-2', action.cls)}
               disabled={loading}
               onClick={() => handle(action)}
             >

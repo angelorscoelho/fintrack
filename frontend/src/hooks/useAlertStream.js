@@ -78,7 +78,8 @@ export function useAlertStream(onNewAlert, isIdle, setIsConnected) {
     const ch = new BroadcastChannel(CH)
     chRef.current = ch
 
-    ch.onmessage = ({ data: { type, data } = {} }) => {
+    ch.onmessage = ({ data: msg }) => {
+      const { type, data: payload } = msg || {}
       switch (type) {
         case MSG.REQUEST_LEADER:
           if (isLeader.current) ch.postMessage({ type: MSG.I_AM_LEADER })
@@ -92,7 +93,7 @@ export function useAlertStream(onNewAlert, isIdle, setIsConnected) {
           startElection()
           break
         case MSG.NEW_ALERT:
-          if (!isLeader.current && data?.transaction_id) cbRef.current(data)
+          if (!isLeader.current && payload?.transaction_id) cbRef.current(payload)
           break
       }
     }
