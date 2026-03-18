@@ -1,59 +1,35 @@
 # Último estado conhecido do projeto FinTrack AI
 Data da última revisão: 2026-03-18
-Última sessão REVIEW concluída: S08R_SSE_Resolve_REVIEW
+Última sessão REVIEW concluída: S09R_React_Dashboard_REVIEW
 
 ## Resumo da última revisão (apenas pontos importantes para o próximo executor)
 
 - GLOBAL RESULT: APPROVED WITH FIXES
-- Alterações críticas aplicadas: sim → 1 MAJOR fix aplicado (race condition no semáforo SSE)
+- Alterações críticas aplicadas: sim → 2 MAJOR fixes aplicados em AlertsTable.jsx
 - Ficheiros corrigidos / sobrescritos:
-  - `backend/api/routes/stream.py` — semáforo agora adquirido no handler antes de criar o StreamingResponse (e libertado no finally do generator), eliminando race condition que permitia >3 conexões SSE simultâneas
+  - `frontend/src/components/AlertsTable.jsx` — (1) Emoji icons substituídos por lucide-react: Clock, CheckCircle2, CircleDot, Check, PauseCircle; (2) ScoreBadge threshold corrigido de `> 0.70` para `>= 0.70` para alinhar com PRD
 - Pontos de atenção / restrições para o próximo EXEC:
-  • API shapes confirmados para React — AlertResponse (15+ campos), StatsResponse (9 campos incluindo rate_limits dict)
+  • InactivityOverlay props: `{ isVisible: bool, onResume: () => void }` — usar shadcn/ui Dialog (non-dismissable via backdrop click)
+  • AlertDetail props: `{ alert, open, onClose, onResolved }` — usar shadcn/ui Sheet como side panel
+  • useAlertStream signature: `(onNewAlert, isIdle, setIsConnected)` — implementar SSE + BroadcastChannel + Page Visibility
+  • useInactivityTimer signature: `(timeoutMs) → { isIdle, resetTimer }` — implementar com eventos mousemove, keydown, etc.
+  • STATUS_CONFIG agora usa lucide-react Icons (propriedade `Icon` com I maiúsculo, tipo componente React)
+  • Badge variants disponíveis: default, secondary, destructive, outline, warning, success
+  • Emojis permitidos em text labels (ex: SelectItem), mas NÃO como icons em JSX — usar sempre lucide-react
+  • SWR polling para quando `isIdle === true` (refreshInterval: 0)
+  • Vite proxy: `/api` → `http://localhost:8000`
+  • `@` alias → `./src` em vite.config.js
+  • shadcn/ui Dialog disponível em `@/components/ui/dialog` para InactivityOverlay
+  • shadcn/ui Sheet disponível em `@/components/ui/sheet` para AlertDetail
+  • `cn()` utility em `@/lib/utils` para className merging
+  • ScoreBadge: destructive >90%, warning ≥70%, outline <70% (alinhado com PRD)
+  • MINOR não corrigido: raw `<button>` para sort headers (aceitável para table headers)
+  • MINOR não corrigido: `useMemo(() => data, [data])` é no-op (cosmético)
+  • `npm run build` ✅ passa sem erros após fixes
+  • Backend API shapes: AlertResponse (15+ campos), StatsResponse (9 campos incluindo rate_limits dict)
   • SSE URL: `GET /api/alerts/stream` — envia `data: {JSON}\n\n` + `: heartbeat\n\n`
   • Resolve: `PUT /api/alerts/{id}/resolve` body: `{resolution_type, analyst_notes}`
-  • Resolution types: CONFIRMED_FRAUD → RESOLVED, FALSE_POSITIVE → FALSE_POSITIVE, ESCALATED → RESOLVED
-  • 503 no 4º SSE — frontend deve tratar gracefully (ex: sonner toast + retry)
-  • Route order: stream.router registado ANTES de alerts.router para evitar conflito com `{transaction_id}`
-  • `config.py` existe mas NÃO é usado — `dynamo.py` usa `os.environ` diretamente
-  • `processing_status` NÃO está em AlertResponse — adicionar se UI precisar
   • `model.pkl` NÃO está no git — correr `python data/generator.py && python data/train_model.py` para regenerar
-  • CORS: localhost:3000 e localhost:5173 apenas
-  • X-Request-ID middleware ativo em todas as respostas
-  • Todas as rotas registadas em main.py: health, alerts, alerts/{id}, stats, alerts/{id}/resolve, alerts/stream
-  • Swagger /docs carrega sem erros com todas as 5 route files
-- Estado atual do repositório: pronto para S09R
+- Estado atual do repositório: pronto para S10E
 
-## S09E — React Dashboard + Alerts Table (executado)
-
-### Implementação realizada:
-- **App.jsx**: Dashboard completo com header (ShieldAlert icon, StatsBar badges, Wifi/WifiOff SSE status, Clock idle indicator), filtro Select por status (all/PENDING_REVIEW/RESOLVED/FALSE_POSITIVE/rate_limited/NORMAL), SWR data fetching com refreshInterval condicionado por isIdle, Toaster sonner, AlertDetail + InactivityOverlay placeholders
-- **AlertsTable.jsx**: TanStack Table v8 com 7 colunas (ID, Data/Hora, NIF, Montante, Categoria, Risco, Estado), ScoreBadge (destructive >90%, warning 70-90%, outline <70%), STATUS_CONFIG com 5 estados incluindo rate_limited ⏸, sorting, pagination (15/página), row click com onRowClick(row.original)
-- **shadcn/ui setup**: Componentes Badge, Button, Card, Select, Dialog, Sheet, Alert criados manualmente (network offline para shadcn CLI), CSS variables configurados em index.css, tailwind.config.js atualizado com theme colors + tailwindcss-animate plugin
-- **Hooks atualizados**: useInactivityTimer.js agora retorna { isIdle, resetTimer } (placeholder S10E), useAlertStream.js aceita (onNewAlert, isIdle, setIsConnected) (placeholder S10E)
-- **InactivityOverlay.jsx**: Assinatura atualizada para { isVisible, onResume } (placeholder S10E)
-
-### Dependências adicionadas:
-- class-variance-authority, @radix-ui/react-dialog, @radix-ui/react-select, @radix-ui/react-slot, sonner, tailwindcss-animate
-
-### Ficheiros criados:
-- frontend/components.json
-- frontend/src/lib/utils.js (cn utility)
-- frontend/src/components/ui/badge.jsx, button.jsx, card.jsx, select.jsx, dialog.jsx, sheet.jsx, alert.jsx
-
-### Ficheiros modificados:
-- frontend/src/App.jsx — dashboard completo
-- frontend/src/components/AlertsTable.jsx — tabela TanStack
-- frontend/src/components/InactivityOverlay.jsx — nova assinatura
-- frontend/src/hooks/useAlertStream.js — nova assinatura
-- frontend/src/hooks/useInactivityTimer.js — nova assinatura + retorno { isIdle, resetTimer }
-- frontend/src/index.css — CSS variables shadcn/ui
-- frontend/tailwind.config.js — tema shadcn/ui + tailwindcss-animate
-- frontend/package.json — novas dependências
-
-### Verificação:
-- `npm run build` ✅ passa sem erros
-- `npm run dev` ✅ inicia em porta 5173
-- Todos os 16 critérios de aceitação verificados e aprovados
-
-Última confirmação de estrutura: S00 + S01E + S01R + S02E + S02R + S03E + S03R + S04E + S04R + S05E + S05R + S06E + S06R + S07E + S07R + S08E + S08R + S09E aplicados
+Última confirmação de estrutura: S00 + S01E + S01R + S02E + S02R + S03E + S03R + S04E + S04R + S05E + S05R + S06E + S06R + S07E + S07R + S08E + S08R + S09E + S09R aplicados
