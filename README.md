@@ -1,3 +1,9 @@
+# Copyright 2026 Ângelo Coelho — PROPRIETARY / NON-COMMERCIAL USE ONLY
+> **PROPRIETARY / NON-COMMERCIAL USE ONLY**
+>
+> This repository is source-available strictly for review. Recruiters and tech leads may read the code to evaluate skills and architecture. Companies and for-profit entities are prohibited from using, copying, or integrating this code for commercial gain.
+> If your company wishes to commercialize or incorporate this work, you must hire or license it from Ângelo Coelho — contact: https://angelorscoelho.dev
+
 # FinTrack AI — Fraud Detection & Fiscal Anomaly Tracking PoC
 
 Serverless AI-powered fraud detection system built on AWS + Google Gemini API.
