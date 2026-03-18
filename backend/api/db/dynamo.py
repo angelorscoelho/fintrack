@@ -61,7 +61,9 @@ async def get_alerts_by_status(
             items = [_deserialize_item(i) for i in response.get("Items", [])]
             items = items[offset : offset + limit]
         else:
-            # Full scan — paginate to collect items
+            # Full scan — paginate to collect all items.
+            # Note: loads entire table into memory. Acceptable for PoC scale;
+            # for production, use cursor-based pagination.
             all_items: List[dict] = []
             scan_kwargs: dict = {}
             while True:
@@ -72,7 +74,7 @@ async def get_alerts_by_status(
                     break
                 scan_kwargs["ExclusiveStartKey"] = last_key
             total = len(all_items)
-            # Sort by timestamp descending (newest first)
+            # Sort by timestamp descending (newest first); items without timestamp go last
             all_items.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
             items = [_deserialize_item(i) for i in all_items[offset : offset + limit]]
 
