@@ -31,19 +31,48 @@ class TransactionState(TypedDict):
 # ── Graph Assembly ────────────────────────────────────────────────────────────
 def build_graph() -> StateGraph:
     """
-    Build compiled LangGraph workflow.
-    S05E: analyse_basic → END
-    S06E will add: analyse_basic → [conditional] → audit_deep → END
+    LangGraph workflow with conditional routing:
+    - analyse_basic (Gemini Flash) → always runs for score >= 0.70
+    - route_by_risk: score > 0.90 → audit_deep (Gemini Pro); else → END
     """
     from backend.genai.nodes.flash_xai import analyse_basic
-    # from backend.genai.nodes.pro_sar import audit_deep  # uncomment in S06E
+    from backend.genai.nodes.pro_sar import audit_deep
 
     graph = StateGraph(TransactionState)
+
     graph.add_node("analyse_basic", analyse_basic)
+    graph.add_node("audit_deep", audit_deep)
+
     graph.set_entry_point("analyse_basic")
-    graph.add_edge("analyse_basic", END)  # S06E replaces this with conditional edge
+
+    graph.add_conditional_edges(
+        "analyse_basic",
+        _route_by_risk,
+        {
+            "audit_deep": "audit_deep",
+            "__end__": END,
+        },
+    )
+    graph.add_edge("audit_deep", END)
 
     return graph.compile()
+
+
+def _route_by_risk(state: TransactionState) -> str:
+    """
+    Conditional edge router.
+    Returns node name or '__end__'.
+
+    Logic:
+    - If processing failed: go to END (no escalation)
+    - If score > 0.90: go to audit_deep (Gemini Pro)
+    - Otherwise: go to END (Flash XAI is sufficient)
+    """
+    if state.get("processing_status") == "error":
+        return "__end__"  # Graceful failure — don't escalate broken state
+    if state["anomaly_score"] > 0.90:
+        return "audit_deep"
+    return "__end__"
 
 
 # Singleton — compiled once at service startup
