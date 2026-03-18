@@ -69,11 +69,12 @@
 ### MINOR-3: SSM parameters created but not dynamically consumed (NOTE — not fixed)
 - **File:** `infra/template.yaml` (lines 165–179) + `backend/lambda_handler/rate_limiter.py` (lines 21–22)
 - **Description:** SSM parameters `/fintrack/gemini_flash_daily_limit` (500) and `/fintrack/gemini_pro_daily_limit` (100) are created in CloudFormation but never consumed by the Lambda function. The rate_limiter.py reads from env vars `GEMINI_FLASH_DAILY_LIMIT` / `GEMINI_PRO_DAILY_LIMIT` with hardcoded defaults (500/100). These defaults match the SSM values, so behavior is correct.
-- **Recommendation for future session:** Add SSM dynamic references to Lambda env vars:
+- **Recommendation for future session:** Add SSM dynamic references to Lambda env vars (resolved at deploy time, not runtime):
   ```yaml
   GEMINI_FLASH_DAILY_LIMIT: !Sub '{{resolve:ssm:/fintrack/gemini_flash_daily_limit}}'
   GEMINI_PRO_DAILY_LIMIT: !Sub '{{resolve:ssm:/fintrack/gemini_pro_daily_limit}}'
   ```
+  Note: `{{resolve:ssm:...}}` resolves at CloudFormation deployment time. To change limits without redeployment, the Lambda would need to call `ssm:GetParameter` at runtime instead.
 - **Not fixed now:** Since defaults match and this is a PoC, deferring to keep changes minimal.
 
 ---
@@ -109,7 +110,7 @@ $ cfn-lint template.yaml
 1. **DynamoDB table name:** `transactions` — use this exact name
 2. **PK:** `transaction_id` (String, UUID v4) — generator must produce valid UUIDs
 3. **Required fields per PRD:** `transaction_id`, `timestamp`, `merchant_nif`, `merchant_name`, `amount`, `category`, `ip_address`, `merchant_country`, `previous_avg_amount`, `hour_of_day`, `day_of_week`, `transactions_last_10min`
-4. **Data types:** All fields are Strings in DynamoDB except: `amount` / `previous_avg_amount` (Number), `hour_of_day` / `day_of_week` / `transactions_last_10min` (Number)
+4. **Data types:** All fields are Strings in DynamoDB except: `amount` / `previous_avg_amount` (Number), `hour_of_day` / `day_of_week` / `transactions_last_10min` (Number). Note: `anomaly_score` is stored as String (`str(score)`) by the Lambda to avoid DynamoDB Decimal issues — generator does NOT set this field.
 5. **Ingestion path:** POST to API Gateway `/ingest` endpoint → SQS → Lambda. Generator should POST JSON payloads to the ingest endpoint.
 6. **anomaly_score:** Lambda stores as String (`str(score)`) to avoid DynamoDB Decimal issues
 7. **TTL field:** Set by Lambda for NORMAL records (7 days); generator should NOT set `ttl`
