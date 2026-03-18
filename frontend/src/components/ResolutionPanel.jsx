@@ -1,4 +1,65 @@
-// Resolution buttons (Confirm Fraud / False Positive) — Implemented in Session S10E
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { AlertTriangle, CheckCircle, ArrowUpCircle, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
+const ACTIONS = [
+  { type: 'CONFIRMED_FRAUD', label: 'Confirmar Fraude', icon: AlertTriangle, variant: 'destructive', msg: 'Fraude confirmada.' },
+  { type: 'FALSE_POSITIVE', label: 'Falso Positivo', icon: CheckCircle, variant: 'outline', cls: 'border-blue-500 text-blue-700 hover:bg-blue-50', msg: 'Falso positivo registado.' },
+  { type: 'ESCALATED', label: 'Escalar', icon: ArrowUpCircle, variant: 'secondary', msg: 'Alerta escalado.' },
+]
+
 export function ResolutionPanel({ alert, onResolved }) {
-  return <div>ResolutionPanel placeholder — S10E</div>
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  const handle = async (action) => {
+    if (loading) return
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch(`${API_BASE}/api/alerts/${alert.transaction_id}/resolve`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resolution_type: action.type }),
+      })
+      if (res.status === 409) throw new Error('Este alerta já foi resolvido anteriormente.')
+      if (!res.ok) throw new Error(`Erro do servidor: HTTP ${res.status}`)
+      toast.success(action.msg, { duration: 4000 })
+      onResolved()
+    } catch (e) {
+      setError(e.message)
+      toast.error(e.message, { duration: 5000 })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <h3 className="text-sm font-semibold text-slate-700">Resolução</h3>
+      <div className="flex flex-wrap gap-2">
+        {ACTIONS.map((action) => {
+          const Icon = action.icon
+          return (
+            <Button
+              key={action.type}
+              variant={action.variant}
+              className={`gap-2 ${action.cls || ''}`}
+              disabled={loading}
+              onClick={() => handle(action)}
+            >
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Icon className="h-4 w-4" />}
+              {action.label}
+            </Button>
+          )
+        })}
+      </div>
+      {error && (
+        <p className="text-xs text-red-600">{error}</p>
+      )}
+    </div>
+  )
 }
