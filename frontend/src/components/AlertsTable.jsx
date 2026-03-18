@@ -6,19 +6,19 @@ import {
 import { useMemo, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react'
+import { ChevronUp, ChevronDown, ChevronsUpDown, Clock, CheckCircle2, CircleDot, Check, PauseCircle } from 'lucide-react'
 
 const STATUS_CONFIG = {
-  PENDING_REVIEW: { label: 'Pendente',      variant: 'warning',     icon: '⏳' },
-  RESOLVED:       { label: 'Resolvido',     variant: 'success',     icon: '✅' },
-  FALSE_POSITIVE: { label: 'Falso Positivo',variant: 'secondary',   icon: '🔵' },
-  NORMAL:         { label: 'Normal',        variant: 'outline',     icon: '✓' },
-  rate_limited:   { label: 'Limite API',    variant: 'outline',     icon: '⏸' },
+  PENDING_REVIEW: { label: 'Pendente',      variant: 'warning',     Icon: Clock },
+  RESOLVED:       { label: 'Resolvido',     variant: 'success',     Icon: CheckCircle2 },
+  FALSE_POSITIVE: { label: 'Falso Positivo',variant: 'secondary',   Icon: CircleDot },
+  NORMAL:         { label: 'Normal',        variant: 'outline',     Icon: Check },
+  rate_limited:   { label: 'Limite API',    variant: 'outline',     Icon: PauseCircle },
 }
 
 function ScoreBadge({ score }) {
   const s = Number(score || 0)
-  const variant = s > 0.90 ? 'destructive' : s > 0.70 ? 'warning' : 'outline'
+  const variant = s > 0.90 ? 'destructive' : s >= 0.70 ? 'warning' : 'outline'
   return <Badge variant={variant} className="font-mono text-xs">{(s * 100).toFixed(1)}%</Badge>
 }
 
@@ -74,9 +74,10 @@ const COLUMNS = [
     header: 'Estado',
     cell: ({ getValue }) => {
       const cfg = STATUS_CONFIG[getValue()] ?? STATUS_CONFIG.NORMAL
+      const StatusIcon = cfg.Icon
       return (
         <Badge variant={cfg.variant} className="text-xs gap-1">
-          <span>{cfg.icon}</span>{cfg.label}
+          <StatusIcon className="h-3 w-3" />{cfg.label}
         </Badge>
       )
     },
