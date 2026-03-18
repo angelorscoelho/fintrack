@@ -30,41 +30,45 @@ async def stream_alerts():
     Frontend uses BroadcastChannel leader election — typically only 1 connection active.
     Backend cap of 3 handles edge cases (page refresh, multiple users in PoC).
     """
-    # Try to acquire slot — non-blocking check
-    acquired = _SSE_SEMAPHORE._value > 0  # peek without blocking
-    if not acquired:
+    # Acquire semaphore BEFORE creating the response — eliminates race condition.
+    # When _value > 0, acquire() returns immediately (no event-loop yield),
+    # so the check + acquire pair is atomic in single-threaded asyncio.
+    if _SSE_SEMAPHORE._value <= 0:
         raise HTTPException(
             status_code=503,
             detail="Maximum SSE connections reached (3). Close another tab or wait.",
         )
+    await _SSE_SEMAPHORE.acquire()
 
     async def event_generator():
-        async with _SSE_SEMAPHORE:
-            seen_ids: set[str] = set()
-            logger.info(f"SSE connection opened (slots used: {3 - _SSE_SEMAPHORE._value})")
-            try:
-                while True:
-                    try:
-                        alerts = await get_latest_alerts(limit=20)
-                        new_alerts = [
-                            a for a in alerts
-                            if a.get("transaction_id") not in seen_ids
-                        ]
-                        for alert in new_alerts:
-                            tid = alert.get("transaction_id", "")
-                            seen_ids.add(tid)
-                            # Use float for Decimal — avoids "0.87" string bug in React
-                            yield f"data: {json.dumps(alert, default=_decimal_safe)}\n\n"
+        seen_ids: set[str] = set()
+        logger.info(f"SSE connection opened (slots used: {3 - _SSE_SEMAPHORE._value})")
+        try:
+            while True:
+                try:
+                    alerts = await get_latest_alerts(limit=20)
+                    new_alerts = [
+                        a for a in alerts
+                        if a.get("transaction_id") not in seen_ids
+                    ]
+                    for alert in new_alerts:
+                        tid = alert.get("transaction_id", "")
+                        seen_ids.add(tid)
+                        # Use float for Decimal — avoids "0.87" string bug in React
+                        yield f"data: {json.dumps(alert, default=_decimal_safe)}\n\n"
 
-                        yield ": heartbeat\n\n"
+                    yield ": heartbeat\n\n"
 
-                    except Exception as exc:
-                        logger.error(f"SSE poll error: {exc}")
-                        yield f"data: {json.dumps({'error': 'poll_failed'})}\n\n"
+                except Exception as exc:
+                    logger.error(f"SSE poll error: {exc}")
+                    yield f"data: {json.dumps({'error': 'poll_failed'})}\n\n"
 
-                    await asyncio.sleep(POLL_INTERVAL)
-            except asyncio.CancelledError:
-                logger.info("SSE connection closed by client")
+                await asyncio.sleep(POLL_INTERVAL)
+        except asyncio.CancelledError:
+            logger.info("SSE connection closed by client")
+        finally:
+            _SSE_SEMAPHORE.release()
+            logger.info("SSE slot released")
 
     return StreamingResponse(
         event_generator(),
