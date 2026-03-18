@@ -194,7 +194,7 @@ Resources:
   LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: fintrack-lambda-role
+      RoleName: !Sub 'fintrack-lambda-role-${Environment}'
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -243,7 +243,6 @@ Resources:
               - Effect: Allow
                 Action:
                   - 'ssm:GetParameter'
-                  - 'ssm:GetParameters'
                 Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/fintrack/*'
 
   # ── LAMBDA FUNCTION ───────────────────────────────────────────────────────
