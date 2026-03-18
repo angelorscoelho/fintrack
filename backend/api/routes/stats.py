@@ -1,9 +1,10 @@
-"""GET /api/stats. Implemented in Session S07E."""
+"""GET /api/stats"""
 from fastapi import APIRouter
+from backend.api.db.dynamo import get_stats as _get_stats
+from backend.api.models import StatsResponse
 
 router = APIRouter(tags=["Stats"])
 
-
-@router.get("/stats")
+@router.get("/stats", response_model=StatsResponse)
 async def get_stats():
-    return {"total": 0, "pending": 0, "critical": 0, "fp_rate": 0.0}  # placeholder
+    return await _get_stats()
