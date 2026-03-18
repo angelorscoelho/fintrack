@@ -1,26 +1,29 @@
 # Último estado conhecido do projeto FinTrack AI
 Data da última revisão: 2026-03-18
-Última sessão REVIEW concluída: S06R_GeminiPro_SAR_REVIEW
+Última sessão REVIEW concluída: S07R_FastAPI_Review
 
 ## Resumo da última revisão (apenas pontos importantes para o próximo executor)
 
 - GLOBAL RESULT: APPROVED WITH FIXES
-- Alterações críticas aplicadas: sim → adicionado tenacity retry 3× para Gemini Pro via `_call_pro()` (BLOCKER corrigido)
+- Alterações críticas aplicadas: sim → 4 MAJOR fixes aplicados (ver abaixo)
 - Ficheiros corrigidos / sobrescritos:
-  - `backend/genai/nodes/pro_sar.py` — adicionado `_call_pro()` com @retry tenacity (3 tentativas, exponential backoff 2-10s), imports de `google.api_core.exceptions` e `tenacity`, chamada direta a `_pro_model.generate_content()` substituída por `_call_pro(prompt)`
-  - `backend/genai/graph.py` — atualizado comentário de `TransactionState.processing_status` para incluir `sar_error`
+  - `backend/api/models.py` — adicionado `RATE_LIMITED = "rate_limited"` ao enum `AlertStatus`; adicionado campo `rate_limited: int` ao `StatsResponse`
+  - `backend/api/db/dynamo.py` — `get_alerts_by_status()` reescrito com contagem total correta (GSI COUNT query separado) e paginação completa de scan (LastEvaluatedKey); `get_stats()` reescrito com paginação de scan e contador `rate_limited`
 - Pontos de atenção / restrições para o próximo EXEC:
-  • GenAI microservice confirmado na porta 8001 (`backend/genai/main.py`)
-  • DynamoDB fields: `ai_explanation` (JSON string), `sar_draft` (Markdown string) — ambos nullable
-  • `processing_status` valores válidos: `pending`, `xai_complete`, `sar_complete`, `sar_error`, `error`
-  • LangGraph flow completo: `analyse_basic` → conditional edge (`_route_by_risk`) → `audit_deep` (se score > 0.90 e sem erro) → `END`
-  • Tenacity retry consistente em Flash e Pro (3 tentativas, exponential backoff 2-10s)
-  • Rate limiter (DynamoDB atomic counter) NÃO está integrado nos nós genai — deve ser adicionado na sessão apropriada
-  • SSM params: `/fintrack/gemini_flash_daily_limit` (500), `/fintrack/gemini_pro_daily_limit` (100)
+  • FastAPI API confirmada na porta 8000 (`backend/api/main.py`), lifespan init DynamoDB, CORS configurado
+  • Endpoints ativos: `GET /health`, `GET /api/alerts`, `GET /api/alerts/{id}`, `GET /api/stats`
+  • Endpoints S08E (placeholders existem, NÃO registados em routers): `PUT /api/alerts/{id}/resolve` (resolve.py), `GET /api/alerts/stream` (stream.py)
+  • S08E precisa criar função `update_alert()` em `db/dynamo.py` para o resolve endpoint — usar UpdateItem com ConditionExpression
+  • SSE: usar `sse-starlette` (já em requirements.txt) + `asyncio.Semaphore(3)` — polling 5s recomendado
+  • `AlertStatus` inclui agora: NORMAL, PENDING_REVIEW, RESOLVED, FALSE_POSITIVE, rate_limited
+  • `StatsResponse` inclui agora: total, pending, critical, resolved, false_positives, rate_limited, fp_rate, avg_score
+  • `_deserialize_item()` converte `ai_explanation` de JSON string para dict automaticamente
+  • `@field_validator` em AlertResponse converte Decimal → float para anomaly_score, amount, previous_avg_amount
+  • `config.py` existe com `Settings` class (pydantic-settings) mas não é usado — `dynamo.py` usa `os.environ` diretamente
+  • `processing_status` NÃO está em AlertResponse — considerar adicionar se UI precisar
   • `model.pkl` NÃO está no git — correr `python data/generator.py && python data/train_model.py` para regenerar
-  • Lambda timeout = 30s, SQS VisibilityTimeout = 60s — não alterar esta relação
-  • FastAPI API (porta 8000) deve tratar `sar_draft` como `Optional[str]` nos endpoints
   • CORS: localhost:3000 e localhost:5173 apenas
-- Estado atual do repositório: pronto para S07E
+  • X-Request-ID middleware ativo em todas as respostas
+- Estado atual do repositório: pronto para S08E
 
-Última confirmação de estrutura: S00 + S01E + S01R + S02E + S02R + S03E + S03R + S04E + S04R + S05E + S05R + S06E + S06R aplicados
+Última confirmação de estrutura: S00 + S01E + S01R + S02E + S02R + S03E + S03R + S04E + S04R + S05E + S05R + S06E + S06R + S07E + S07R aplicados
