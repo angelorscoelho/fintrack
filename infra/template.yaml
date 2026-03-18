@@ -7,10 +7,6 @@ Globals:
     Runtime: python3.11
     Timeout: 30
     MemorySize: 512
-    Environment:
-      Variables:
-        DYNAMODB_TABLE: !Ref TransactionsTable
-        AWS_ACCOUNT_ID: !Ref AWS::AccountId
 
 Parameters:
   Environment:
@@ -108,7 +104,6 @@ Resources:
       RequestParameters:
         QueueUrl: !Ref TransactionsQueue
         MessageBody: '$request.body'
-        MessageGroupId: 'transactions'
       PayloadFormatVersion: '1.0'
 
   IngestRoute:
