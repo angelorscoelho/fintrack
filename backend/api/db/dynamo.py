@@ -26,6 +26,13 @@ def get_table():
     return _table
 
 
+def _decimal_safe(obj):
+    """JSON serializer that converts Decimal to float (not str)."""
+    if isinstance(obj, Decimal):
+        return float(obj)
+    raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
+
+
 def _deserialize_item(item: dict) -> dict:
     """Parse ai_explanation from JSON string to dict."""
     if item.get("ai_explanation") and isinstance(item["ai_explanation"], str):
@@ -98,7 +105,55 @@ async def get_alert_by_id(transaction_id: str) -> Optional[dict]:
         return None
 
 
+async def resolve_alert(
+    transaction_id: str,
+    new_status: str,
+    resolution_type: str,
+    resolved_at: str,
+    analyst_notes: str = "",
+) -> None:
+    table = get_table()
+    table.update_item(
+        Key={"transaction_id": transaction_id},
+        UpdateExpression=(
+            "SET #s = :status, resolution_type = :rtype, "
+            "resolved_at = :rat, analyst_notes = :notes"
+        ),
+        ExpressionAttributeNames={"#s": "status"},
+        ExpressionAttributeValues={
+            ":status": new_status,
+            ":rtype":  resolution_type,
+            ":rat":    resolved_at,
+            ":notes":  analyst_notes,
+        },
+    )
+
+
+async def get_latest_alerts(limit: int = 20) -> list[dict]:
+    """For SSE: fetch most recent alerts sorted by processed_at."""
+    table = get_table()
+    try:
+        response = table.scan(
+            Limit=limit * 2,  # Over-fetch to sort client-side
+            ProjectionExpression=(
+                "transaction_id, #ts, merchant_nif, amount, category, "
+                "anomaly_score, #s, ai_explanation, processing_status, processed_at"
+            ),
+            ExpressionAttributeNames={"#ts": "timestamp", "#s": "status"},
+        )
+        items = sorted(
+            response.get("Items", []),
+            key=lambda x: x.get("processed_at", ""),
+            reverse=True,
+        )
+        return [_deserialize_item(i) for i in items[:limit]]
+    except Exception as exc:
+        logger.error(f"SSE get_latest_alerts failed: {exc}")
+        return []
+
+
 async def get_stats() -> dict:
+    """Aggregate stats including rate_limited count and rate_limits."""
     table = get_table()
     try:
         items: List[dict] = []
@@ -123,12 +178,21 @@ async def get_stats() -> dict:
         critical = sum(1 for s in scores if s > 0.90)
         fp_rate = round(fp / max(resolved + fp, 1), 3)
         avg_score = round(sum(scores) / max(len(scores), 1), 3)
+
+        # Rate limits from rate_limiter
+        try:
+            from backend.lambda_handler.rate_limiter import get_today_counts
+            rate_limits = get_today_counts()
+        except Exception:
+            rate_limits = {}
+
         return {"total": total, "pending": pending, "critical": critical,
                 "resolved": resolved, "false_positives": fp,
                 "rate_limited": rl,
-                "fp_rate": fp_rate, "avg_score": avg_score}
+                "fp_rate": fp_rate, "avg_score": avg_score,
+                "rate_limits": rate_limits}
     except Exception as exc:
         logger.error(f"Stats query failed: {exc}")
         return {"total": 0, "pending": 0, "critical": 0, "resolved": 0,
                 "false_positives": 0, "rate_limited": 0,
-                "fp_rate": 0.0, "avg_score": 0.0}
+                "fp_rate": 0.0, "avg_score": 0.0, "rate_limits": {}}

@@ -85,3 +85,4 @@ class StatsResponse(BaseModel):
     rate_limited: int
     fp_rate: float
     avg_score: float
+    rate_limits: dict
