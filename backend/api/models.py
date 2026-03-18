@@ -10,6 +10,7 @@ class AlertStatus(str, Enum):
     PENDING_REVIEW = "PENDING_REVIEW"
     RESOLVED = "RESOLVED"
     FALSE_POSITIVE = "FALSE_POSITIVE"
+    RATE_LIMITED = "rate_limited"
 
 
 class ResolutionType(str, Enum):
@@ -81,5 +82,6 @@ class StatsResponse(BaseModel):
     critical: int
     resolved: int
     false_positives: int
+    rate_limited: int
     fp_rate: float
     avg_score: float
