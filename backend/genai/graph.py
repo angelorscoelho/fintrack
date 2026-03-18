@@ -86,6 +86,10 @@ def run_xai_pipeline(transaction_id: str, score: float, payload: dict) -> dict:
         update_expr += ", sar_draft = :sar"
         expr_values[":sar"] = result["sar_draft"]
 
+    if result.get("error_message"):
+        update_expr += ", error_message = :em"
+        expr_values[":em"] = result["error_message"]
+
     try:
         _table.update_item(
             Key={"transaction_id": transaction_id},

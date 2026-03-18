@@ -6,7 +6,9 @@ import json
 import logging
 import os
 
+import google.api_core.exceptions
 import google.generativeai as genai
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from backend.genai.graph import TransactionState
 
@@ -14,19 +16,20 @@ logger = logging.getLogger(__name__)
 
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY", ""))
 
+_SYSTEM_PROMPT = """És um especialista sénior em análise forense financeira e auditoria fiscal.
+Analisa transações financeiras sinalizadas por um modelo de Machine Learning (Isolation Forest).
+A tua tarefa é explicar, em linguagem clara para auditores não técnicos, POR QUE esta transação é matematicamente anómala.
+Respondes SEMPRE em JSON válido e NUNCA incluis texto fora do JSON."""
+
 _flash_model = genai.GenerativeModel(
     model_name="gemini-1.5-flash-latest",
+    system_instruction=_SYSTEM_PROMPT,
     generation_config=genai.types.GenerationConfig(
         temperature=0.1,          # Low creativity — factual, consistent output
         max_output_tokens=512,
         response_mime_type="application/json",  # Enforce JSON response
     ),
 )
-
-_SYSTEM_PROMPT = """És um especialista sénior em análise forense financeira e auditoria fiscal.
-Analisa transações financeiras sinalizadas por um modelo de Machine Learning (Isolation Forest).
-A tua tarefa é explicar, em linguagem clara para auditores não técnicos, POR QUE esta transação é matematicamente anómala.
-Respondes SEMPRE em JSON válido e NUNCA incluis texto fora do JSON."""
 
 _USER_PROMPT_TEMPLATE = """Analisa a seguinte transação sinalizada com anomaly_score={score:.2f} ({risk_level} RISCO):
 
@@ -71,6 +74,23 @@ def _build_prompt(payload: dict, score: float) -> str:
     )
 
 
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    retry=retry_if_exception_type((
+        google.api_core.exceptions.ResourceExhausted,
+        google.api_core.exceptions.ServiceUnavailable,
+        google.api_core.exceptions.InternalServerError,
+        google.api_core.exceptions.DeadlineExceeded,
+    )),
+    reraise=True,
+)
+def _call_flash(prompt: str) -> str:
+    """Call Gemini Flash with tenacity retry (3 attempts, exponential backoff)."""
+    response = _flash_model.generate_content(prompt)
+    return response.text.strip()
+
+
 def analyse_basic(state: TransactionState) -> TransactionState:
     """
     LangGraph node: Basic XAI Analysis via Gemini 1.5 Flash.
@@ -82,16 +102,17 @@ def analyse_basic(state: TransactionState) -> TransactionState:
 
     try:
         prompt = _build_prompt(payload, score)
-        full_prompt = f"{_SYSTEM_PROMPT}\n\n{prompt}"
 
-        response = _flash_model.generate_content(full_prompt)
-        raw_text = response.text.strip()
+        raw_text = _call_flash(prompt)
 
         # Validate JSON structure
         xai_data = json.loads(raw_text)
-        assert "bullets" in xai_data, "Missing 'bullets' key"
-        assert len(xai_data["bullets"]) == 3, f"Expected 3 bullets, got {len(xai_data['bullets'])}"
-        assert "summary_pt" in xai_data, "Missing 'summary_pt' key"
+        if "bullets" not in xai_data:
+            raise ValueError("Missing 'bullets' key in Gemini response")
+        if len(xai_data["bullets"]) != 3:
+            raise ValueError(f"Expected 3 bullets, got {len(xai_data['bullets'])}")
+        if "summary_pt" not in xai_data:
+            raise ValueError("Missing 'summary_pt' key in Gemini response")
 
         state["ai_explanation"] = json.dumps(xai_data, ensure_ascii=False)
         state["processing_status"] = "xai_complete"
