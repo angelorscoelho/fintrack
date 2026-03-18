@@ -29,6 +29,11 @@ samconfig.toml.bak
 .idea/
 *.swp
 
+# Generated data
+data/synthetic_transactions.csv
+data/synthetic_transactions.json
+data/anomaly_labels.json
+
 # OS
 .DS_Store
 Thumbs.db
