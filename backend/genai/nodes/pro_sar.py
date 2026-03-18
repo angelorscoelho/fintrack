@@ -6,7 +6,9 @@ Only invoked when anomaly_score > 0.90 — cost control per PRD Golden Rules.
 import logging
 import os
 
+import google.api_core.exceptions
 import google.generativeai as genai
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from backend.genai.graph import TransactionState
 
@@ -57,6 +59,23 @@ INSTRUÇÃO: Produz um rascunho SAR completo em Markdown com EXATAMENTE estas 6 
 Escreve o SAR de forma profissional, concisa e factual. Usa os dados reais da transação."""
 
 
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    retry=retry_if_exception_type((
+        google.api_core.exceptions.ResourceExhausted,
+        google.api_core.exceptions.ServiceUnavailable,
+        google.api_core.exceptions.InternalServerError,
+        google.api_core.exceptions.DeadlineExceeded,
+    )),
+    reraise=True,
+)
+def _call_pro(prompt: str) -> str:
+    """Call Gemini Pro with tenacity retry (3 attempts, exponential backoff)."""
+    response = _pro_model.generate_content(prompt)
+    return response.text.strip()
+
+
 def _extract_xai_summary(ai_explanation: str | None) -> str:
     """Extract human-readable summary from XAI JSON string."""
     if not ai_explanation:
@@ -91,8 +110,7 @@ def audit_deep(state: TransactionState) -> TransactionState:
             xai_summary=xai_summary,
         )
 
-        response = _pro_model.generate_content(prompt)
-        sar_text = response.text.strip()
+        sar_text = _call_pro(prompt)
 
         # Validate structure — must contain all 6 section headers
         required_sections = [
