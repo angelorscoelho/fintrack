@@ -1,0 +1,6 @@
+[default.deploy.parameters]
+stack_name = "fintrack-ai-poc"
+region = "eu-west-1"
+confirm_changeset = false
+capabilities = "CAPABILITY_IAM"
+resolve_s3 = true
