@@ -24,7 +24,7 @@ class TransactionState(TypedDict):
     payload: dict
     ai_explanation: Optional[str]   # JSON string stored in DynamoDB
     sar_draft: Optional[str]         # Markdown string (S06E)
-    processing_status: str           # pending | xai_complete | sar_complete | error
+    processing_status: str           # pending | xai_complete | sar_complete | sar_error | error
     error_message: Optional[str]
 
 
