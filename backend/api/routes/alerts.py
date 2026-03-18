@@ -1,14 +1,30 @@
-"""GET /api/alerts and GET /api/alerts/{id}. Implemented in Session S07E."""
-from fastapi import APIRouter
+"""GET /api/alerts and GET /api/alerts/{transaction_id}"""
+import logging
+from typing import Optional
 
+from fastapi import APIRouter, HTTPException, Query
+
+from backend.api.db.dynamo import get_alert_by_id, get_alerts_by_status
+from backend.api.models import AlertListResponse, AlertResponse
+
+logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Alerts"])
 
 
-@router.get("/alerts")
-async def list_alerts():
-    return {"items": [], "total": 0}  # placeholder
+@router.get("/alerts", response_model=AlertListResponse)
+async def list_alerts(
+    status: Optional[str] = Query(None, description="Filter by status: NORMAL|PENDING_REVIEW|RESOLVED|FALSE_POSITIVE"),
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+):
+    items, total = await get_alerts_by_status(status=status, limit=limit, offset=offset)
+    page = offset // limit + 1
+    return AlertListResponse(items=items, total=total, page=page, page_size=limit)
 
 
-@router.get("/alerts/{transaction_id}")
+@router.get("/alerts/{transaction_id}", response_model=AlertResponse)
 async def get_alert(transaction_id: str):
-    return {"transaction_id": transaction_id}  # placeholder
+    item = await get_alert_by_id(transaction_id)
+    if not item:
+        raise HTTPException(status_code=404, detail=f"Alert {transaction_id} not found")
+    return item
