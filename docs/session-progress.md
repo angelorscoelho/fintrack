@@ -22,6 +22,38 @@ Data da última revisão: 2026-03-18
   • X-Request-ID middleware ativo em todas as respostas
   • Todas as rotas registadas em main.py: health, alerts, alerts/{id}, stats, alerts/{id}/resolve, alerts/stream
   • Swagger /docs carrega sem erros com todas as 5 route files
-- Estado atual do repositório: pronto para S09E
+- Estado atual do repositório: pronto para S09R
 
-Última confirmação de estrutura: S00 + S01E + S01R + S02E + S02R + S03E + S03R + S04E + S04R + S05E + S05R + S06E + S06R + S07E + S07R + S08E + S08R aplicados
+## S09E — React Dashboard + Alerts Table (executado)
+
+### Implementação realizada:
+- **App.jsx**: Dashboard completo com header (ShieldAlert icon, StatsBar badges, Wifi/WifiOff SSE status, Clock idle indicator), filtro Select por status (all/PENDING_REVIEW/RESOLVED/FALSE_POSITIVE/rate_limited/NORMAL), SWR data fetching com refreshInterval condicionado por isIdle, Toaster sonner, AlertDetail + InactivityOverlay placeholders
+- **AlertsTable.jsx**: TanStack Table v8 com 7 colunas (ID, Data/Hora, NIF, Montante, Categoria, Risco, Estado), ScoreBadge (destructive >90%, warning 70-90%, outline <70%), STATUS_CONFIG com 5 estados incluindo rate_limited ⏸, sorting, pagination (15/página), row click com onRowClick(row.original)
+- **shadcn/ui setup**: Componentes Badge, Button, Card, Select, Dialog, Sheet, Alert criados manualmente (network offline para shadcn CLI), CSS variables configurados em index.css, tailwind.config.js atualizado com theme colors + tailwindcss-animate plugin
+- **Hooks atualizados**: useInactivityTimer.js agora retorna { isIdle, resetTimer } (placeholder S10E), useAlertStream.js aceita (onNewAlert, isIdle, setIsConnected) (placeholder S10E)
+- **InactivityOverlay.jsx**: Assinatura atualizada para { isVisible, onResume } (placeholder S10E)
+
+### Dependências adicionadas:
+- class-variance-authority, @radix-ui/react-dialog, @radix-ui/react-select, @radix-ui/react-slot, sonner, tailwindcss-animate
+
+### Ficheiros criados:
+- frontend/components.json
+- frontend/src/lib/utils.js (cn utility)
+- frontend/src/components/ui/badge.jsx, button.jsx, card.jsx, select.jsx, dialog.jsx, sheet.jsx, alert.jsx
+
+### Ficheiros modificados:
+- frontend/src/App.jsx — dashboard completo
+- frontend/src/components/AlertsTable.jsx — tabela TanStack
+- frontend/src/components/InactivityOverlay.jsx — nova assinatura
+- frontend/src/hooks/useAlertStream.js — nova assinatura
+- frontend/src/hooks/useInactivityTimer.js — nova assinatura + retorno { isIdle, resetTimer }
+- frontend/src/index.css — CSS variables shadcn/ui
+- frontend/tailwind.config.js — tema shadcn/ui + tailwindcss-animate
+- frontend/package.json — novas dependências
+
+### Verificação:
+- `npm run build` ✅ passa sem erros
+- `npm run dev` ✅ inicia em porta 5173
+- Todos os 16 critérios de aceitação verificados e aprovados
+
+Última confirmação de estrutura: S00 + S01E + S01R + S02E + S02R + S03E + S03R + S04E + S04R + S05E + S05R + S06E + S06R + S07E + S07R + S08E + S08R + S09E aplicados
