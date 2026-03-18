@@ -1,24 +1,21 @@
 # Último estado conhecido do projeto FinTrack AI
-Data: 2026-03-18 | Última EXEC: S10E
+Data da última revisão: 2026-03-18
+Última sessão REVIEW concluída: S10R_Final_QA_REVIEW
 
-## Resumo (pontos para o próximo executor)
+## Resumo da última revisão (apenas pontos importantes para o próximo executor)
 
-- GLOBAL RESULT: S10E EXEC COMPLETE
-- Alterações críticas: sim → 5 ficheiros implementados (substituíram placeholders)
-- Ficheiros corrigidos:
-  - `frontend/src/hooks/useInactivityTimer.js` — timer completo com 7 eventos (mousemove, mousedown, keydown, touchstart, scroll, click, visibilitychange), setTimeout/clearTimeout, cleanup no unmount
-  - `frontend/src/hooks/useAlertStream.js` — SSE + BroadcastChannel "fintrack-sse-coordinator", leader election (REQUEST_LEADER → 500ms timeout → claimLeadership), NEW_ALERT relay, page visibility handling, idle-aware open/close
-  - `frontend/src/components/InactivityOverlay.jsx` — shadcn/ui Dialog non-dismissable (onInteractOutside + onEscapeKeyDown prevented), Clock icon, "Continuar" (onResume) + "Fechar sessão" (window.close) buttons
-  - `frontend/src/components/AlertDetail.jsx` — shadcn/ui Sheet, ScoreRing (score display), DataRow helper, XAIPanel (null-guarded, Gemini Flash bullets), SARPanel (null-guarded, expand/collapse, ReactMarkdown), RateLimitedBanner (Alert), ResolutionPanel only for PENDING_REVIEW, ai_explanation JSON parse with try/catch
-  - `frontend/src/components/ResolutionPanel.jsx` — 3 buttons (CONFIRMED_FRAUD/FALSE_POSITIVE/ESCALATED), sonner toast.success/error, 409 → "Este alerta já foi resolvido anteriormente.", Loader2 while loading, buttons disabled during load
-- Pontos de atenção:
-  - `npm run build` ✅ passa sem erros
-  - ScoreRing threshold: >0.90 red, >=0.70 amber, <0.70 slate (alinhado com PRD)
-  - ai_explanation parsed como JSON string do DynamoDB (Golden Rule #3)
-  - BroadcastChannel: apenas 1 tab abre SSE (leader), restantes recebem via NEW_ALERT relay
-  - SSE fecha quando idle ou tab hidden (leader only), reabre quando active + visible
-  - LEADER_CLOSING enviado no unmount para re-election
-  - react-markdown v9.0.1 já instalado em package.json
-- Estado: pronto para S10R
+- GLOBAL RESULT: APPROVED
+- Alterações críticas aplicadas: não → nenhuma (todos os 21 itens da checklist passaram)
+- Ficheiros corrigidos / sobrescritos: nenhum
+- Pontos de atenção / restrições para o próximo EXEC:
+  • useInactivityTimer.js regista 7 eventos (6 PRD + visibilitychange extra) — intencional, melhora UX
+  • window.close() em InactivityOverlay pode não funcionar em tabs abertas manualmente (limitação do browser)
+  • Race condition teórica se 2 tabs abrem simultaneamente (<500ms) — mitigada pelo Semaphore(3) no servidor
+  • handler.py armazena anomaly_score como str() — pré-existente de S04E, funcional via coerce_decimal no Pydantic
+  • Frontend build: 500.74 kB JS (warning de chunk size) — aceitável para PoC, pode ser otimizado com code-splitting se necessário
+  • Todas as dependências shadcn/ui (7 componentes ui/) presentes e funcionais
+  • Sonner como único sistema de toasts — zero react-hot-toast/react-toastify
+  • Zero inline style={{}} — todo styling via Tailwind CSS
+- Estado atual do repositório: pronto para deploy / próxima iteração
 
-Confirmação de estrutura: S00 + S01E + S01R + S02E + S02R + S03E + S03R + S04E + S04R + S05E + S05R + S06E + S06R + S07E + S07R + S08E + S08R + S09E + S09R + S10E aplicados
+Última confirmação de estrutura: S00 + S01E + S01R + S02E + S02R + S03E + S03R + S04E + S04R + S05E + S05R + S06E + S06R + S07E + S07R + S08E + S08R + S09E + S09R + S10E + S10R aplicados
