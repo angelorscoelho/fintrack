@@ -1,0 +1,22 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'FinTrack AI — Fraud Detection PoC'
+
+Globals:
+  Function:
+    Runtime: python3.11
+    Timeout: 30
+    MemorySize: 512
+
+Resources:
+  # Resources will be added in sessions S01E and S02E
+  PlaceholderResource:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /fintrack/placeholder
+      Type: String
+      Value: bootstrap
+
+Outputs:
+  StackName:
+    Value: !Ref AWS::StackName
