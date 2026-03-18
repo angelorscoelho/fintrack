@@ -1,22 +1,154 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: 'FinTrack AI — Fraud Detection PoC'
+Description: 'FinTrack AI — Fraud Detection PoC — Phase 1: Ingestion Layer'
 
 Globals:
   Function:
     Runtime: python3.11
     Timeout: 30
     MemorySize: 512
+    Environment:
+      Variables:
+        DYNAMODB_TABLE: !Ref TransactionsTable
+        AWS_ACCOUNT_ID: !Ref AWS::AccountId
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, prod]
 
 Resources:
-  # Resources will be added in sessions S01E and S02E
-  PlaceholderResource:
-    Type: AWS::SSM::Parameter
+
+  # ── 1. DEAD LETTER QUEUE ─────────────────────────────────────────────────
+  TransactionsDLQ:
+    Type: AWS::SQS::Queue
     Properties:
-      Name: /fintrack/placeholder
-      Type: String
-      Value: bootstrap
+      QueueName: !Sub 'fintrack-transactions-dlq-${Environment}'
+      MessageRetentionPeriod: 1209600  # 14 days
+      Tags:
+        - Key: Project
+          Value: fintrack-ai
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ── 2. MAIN SQS QUEUE ────────────────────────────────────────────────────
+  TransactionsQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub 'fintrack-transactions-queue-${Environment}'
+      VisibilityTimeout: 60        # Must be >= Lambda timeout (set in S02E)
+      MessageRetentionPeriod: 86400  # 1 day
+      ReceiveMessageWaitTimeSeconds: 20  # Long polling — reduces cost
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt TransactionsDLQ.Arn
+        maxReceiveCount: 3
+      Tags:
+        - Key: Project
+          Value: fintrack-ai
+
+  # ── 3. IAM ROLE: API Gateway → SQS ───────────────────────────────────────
+  ApiGatewayToSQSRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'fintrack-apigw-sqs-role-${Environment}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: apigateway.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: AllowSQSSendMessage
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'sqs:SendMessage'
+                Resource: !GetAtt TransactionsQueue.Arn
+
+  # ── 4. API GATEWAY HTTP API ───────────────────────────────────────────────
+  FinTrackHttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: !Sub 'fintrack-api-${Environment}'
+      ProtocolType: HTTP
+      CorsConfiguration:
+        AllowOrigins:
+          - 'http://localhost:3000'
+          - 'http://localhost:5173'
+        AllowMethods:
+          - POST
+          - OPTIONS
+        AllowHeaders:
+          - Content-Type
+          - X-Api-Key
+        MaxAge: 300
+
+  FinTrackApiStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref FinTrackHttpApi
+      StageName: prod
+      AutoDeploy: true
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 100
+        ThrottlingRateLimit: 50
+
+  # ── 5. API GATEWAY → SQS INTEGRATION ─────────────────────────────────────
+  SQSIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref FinTrackHttpApi
+      IntegrationType: AWS_PROXY
+      IntegrationSubtype: SQS-SendMessage
+      CredentialsArn: !GetAtt ApiGatewayToSQSRole.Arn
+      RequestParameters:
+        QueueUrl: !Ref TransactionsQueue
+        MessageBody: '$request.body'
+        MessageGroupId: 'transactions'
+      PayloadFormatVersion: '1.0'
+
+  IngestRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref FinTrackHttpApi
+      RouteKey: 'POST /ingest'
+      Target: !Sub 'integrations/${SQSIntegration}'
+
+  # ── PLACEHOLDER for S02E ──────────────────────────────────────────────────
+  # TransactionsTable (DynamoDB) — added in S02E
+  # TransactionProcessorFunction (Lambda) — added in S02E
 
 Outputs:
-  StackName:
-    Value: !Ref AWS::StackName
+  IngestEndpoint:
+    Description: 'POST endpoint for transaction ingestion'
+    Value: !Sub 'https://${FinTrackHttpApi}.execute-api.${AWS::Region}.amazonaws.com/prod/ingest'
+    Export:
+      Name: !Sub 'FinTrackIngestEndpoint-${Environment}'
+
+  SQSQueueUrl:
+    Description: 'Main SQS queue URL'
+    Value: !Ref TransactionsQueue
+    Export:
+      Name: !Sub 'FinTrackSQSQueueUrl-${Environment}'
+
+  SQSQueueArn:
+    Description: 'Main SQS queue ARN'
+    Value: !GetAtt TransactionsQueue.Arn
+    Export:
+      Name: !Sub 'FinTrackSQSQueueArn-${Environment}'
+
+  DLQUrl:
+    Description: 'Dead Letter Queue URL'
+    Value: !Ref TransactionsDLQ
+    Export:
+      Name: !Sub 'FinTrackDLQUrl-${Environment}'
+
+  HttpApiId:
+    Description: 'API Gateway HTTP API ID'
+    Value: !Ref FinTrackHttpApi
+    Export:
+      Name: !Sub 'FinTrackHttpApiId-${Environment}'
