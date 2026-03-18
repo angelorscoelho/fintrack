@@ -66,8 +66,8 @@ def normalize_scores(raw_scores: np.ndarray) -> np.ndarray:
         - More negative = more anomalous
         - Range is roughly [-0.5, 0.5]
     
-    We invert and normalize: score = (raw - min) / (max - min), then invert.
-    Using global percentiles (p10/p90) makes the normalization robust to outliers.
+    We invert once (so higher = more anomalous), then normalize using
+    percentile-based clipping (p10/p90) for robustness to outliers.
     """
     # Invert: more negative → higher raw anomaly signal
     inverted = -raw_scores

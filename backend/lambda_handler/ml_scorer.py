@@ -53,7 +53,7 @@ def _build_feature_vector(payload: dict, artifact: dict) -> np.ndarray:
     categories = artifact["categories"]
 
     amount         = float(payload.get("amount", 0))
-    prev_avg       = float(payload.get("previous_avg_amount", 1)) or 1.0
+    prev_avg       = max(float(payload.get("previous_avg_amount", 1)), 1.0)
     velocity       = float(payload.get("transactions_last_10min", 0))
     hour           = float(payload.get("hour_of_day", 12))
     day            = float(payload.get("day_of_week", 1))
@@ -70,7 +70,7 @@ def _build_feature_vector(payload: dict, artifact: dict) -> np.ndarray:
         math.cos(2 * math.pi * hour / 24),    # hour_cos
         day / 6.0,                             # day_norm
         math.log1p(amount),                    # amount_log
-        1.0 if hour <= 5 else 0.0,            # is_off_hours
+        1.0 if 0 <= hour <= 5 else 0.0,        # is_off_hours
         0.0 if country == "PT" else 1.0,       # is_foreign
         float(category_enc),                   # category_enc
     ], dtype=np.float64)
