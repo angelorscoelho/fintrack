@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: 'FinTrack AI — Fraud Detection PoC — Phase 1: Ingestion Layer'
+Description: 'FinTrack AI — Fraud Detection PoC — Ingestion + Processing Layer'
 
 Globals:
   Function:
@@ -113,9 +113,164 @@ Resources:
       RouteKey: 'POST /ingest'
       Target: !Sub 'integrations/${SQSIntegration}'
 
-  # ── PLACEHOLDER for S02E ──────────────────────────────────────────────────
-  # TransactionsTable (DynamoDB) — added in S02E
-  # TransactionProcessorFunction (Lambda) — added in S02E
+  # ── DYNAMODB: transactions ────────────────────────────────────────────────
+  TransactionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: transactions
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: transaction_id
+          AttributeType: S
+        - AttributeName: status
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: transaction_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: status-timestamp-index
+          KeySchema:
+            - AttributeName: status
+              KeyType: HASH
+            - AttributeName: timestamp
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      Tags:
+        - Key: Project
+          Value: fintrack-ai
+
+  # ── DYNAMODB: gemini_rate_limiter ─────────────────────────────────────────
+  GeminiRateLimiterTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: gemini_rate_limiter
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: date
+          AttributeType: S
+      KeySchema:
+        - AttributeName: date
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+
+  # ── SSM PARAMETERS: daily limits ─────────────────────────────────────────
+  GeminiFlashDailyLimit:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /fintrack/gemini_flash_daily_limit
+      Type: String
+      Value: '500'
+      Description: 'Max Gemini Flash API calls per day'
+
+  GeminiProDailyLimit:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /fintrack/gemini_pro_daily_limit
+      Type: String
+      Value: '100'
+      Description: 'Max Gemini Pro API calls per day'
+
+  # ── LAMBDA LAYER ──────────────────────────────────────────────────────────
+  MLDependenciesLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: fintrack-ml-dependencies
+      Description: 'scikit-learn, numpy, pandas'
+      ContentUri: ../backend/lambda_layer/
+      CompatibleRuntimes: [python3.11]
+      RetentionPolicy: Delete
+    Metadata:
+      BuildMethod: python3.11
+
+  # ── LAMBDA IAM ROLE ───────────────────────────────────────────────────────
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: fintrack-lambda-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: SQSReadPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'sqs:ReceiveMessage'
+                  - 'sqs:DeleteMessage'
+                  - 'sqs:GetQueueAttributes'
+                Resource: !GetAtt TransactionsQueue.Arn
+        - PolicyName: DynamoDBWritePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'dynamodb:PutItem'
+                  - 'dynamodb:UpdateItem'
+                  - 'dynamodb:GetItem'
+                Resource:
+                  - !GetAtt TransactionsTable.Arn
+                  - !Sub '${TransactionsTable.Arn}/index/*'
+        - PolicyName: RateLimiterPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'dynamodb:UpdateItem'
+                  - 'dynamodb:GetItem'
+                Resource: !GetAtt GeminiRateLimiterTable.Arn
+        - PolicyName: SSMReadPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'ssm:GetParameter'
+                  - 'ssm:GetParameters'
+                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/fintrack/*'
+
+  # ── LAMBDA FUNCTION ───────────────────────────────────────────────────────
+  TransactionProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: fintrack-transaction-processor
+      CodeUri: ../backend/lambda_handler/
+      Handler: handler.lambda_handler
+      Description: 'Score transactions, persist to DynamoDB, invoke GenAI service'
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Layers: [!Ref MLDependenciesLayer]
+      AutoPublishAlias: live
+      ProvisionedConcurrencyConfig:
+        ProvisionedConcurrentExecutions: 1
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref TransactionsTable
+          RATE_LIMITER_TABLE: !Ref GeminiRateLimiterTable
+          GENAI_SERVICE_URL: 'http://localhost:8001'
+      Events:
+        SQSEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt TransactionsQueue.Arn
+            BatchSize: 1
+            FunctionResponseTypes: [ReportBatchItemFailures]
 
 Outputs:
   IngestEndpoint:
@@ -147,3 +302,21 @@ Outputs:
     Value: !Ref FinTrackHttpApi
     Export:
       Name: !Sub 'FinTrackHttpApiId-${Environment}'
+
+  DynamoDBTableName:
+    Description: 'DynamoDB transactions table name'
+    Value: !Ref TransactionsTable
+    Export:
+      Name: !Sub 'FinTrackDynamoDBTable-${Environment}'
+
+  RateLimiterTableName:
+    Description: 'DynamoDB rate limiter table name'
+    Value: !Ref GeminiRateLimiterTable
+    Export:
+      Name: !Sub 'FinTrackRateLimiterTable-${Environment}'
+
+  LambdaFunctionArn:
+    Description: 'Lambda function ARN'
+    Value: !GetAtt TransactionProcessorFunction.Arn
+    Export:
+      Name: !Sub 'FinTrackLambdaArn-${Environment}'
