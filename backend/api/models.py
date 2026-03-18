@@ -54,8 +54,10 @@ class AlertResponse(BaseModel):
 
     @field_validator("anomaly_score", "amount", "previous_avg_amount", mode="before")
     @classmethod
-    def coerce_decimal(cls, v: Any) -> float:
+    def coerce_decimal(cls, v: Any) -> Optional[float]:
         """DynamoDB returns Decimal — convert to float for JSON serialization."""
+        if v is None:
+            return None
         if isinstance(v, Decimal):
             return float(v)
         if isinstance(v, str):
@@ -63,7 +65,7 @@ class AlertResponse(BaseModel):
                 return float(v)
             except ValueError:
                 return 0.0
-        return v or 0.0
+        return float(v) if v else 0.0
 
 
 class AlertListResponse(BaseModel):
