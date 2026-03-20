@@ -4,7 +4,6 @@ Description: 'FinTrack AI — Fraud Detection PoC — Ingestion + Processing Lay
 
 Globals:
   Function:
-    Runtime: python3.12
     Timeout: 30
     MemorySize: 512
 
@@ -243,7 +242,6 @@ Resources:
     Properties:
       FunctionName: fintrack-transaction-processor
       PackageType: Image
-      CodeUri: ../backend/
       Description: 'Score transactions, persist to DynamoDB, invoke GenAI service'
       Role: !GetAtt LambdaExecutionRole.Arn
       Environment:
@@ -266,7 +264,7 @@ Resources:
 Outputs:
   IngestEndpoint:
     Description: 'POST endpoint for transaction ingestion'
-    Value: !Sub 'https://${FinTrackHttpApi}.execute-api.${AWS::Region}.amazonaws.com/prod/ingest'
+    Value: !Sub 'https://${FinTrackHttpApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/ingest'
     Export:
       Name: !Sub 'FinTrackIngestEndpoint-${Environment}'
 
