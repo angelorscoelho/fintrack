@@ -5,6 +5,7 @@ stack_name = "fintrack-ai-poc"
 region = "eu-west-1"
 capabilities = "CAPABILITY_IAM CAPABILITY_NAMED_IAM"
 resolve_s3 = true
+resolve_image_repos = true
 confirm_changeset = false
 profile = "fintrack"
 
