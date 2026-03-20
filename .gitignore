@@ -37,3 +37,6 @@ data/anomaly_labels.json
 # OS
 .DS_Store
 Thumbs.db
+
+# Lambda Dependencies
+backend/lambda_layer

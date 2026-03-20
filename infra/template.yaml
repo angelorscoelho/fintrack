@@ -4,7 +4,7 @@ Description: 'FinTrack AI — Fraud Detection PoC — Ingestion + Processing Lay
 
 Globals:
   Function:
-    Runtime: python3.11
+    Runtime: python3.12
     Timeout: 30
     MemorySize: 512
 
@@ -19,6 +19,8 @@ Resources:
   # ── 1. DEAD LETTER QUEUE ─────────────────────────────────────────────────
   TransactionsDLQ:
     Type: AWS::SQS::Queue
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       QueueName: !Sub 'fintrack-transactions-dlq-${Environment}'
       MessageRetentionPeriod: 1209600  # 14 days
@@ -87,7 +89,7 @@ Resources:
     Type: AWS::ApiGatewayV2::Stage
     Properties:
       ApiId: !Ref FinTrackHttpApi
-      StageName: prod
+      StageName: !Ref Environment
       AutoDeploy: true
       DefaultRouteSettings:
         ThrottlingBurstLimit: 100
@@ -178,17 +180,7 @@ Resources:
       Value: '100'
       Description: 'Max Gemini Pro API calls per day'
 
-  # ── LAMBDA LAYER ──────────────────────────────────────────────────────────
-  MLDependenciesLayer:
-    Type: AWS::Serverless::LayerVersion
-    Properties:
-      LayerName: fintrack-ml-dependencies
-      Description: 'scikit-learn, numpy, pandas'
-      ContentUri: ../backend/lambda_layer/
-      CompatibleRuntimes: [python3.11]
-      RetentionPolicy: Delete
-    Metadata:
-      BuildMethod: python3.11
+  # (MLDependenciesLayer removed — using container image instead)
 
   # ── LAMBDA IAM ROLE ───────────────────────────────────────────────────────
   LambdaExecutionRole:
@@ -250,14 +242,10 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: fintrack-transaction-processor
-      CodeUri: ../backend/lambda_handler/
-      Handler: handler.lambda_handler
+      PackageType: Image
+      CodeUri: ../backend/
       Description: 'Score transactions, persist to DynamoDB, invoke GenAI service'
       Role: !GetAtt LambdaExecutionRole.Arn
-      Layers: [!Ref MLDependenciesLayer]
-      AutoPublishAlias: live
-      ProvisionedConcurrencyConfig:
-        ProvisionedConcurrentExecutions: 1
       Environment:
         Variables:
           DYNAMODB_TABLE: !Ref TransactionsTable
@@ -270,6 +258,10 @@ Resources:
             Queue: !GetAtt TransactionsQueue.Arn
             BatchSize: 1
             FunctionResponseTypes: [ReportBatchItemFailures]
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: ../backend/
+      DockerTag: v1
 
 Outputs:
   IngestEndpoint:

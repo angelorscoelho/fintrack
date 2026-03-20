@@ -4,7 +4,7 @@
 Serverless fraud detection PoC: AWS Lambda + DynamoDB + LangGraph + Gemini API + React.
 
 ## Stack
-- Python 3.11: FastAPI, boto3, scikit-learn, langgraph, google-generativeai
+- Python 3.12: FastAPI, boto3, scikit-learn, langgraph, google-generativeai
 - AWS: Lambda, SQS, DynamoDB, API Gateway (SAM IaC)
 - Frontend: React 18, Vite, TanStack Table v8, shadcn/ui, Tailwind CSS
 

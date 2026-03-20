@@ -3,7 +3,10 @@ version = 0.1
 [default.deploy.parameters]
 stack_name = "fintrack-ai-poc"
 region = "eu-west-1"
-confirm_changeset = false
 capabilities = "CAPABILITY_IAM CAPABILITY_NAMED_IAM"
 resolve_s3 = true
-parameter_overrides = "Environment=dev"
+confirm_changeset = false
+profile = "fintrack"
+
+[default.global.parameters]
+region = "eu-west-1"
