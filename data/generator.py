@@ -249,14 +249,14 @@ def save_outputs(records: list[dict], output_dir: Path) -> None:
     # Statistics
     total = len(records)
     anomaly_total = sum(1 for r in records if r["is_anomaly"])
-    print(f"\n{'─' * 50}")
+    print(f"\n{'-' * 50}")
     print(f"Generated {total} transactions")
     print(f"  Normal:  {total - anomaly_total} ({(total - anomaly_total)/total*100:.1f}%)")
     print(f"  Anomaly: {anomaly_total} ({anomaly_total/total*100:.1f}%)")
     for atype in ANOMALY_DISTRIBUTION:
         count = sum(1 for r in records if r.get("anomaly_type") == atype)
         print(f"    {atype}: {count} ({count/total*100:.1f}%)")
-    print(f"{'─' * 50}")
+    print(f"{'-' * 50}")
     print(f"Saved: {csv_path}")
     print(f"Saved: {json_path}")
     print(f"Saved: {labels_path}")
