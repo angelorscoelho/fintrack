@@ -32,6 +32,8 @@ Resources:
   # ── 2. MAIN SQS QUEUE ────────────────────────────────────────────────────
   TransactionsQueue:
     Type: AWS::SQS::Queue
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       QueueName: !Sub 'fintrack-transactions-queue-${Environment}'
       VisibilityTimeout: 60        # Must be >= Lambda timeout (set in S02E)
@@ -239,9 +241,15 @@ Resources:
   # ── LAMBDA FUNCTION ───────────────────────────────────────────────────────
   TransactionProcessorFunction:
     Type: AWS::Serverless::Function
+    Metadata:
+      # Paths are resolved relative to this template file (infra/template.yaml),
+      # so DockerContext must go one level up to reach backend/lambda_handler.
+      Dockerfile: Dockerfile
+      DockerContext: ../backend/lambda_handler
     Properties:
       FunctionName: fintrack-transaction-processor
       PackageType: Image
+      ImageUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/fintrack-lambda:latest"
       Description: 'Score transactions, persist to DynamoDB, invoke GenAI service'
       Role: !GetAtt LambdaExecutionRole.Arn
       Environment:
@@ -256,10 +264,11 @@ Resources:
             Queue: !GetAtt TransactionsQueue.Arn
             BatchSize: 1
             FunctionResponseTypes: [ReportBatchItemFailures]
-    Metadata:
-      Dockerfile: Dockerfile
-      DockerContext: ../backend/
-      DockerTag: v1
+        Api:
+          Type: Api
+          Properties:
+            Path: /lambda
+            Method: post
 
 Outputs:
   IngestEndpoint:
