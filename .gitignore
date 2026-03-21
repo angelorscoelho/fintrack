@@ -40,3 +40,4 @@ Thumbs.db
 
 # Lambda Dependencies
 backend/lambda_layer
+.scratch/
