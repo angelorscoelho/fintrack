@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { KPICard } from '@/components/dashboard/KPICard'
 import { VolumeChart } from '@/components/dashboard/VolumeChart'
 import { LiveAlertFeed } from '@/components/dashboard/LiveAlertFeed'
+import { GeoMap } from '@/components/dashboard/GeoMap'
 import { Activity, AlertTriangle, ShieldAlert, Gauge } from 'lucide-react'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
@@ -27,6 +28,7 @@ export default function CommandCenter({ isIdle, setMutateAlerts }) {
         queryClient.invalidateQueries({ queryKey: ['stats'] })
         queryClient.invalidateQueries({ queryKey: ['feed-alerts'] })
         queryClient.invalidateQueries({ queryKey: ['alerts-volume'] })
+        queryClient.invalidateQueries({ queryKey: ['geo-alerts'] })
       })
     }
   }, [setMutateAlerts, queryClient])
@@ -86,6 +88,9 @@ export default function CommandCenter({ isIdle, setMutateAlerts }) {
           <LiveAlertFeed />
         </div>
       </div>
+
+      {/* Row 3: Geographic alert distribution map */}
+      <GeoMap />
     </>
   )
 }
