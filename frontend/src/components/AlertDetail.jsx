@@ -2,6 +2,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ResolutionPanel } from './ResolutionPanel'
+import { SARExportButton } from './reports/SARExportButton'
 import { AlertTriangle, Clock, Globe, Cpu, FileText, ChevronDown, ChevronUp } from 'lucide-react'
 import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
@@ -53,7 +54,7 @@ function XAIPanel({ explanation }) {
   )
 }
 
-function SARPanel({ markdown }) {
+function SARPanel({ markdown, transactionId, merchantNif, score }) {
   const [expanded, setExpanded] = useState(false)
   if (!markdown) return null
   return (
@@ -74,9 +75,19 @@ function SARPanel({ markdown }) {
         </Button>
       </div>
       {expanded && (
-        <div className="prose prose-sm max-w-none text-slate-700">
-          <ReactMarkdown>{markdown}</ReactMarkdown>
-        </div>
+        <>
+          <div className="prose prose-sm max-w-none text-slate-700">
+            <ReactMarkdown>{markdown}</ReactMarkdown>
+          </div>
+          <div className="mt-3 flex justify-end">
+            <SARExportButton
+              sarContent={markdown}
+              transactionId={transactionId}
+              merchantNif={merchantNif}
+              score={score}
+            />
+          </div>
+        </>
       )}
     </div>
   )
@@ -154,7 +165,12 @@ export function AlertDetail({ alert, open, onClose, onResolved }) {
           <XAIPanel explanation={explanation} />
 
           {/* SAR Panel — null-guarded */}
-          <SARPanel markdown={alert.sar_draft} />
+          <SARPanel
+            markdown={alert.sar_draft}
+            transactionId={alert.transaction_id}
+            merchantNif={alert.merchant_nif}
+            score={alert.anomaly_score}
+          />
 
           {/* Resolution Panel — only for PENDING_REVIEW */}
           {alert.status === 'PENDING_REVIEW' && (

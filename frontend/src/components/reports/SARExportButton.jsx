@@ -1,0 +1,178 @@
+import { useState, useRef, useCallback } from 'react'
+import { Button } from '@/components/ui/button'
+import { Download, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
+import ReactMarkdown from 'react-markdown'
+
+const EXPORT_COUNT_KEY = 'fintrack_sar_export_count'
+
+export function incrementExportCount() {
+  const current = parseInt(localStorage.getItem(EXPORT_COUNT_KEY) || '0', 10)
+  localStorage.setItem(EXPORT_COUNT_KEY, String(current + 1))
+}
+
+export function getExportCount() {
+  return parseInt(localStorage.getItem(EXPORT_COUNT_KEY) || '0', 10)
+}
+
+export async function generateSARPdf({ sarContent, transactionId, merchantNif, score }) {
+  const { default: html2canvas } = await import('html2canvas')
+  const { jsPDF } = await import('jspdf')
+
+  // Create a temporary hidden div to render the markdown
+  const container = document.createElement('div')
+  container.style.cssText =
+    'position:absolute;left:-9999px;top:0;width:700px;padding:24px;background:#fff;font-family:sans-serif;font-size:14px;line-height:1.6;color:#1e293b;'
+  document.body.appendChild(container)
+
+  // Render markdown content as HTML
+  const { createRoot } = await import('react-dom/client')
+  const root = createRoot(container)
+  await new Promise((resolve) => {
+    root.render(
+      <div className="prose prose-sm max-w-none">
+        <ReactMarkdown>{sarContent}</ReactMarkdown>
+      </div>
+    )
+    // Give React time to render
+    setTimeout(resolve, 300)
+  })
+
+  try {
+    const canvas = await html2canvas(container, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+    })
+
+    const pdf = new jsPDF('p', 'mm', 'a4')
+    const pageWidth = pdf.internal.pageSize.getWidth()
+    const pageHeight = pdf.internal.pageSize.getHeight()
+    const margin = 15
+    const contentWidth = pageWidth - margin * 2
+    const footerY = pageHeight - 10
+    const today = new Date().toISOString().split('T')[0]
+    const scorePct = (Number(score) * 100).toFixed(1)
+
+    // Header
+    pdf.setFontSize(12)
+    pdf.setFont(undefined, 'bold')
+    pdf.text('RELATÓRIO DE ATIVIDADE SUSPEITA — CONFIDENCIAL', pageWidth / 2, 15, { align: 'center' })
+
+    // Metadata line
+    pdf.setFontSize(9)
+    pdf.setFont(undefined, 'normal')
+    pdf.text(
+      `Transação: ${transactionId} | Merchant: ${merchantNif} | Score: ${scorePct}% | Data: ${today}`,
+      pageWidth / 2,
+      22,
+      { align: 'center' }
+    )
+
+    // Horizontal rule
+    pdf.setDrawColor(200)
+    pdf.line(margin, 26, pageWidth - margin, 26)
+
+    // Content image from canvas
+    const imgData = canvas.toDataURL('image/png')
+    const imgWidth = contentWidth
+    const imgHeight = (canvas.height * imgWidth) / canvas.width
+    const contentStartY = 30
+    const maxContentHeight = footerY - contentStartY - 10
+
+    if (imgHeight <= maxContentHeight) {
+      pdf.addImage(imgData, 'PNG', margin, contentStartY, imgWidth, imgHeight)
+    } else {
+      // Multi-page: slice the canvas
+      let remainingHeight = canvas.height
+      let sourceY = 0
+      const sliceHeightPx = (maxContentHeight / imgWidth) * canvas.width
+      let isFirstPage = true
+
+      while (remainingHeight > 0) {
+        if (!isFirstPage) {
+          pdf.addPage()
+        }
+        const currentSliceHeight = Math.min(sliceHeightPx, remainingHeight)
+        const currentSliceHeightMm = (currentSliceHeight * imgWidth) / canvas.width
+
+        // Create a slice canvas
+        const sliceCanvas = document.createElement('canvas')
+        sliceCanvas.width = canvas.width
+        sliceCanvas.height = currentSliceHeight
+        const ctx = sliceCanvas.getContext('2d')
+        ctx.drawImage(canvas, 0, sourceY, canvas.width, currentSliceHeight, 0, 0, canvas.width, currentSliceHeight)
+
+        const sliceData = sliceCanvas.toDataURL('image/png')
+        pdf.addImage(sliceData, 'PNG', margin, isFirstPage ? contentStartY : margin, imgWidth, currentSliceHeightMm)
+
+        sourceY += currentSliceHeight
+        remainingHeight -= currentSliceHeight
+        isFirstPage = false
+      }
+    }
+
+    // Footer on each page
+    const totalPages = pdf.internal.getNumberOfPages()
+    for (let i = 1; i <= totalPages; i++) {
+      pdf.setPage(i)
+      pdf.setFontSize(7)
+      pdf.setTextColor(150)
+      pdf.text(
+        'Gerado automaticamente por FinTrack AI — Requer revisão humana',
+        pageWidth / 2,
+        footerY,
+        { align: 'center' }
+      )
+      pdf.setTextColor(0)
+    }
+
+    const filename = `SAR_${transactionId}_${today}.pdf`
+    pdf.save(filename)
+
+    incrementExportCount()
+    return true
+  } finally {
+    root.unmount()
+    document.body.removeChild(container)
+  }
+}
+
+export function SARExportButton({ sarContent, transactionId, merchantNif, score }) {
+  const [loading, setLoading] = useState(false)
+
+  const handleExport = useCallback(async () => {
+    setLoading(true)
+    try {
+      await generateSARPdf({ sarContent, transactionId, merchantNif, score })
+    } catch (err) {
+      console.error('PDF generation error:', err)
+      toast.error('Erro ao gerar PDF')
+    } finally {
+      setLoading(false)
+    }
+  }, [sarContent, transactionId, merchantNif, score])
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={handleExport}
+      disabled={loading}
+      className="gap-1.5"
+    >
+      {loading ? (
+        <>
+          <Loader2 className="h-4 w-4 animate-spin" />
+          A gerar...
+        </>
+      ) : (
+        <>
+          <Download className="h-4 w-4" />
+          Exportar PDF
+        </>
+      )}
+    </Button>
+  )
+}
