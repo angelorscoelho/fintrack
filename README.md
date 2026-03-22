@@ -46,11 +46,13 @@ Serverless AI-powered fraud detection system built on AWS + Google Gemini API.
 
 ### Step 1: Configure SSM Parameters (Secrets)
 
+> **⚠️ IMPORTANT**: Secrets are NEVER stored in source control. The Gemini API key lives only in AWS SSM Parameter Store. You set it once, and Lambda reads it at runtime via IAM role.
+
 ```bash
-# Set your Gemini API key
+# Set your Gemini API key (only in your terminal - never commit this!)
 export GEMINI_API_KEY="AIza..."
 
-# Create SSM parameters
+# Create SSM parameters in AWS
 aws ssm put-parameter \
   --name "/fintrack/gemini_api_key" \
   --value "$GEMINI_API_KEY" \
@@ -76,9 +78,28 @@ aws ssm put-parameter \
 aws ssm get-parameter --name "/fintrack/gemini_api_key" --with-decryption --region eu-west-1
 ```
 
-Or use the Makefile target:
+Or use the Makefile target (ensure `GEMINI_API_KEY` is set in your environment first):
 ```bash
-make secrets
+# Linux/macOS/Git Bash:
+export GEMINI_API_KEY="AIza..." && make secrets
+
+# Windows (with make.bat):
+set GEMINI_API_KEY=AIza... && make.bat secrets
+```
+
+**Without Make** — run AWS CLI directly:
+```bash
+# Windows CMD:
+set GEMINI_API_KEY=AIza...
+aws ssm put-parameter --name "/fintrack/gemini_api_key" --value "%GEMINI_API_KEY%" --type SecureString --region eu-west-1 --overwrite
+aws ssm put-parameter --name "/fintrack/gemini_flash_daily_limit" --value "500" --type String --region eu-west-1 --overwrite
+aws ssm put-parameter --name "/fintrack/gemini_pro_daily_limit" --value "100" --type String --region eu-west-1 --overwrite
+
+# PowerShell:
+$env:GEMINI_API_KEY="AIza..."
+aws ssm put-parameter --name "/fintrack/gemini_api_key" --value "$env:GEMINI_API_KEY" --type SecureString --region eu-west-1 --overwrite
+aws ssm put-parameter --name "/fintrack/gemini_flash_daily_limit" --value "500" --type String --region eu-west-1 --overwrite
+aws ssm put-parameter --name "/fintrack/gemini_pro_daily_limit" --value "100" --type String --region eu-west-1 --overwrite
 ```
 
 ---
@@ -176,9 +197,13 @@ curl https://[fintrack-genai].railway.app/health
 
 ---
 
-### Step 5: Update Lambda with Railway URL
+### Step 5: Update Lambda GENAI_SERVICE_URL
 
-After deploying fintrack-genai, update Lambda configuration:
+> **GENAI_SERVICE_URL Options**:
+> - **Production (Railway)**: After deploying `fintrack-genai` to Railway, update Lambda with the Railway URL
+> - **Local Development**: Keep `http://localhost:8001` and run genai locally with `uvicorn main:app --port 8001`
+
+After deploying fintrack-genai to Railway, update Lambda configuration:
 
 ```bash
 aws lambda update-function-configuration \
@@ -187,9 +212,18 @@ aws lambda update-function-configuration \
   --environment "Variables={DYNAMODB_TABLE=transactions,RATE_LIMITER_TABLE=gemini_rate_limiter,GENAI_SERVICE_URL=https://[fintrack-genai].railway.app}"
 ```
 
+**For local development**, keep the default `http://localhost:8001` and run:
+```bash
+cd backend/genai
+pip install -r requirements.txt
+uvicorn main:app --port 8001
+```
+
 ---
 
 ### Step 6: Deploy Vercel Frontend
+
+> **Portfolio Subpage Deployment**: The FinTrack dashboard will be served at `angelorscoelho.dev/poc/fintrack/` by configuring `VITE_BASE_PATH` and adding a rewrite rule in your main portfolio's `vercel.json`.
 
 ```bash
 cd frontend
@@ -213,9 +247,9 @@ vercel --prod
 
 ---
 
-### Step 7: Update Portfolio Rewrites
+### Step 7: Configure Portfolio Rewrites
 
-In your main portfolio repo (`angelorscoelho.dev`), update `vercel.json` with:
+In your main portfolio repo (`angelorscoelho.dev`), update `vercel.json` to route `/poc/fintrack/` to the FinTrack Vercel deployment:
 
 ```json
 {
