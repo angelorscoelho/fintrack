@@ -1,102 +1,91 @@
-import { useState, useCallback, useEffect } from 'react'
-import useSWR from 'swr'
-import { AlertsTable } from '@/components/AlertsTable'
-import { AlertDetail } from '@/components/AlertDetail'
-import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useEffect } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { KPICard } from '@/components/dashboard/KPICard'
+import { VolumeChart } from '@/components/dashboard/VolumeChart'
+import { LiveAlertFeed } from '@/components/dashboard/LiveAlertFeed'
+import { Activity, AlertTriangle, ShieldAlert, Gauge } from 'lucide-react'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-const fetcher  = (url) => fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r.json() })
+const API_BASE = import.meta.env.VITE_API_URL || ''
 
 export default function CommandCenter({ isIdle, setMutateAlerts }) {
-  const [statusFilter,  setStatusFilter]  = useState('all')
-  const [selectedAlert, setSelectedAlert] = useState(null)
-  const [detailOpen,    setDetailOpen]    = useState(false)
+  const queryClient = useQueryClient()
 
-  const apiStatus = statusFilter === 'all' ? '' : statusFilter
+  const { data: stats, isLoading: statsLoading } = useQuery({
+    queryKey: ['stats'],
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE}/api/stats`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      return res.json()
+    },
+    refetchInterval: isIdle ? false : 15000,
+  })
 
-  const { data, error, isLoading, mutate } = useSWR(
-    `${API_BASE}/api/alerts?status=${apiStatus}&limit=50`,
-    fetcher,
-    { refreshInterval: isIdle ? 0 : 8000, revalidateOnFocus: !isIdle }
-  )
-  const { data: stats } = useSWR(
-    `${API_BASE}/api/stats`,
-    fetcher,
-    { refreshInterval: isIdle ? 0 : 15000 }
-  )
-
-  // Expose mutate to parent so SSE stream can trigger refetch
+  // Expose a mutate-like function so SSE stream can trigger refetch
   useEffect(() => {
-    if (setMutateAlerts) setMutateAlerts(() => mutate)
-  }, [mutate, setMutateAlerts])
+    if (setMutateAlerts) {
+      setMutateAlerts(() => () => {
+        queryClient.invalidateQueries({ queryKey: ['stats'] })
+        queryClient.invalidateQueries({ queryKey: ['feed-alerts'] })
+        queryClient.invalidateQueries({ queryKey: ['alerts-volume'] })
+      })
+    }
+  }, [setMutateAlerts, queryClient])
 
-  const handleRowClick = (alert) => { setSelectedAlert(alert); setDetailOpen(true) }
-  const handleResolved = () => { mutate(); setDetailOpen(false) }
+  // Derived KPI values
+  const total = stats?.total ?? 0
+  const pending = stats?.pending ?? 0
+  const critical = stats?.critical ?? 0
+  const avgScore = stats?.avg_score ?? 0
+
+  const fraudRate = total > 0 ? (pending / total) * 100 : 0
+  const fraudRateDisplay = total > 0 ? fraudRate.toFixed(1) + '%' : '–'
+  const avgScoreDisplay = (avgScore * 100).toFixed(1) + '%'
+
+  const fraudRateVariant = fraudRate > 10 ? 'critical' : fraudRate > 5 ? 'warning' : 'default'
+  const avgScoreVariant = avgScore >= 0.70 ? 'critical' : avgScore >= 0.50 ? 'warning' : 'default'
 
   return (
     <>
-      {/* Stats cards row */}
-      <StatsBar stats={stats} />
-
-      {/* Filter bar */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <span className="text-sm font-medium text-slate-700">Estado:</span>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-52 h-8 text-sm">
-            <SelectValue placeholder="Todos os alertas" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="PENDING_REVIEW">⏳ Pendente Revisão</SelectItem>
-            <SelectItem value="RESOLVED">✅ Resolvido</SelectItem>
-            <SelectItem value="FALSE_POSITIVE">🔵 Falso Positivo</SelectItem>
-            <SelectItem value="rate_limited">⏸ Limite API</SelectItem>
-            <SelectItem value="NORMAL">✓ Normal</SelectItem>
-          </SelectContent>
-        </Select>
-        {isLoading && (
-          <span className="text-xs text-slate-400 animate-pulse">A atualizar…</span>
-        )}
-        {error && (
-          <span className="text-xs text-red-500">Erro ao carregar dados do servidor</span>
-        )}
+      {/* Row 1: KPI Cards — horizontal scroll on mobile, 4-column grid on desktop */}
+      <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 md:grid md:grid-cols-4 md:overflow-visible md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
+        <KPICard
+          title="Transações Hoje"
+          value={total}
+          icon={Activity}
+          loading={statsLoading}
+        />
+        <KPICard
+          title="Taxa de Fraude"
+          value={fraudRateDisplay}
+          icon={AlertTriangle}
+          variant={fraudRateVariant}
+          loading={statsLoading}
+        />
+        <KPICard
+          title="Alertas Críticos"
+          value={critical}
+          icon={ShieldAlert}
+          variant={critical > 0 ? 'critical' : 'default'}
+          loading={statsLoading}
+        />
+        <KPICard
+          title="Score Médio"
+          value={avgScoreDisplay}
+          icon={Gauge}
+          variant={avgScoreVariant}
+          loading={statsLoading}
+        />
       </div>
 
-      {/* Alerts table */}
-      <AlertsTable
-        data={data?.items ?? []}
-        isLoading={isLoading}
-        onRowClick={handleRowClick}
-      />
-
-      {/* Detail sheet */}
-      <AlertDetail
-        alert={selectedAlert}
-        open={detailOpen}
-        onClose={() => setDetailOpen(false)}
-        onResolved={handleResolved}
-      />
+      {/* Row 2: Chart + Live Feed — stacked on mobile, 60/40 on desktop */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="md:col-span-3">
+          <VolumeChart />
+        </div>
+        <div className="md:col-span-2">
+          <LiveAlertFeed />
+        </div>
+      </div>
     </>
-  )
-}
-
-function StatsBar({ stats }) {
-  if (!stats) return null
-  const cards = [
-    { label: 'Total',            value: stats.total,           color: 'secondary' },
-    { label: 'Pendentes',        value: stats.pending,         color: 'warning' },
-    { label: 'Críticos',         value: stats.critical,        color: 'destructive' },
-    { label: 'Falsos Positivos', value: stats.false_positives, color: 'secondary' },
-    { label: 'Limite API',       value: stats.rate_limited,    color: 'outline' },
-  ]
-  return (
-    <div className="flex items-center gap-2 flex-wrap">
-      {cards.map(({ label, value, color }) => (
-        <Badge key={label} variant={color} className="text-xs">
-          {label}: {value ?? '–'}
-        </Badge>
-      ))}
-    </div>
   )
 }
