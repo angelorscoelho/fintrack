@@ -39,7 +39,7 @@ function timeAgo(timestamp) {
   }
 }
 
-export function LiveAlertFeed({ isConnected = true }) {
+export function LiveAlertFeed() {
   const [alerts, setAlerts] = useState([])
   const [sseConnected, setSseConnected] = useState(false)
   const listRef = useRef(null)

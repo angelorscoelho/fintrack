@@ -18,9 +18,7 @@ export function KPICard({ title, value, change, trend, variant = 'default', icon
   const changeColor = isFraudMetric
     ? (changeIsPositive ? 'text-red-600' : 'text-green-600')
     : (changeIsPositive ? 'text-green-600' : 'text-red-600')
-  const ChangeIcon = isFraudMetric
-    ? (changeIsPositive ? TrendingUp : TrendingDown)
-    : (changeIsPositive ? TrendingUp : TrendingDown)
+  const ChangeIcon = changeIsPositive ? TrendingUp : TrendingDown
 
   return (
     <Card className={cn('min-w-[160px] snap-start shrink-0 md:shrink md:min-w-0', variantClass)}>
