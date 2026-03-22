@@ -34,7 +34,7 @@ export function Header({ isConnected, isIdle, isDark, onToggleDark }) {
         {/* Right — status indicators + dark mode toggle */}
         <div className="flex items-center gap-3">
           {/* Dark mode toggle */}
-          <Button variant="ghost" size="icon" onClick={onToggleDark} className="h-8 w-8">
+          <Button variant="ghost" size="icon" onClick={onToggleDark} className="h-8 w-8" aria-label="Alternar modo escuro">
             {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
 
