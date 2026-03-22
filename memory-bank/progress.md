@@ -11,22 +11,22 @@
 - [x] API Gateway endpoint: `https://401mgspqf4.execute-api.eu-west-1.amazonaws.com/dev/ingest`
 - [x] ML model.pkl trained and exists locally (1.6MB)
 - [x] IAM users created: fintrack-deploy (for deployment), fintrack-runtime (for Railway)
+- [x] SSM Parameters configured with Gemini API key
+- [x] Railway fintrack-api deployed
+- [x] Railway fintrack-genai deployed
+- [x] Lambda GENAI_SERVICE_URL updated to https://fintrack-genai.railway.app
+- [x] Frontend built with base=/poc/fintrack/ (Siemens approach)
+- [x] angelorscoelho.dev vercel.json updated with /poc/fintrack/ rewrite
+- [x] angelorscoelho.dev package.json updated with build:fintrack script
 
 ## In Progress
-- [ ] SSM Gemini API key not set — `make secrets` not run yet
-- [ ] Railway services not deployed/verified
-- [ ] Lambda GENAI_SERVICE_URL still points to localhost
+- [ ] Copy frontend/dist/* to ../angelorscoelho.dev/dist/fintrack/
+- [ ] Deploy portfolio: cd ../angelorscoelho.dev && vercel --prod
 
 ## Backlog
-- [ ] Railway: Deploy fintrack-api and fintrack-genai services
-- [ ] Railway: Update Lambda GENAI_SERVICE_URL to Railway genai URL
-- [ ] Vercel: Deploy frontend with VITE_API_URL, VITE_BASE_PATH=/poc/fintrack/
-- [ ] Portfolio: Update vercel.json with FinTrack rewrites
 - [ ] GitHub Actions: Configure secrets for CI/CD
 - [ ] E2E smoke test: `make test-e2e`
 
 ## Known Issues / Tech Debt
 <!-- Things that need fixing but aren't blocking current work. -->
-- Lambda GENAI_SERVICE_URL = `http://localhost:8001` (wrong — should be Railway URL)
-- SSM `/fintrack/gemini_api_key` missing (only rate limit params exist)
 - deploy.sh deletes and recreates stack on every run (could be improved)
