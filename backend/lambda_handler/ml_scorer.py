@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 # Lambda Layer path (deployed) or local path (dev)
 _MODEL_PATHS = [
+    Path("model.pkl"),                      # Container image (copied to same dir)
     Path("/opt/python/model.pkl"),          # Lambda Layer (production)
     Path("backend/lambda_layer/model.pkl"), # Local development
     Path("../lambda_layer/model.pkl"),      # Relative from lambda_handler/

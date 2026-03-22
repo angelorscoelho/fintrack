@@ -8,7 +8,7 @@ RUN pip install --no-cache-dir --target . \
     numpy==1.26.4 \
     joblib==1.4.2
 
-# Copia código + model (assume handler.py e model.pkl na pasta atual)
+# Copia código + model.pkl (must be present in the same directory)
 COPY . .
 
 # Handler: módulo.funcao (confirma que tens handler.py com def lambda_handler(event, context))
