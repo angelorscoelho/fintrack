@@ -25,7 +25,9 @@ export function usePullToRefresh(onRefresh) {
     if (pullDistance > 80 && !isRefreshing) {
       setIsRefreshing(true)
       try {
-        await onRefresh?.()
+        if (typeof onRefresh === 'function') {
+          await onRefresh()
+        }
       } finally {
         setIsRefreshing(false)
       }

@@ -9,6 +9,15 @@ import { toast } from 'sonner'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
+function formatTimestamp(timestamp) {
+  if (!timestamp) return '–'
+  try {
+    return formatDistanceToNow(new Date(timestamp), { addSuffix: true, locale: pt })
+  } catch {
+    return '–'
+  }
+}
+
 const STATUS_CONFIG = {
   PENDING_REVIEW:  { label: 'Pendente',       variant: 'warning',   Icon: Clock },
   CONFIRMED_FRAUD: { label: 'Fraude',         variant: 'destructive', Icon: XCircle },
@@ -82,9 +91,7 @@ export function MobileAlertCard({ alert, onRefetch }) {
 
   const cfg = STATUS_CONFIG[alert.status] ?? STATUS_CONFIG.NORMAL
   const StatusIcon = cfg.Icon
-  const timeStr = alert.timestamp
-    ? (() => { try { return formatDistanceToNow(new Date(alert.timestamp), { addSuffix: true, locale: pt }) } catch { return '–' } })()
-    : '–'
+  const timeStr = formatTimestamp(alert.timestamp)
 
   let explanation = null
   if (expanded && alert.ai_explanation) {
