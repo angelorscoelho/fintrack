@@ -1,11 +1,110 @@
+import { useState, useMemo, useRef, useCallback } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle } from 'lucide-react'
+import { EnhancedAlertsTable } from '@/components/alerts/EnhancedAlertsTable'
+import { BulkActionBar } from '@/components/alerts/BulkActionBar'
+import { FilterBar } from '@/components/alerts/FilterBar'
+import { ScoreHistogram } from '@/components/alerts/ScoreHistogram'
+
+const API_BASE = import.meta.env.VITE_API_URL || ''
 
 export default function AlertQueue() {
+  const queryClient = useQueryClient()
+  const clearSelectionRef = useRef(null)
+
+  const [filters, setFilters] = useState({ status: '', scoreRange: '', category: '' })
+  const [selectedRows, setSelectedRows] = useState([])
+
+  const { data: rawAlerts = [], isLoading } = useQuery({
+    queryKey: ['alerts', filters.status],
+    queryFn: async () => {
+      const params = new URLSearchParams()
+      if (filters.status) params.set('status', filters.status)
+      params.set('limit', '200')
+      const res = await fetch(`${API_BASE}/api/alerts?${params.toString()}`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const json = await res.json()
+      return Array.isArray(json) ? json : json.alerts || json.items || []
+    },
+    refetchInterval: 10000,
+  })
+
+  const filteredAlerts = useMemo(() => {
+    let result = rawAlerts
+
+    if (filters.scoreRange) {
+      const [minStr, maxStr] = filters.scoreRange.split('-')
+      const min = parseFloat(minStr)
+      const max = parseFloat(maxStr)
+      result = result.filter((a) => {
+        const s = Number(a.anomaly_score || 0)
+        return s >= min && s < max
+      })
+    }
+
+    if (filters.category) {
+      result = result.filter((a) => a.category === filters.category)
+    }
+
+    return result
+  }, [rawAlerts, filters.scoreRange, filters.category])
+
+  const refetch = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['alerts'] })
+  }, [queryClient])
+
+  const handleHistogramClick = (range) => {
+    setFilters((prev) => ({
+      ...prev,
+      scoreRange: prev.scoreRange === range ? '' : range,
+    }))
+  }
+
+  const handleClearSelection = useCallback(() => {
+    setSelectedRows([])
+    if (clearSelectionRef.current) clearSelectionRef.current()
+  }, [])
+
   return (
-    <div className="flex flex-col items-center justify-center py-24 text-slate-400 gap-3">
-      <AlertTriangle className="h-10 w-10" />
-      <h2 className="text-lg font-semibold text-slate-700">Fila de Alertas</h2>
-      <p className="text-sm">Em construção — brevemente disponível.</p>
+    <div className="space-y-4">
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <AlertTriangle className="h-6 w-6 text-amber-500" />
+          <div>
+            <h1 className="text-lg font-bold text-slate-800">Fila de Alertas</h1>
+            <p className="text-xs text-slate-500">{filteredAlerts.length} alertas</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <FilterBar filters={filters} onFilterChange={setFilters} />
+
+      {/* Score histogram + Bulk actions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="md:col-span-1">
+          <ScoreHistogram alerts={rawAlerts} onBucketClick={handleHistogramClick} />
+        </div>
+        <div className="md:col-span-2 flex items-end">
+          {selectedRows.length > 0 && (
+            <BulkActionBar
+              selectedRows={selectedRows}
+              onClearSelection={handleClearSelection}
+              onComplete={refetch}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Enhanced table */}
+      <EnhancedAlertsTable
+        data={filteredAlerts}
+        isLoading={isLoading}
+        onRefetch={refetch}
+        onSelectionChange={setSelectedRows}
+        clearSelectionRef={clearSelectionRef}
+      />
     </div>
   )
 }
