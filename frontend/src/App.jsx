@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, lazy, Suspense } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
+import { useSwipeable } from 'react-swipeable'
 import { Toaster } from 'sonner'
 import { Header } from '@/components/layout/Header'
 import { BottomNav } from '@/components/layout/BottomNav'
@@ -66,6 +67,29 @@ export default function App() {
 
   const setMutateAlerts = useCallback((fn) => { mutateRef.current = fn }, [])
 
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const PAGES = ['/', '/alerts', '/merchants', '/reports']
+  const currentPageIndex = PAGES.indexOf(location.pathname)
+  const isSwipeable = currentPageIndex >= 0
+
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => {
+      if (isSwipeable && currentPageIndex < PAGES.length - 1) {
+        navigate(PAGES[currentPageIndex + 1])
+      }
+    },
+    onSwipedRight: () => {
+      if (isSwipeable && currentPageIndex > 0) {
+        navigate(PAGES[currentPageIndex - 1])
+      }
+    },
+    preventScrollOnSwipe: false,
+    trackMouse: false,
+    delta: 50,
+  })
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-16 md:pb-0">
       <Toaster position="top-right" richColors />
@@ -79,7 +103,7 @@ export default function App() {
       />
 
       {/* Page content */}
-      <main className="p-4 md:p-6 max-w-screen-xl mx-auto space-y-4">
+      <main {...swipeHandlers} className="p-4 md:p-6 max-w-screen-xl mx-auto space-y-4">
         <Suspense fallback={<PageFallback />}>
           <Routes>
             <Route
@@ -99,6 +123,20 @@ export default function App() {
           </Routes>
         </Suspense>
       </main>
+
+      {/* Mobile page dots indicator */}
+      {isSwipeable && (
+        <div className="fixed bottom-14 inset-x-0 z-30 flex justify-center gap-1.5 py-1 md:hidden">
+          {PAGES.map((_, i) => (
+            <div
+              key={i}
+              className={`h-1.5 rounded-full transition-all duration-200 ${
+                i === currentPageIndex ? 'w-4 bg-blue-500' : 'w-1.5 bg-slate-300 dark:bg-slate-600'
+              }`}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Mobile-only bottom navigation */}
       <BottomNav />

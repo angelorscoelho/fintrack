@@ -1,16 +1,24 @@
 import { useState, useMemo, useRef, useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, Loader2 } from 'lucide-react'
 import { EnhancedAlertsTable } from '@/components/alerts/EnhancedAlertsTable'
 import { BulkActionBar } from '@/components/alerts/BulkActionBar'
 import { FilterBar } from '@/components/alerts/FilterBar'
 import { ScoreHistogram } from '@/components/alerts/ScoreHistogram'
+import { MobileAlertCards } from '@/components/alerts/MobileAlertCard'
+import { usePullToRefresh } from '@/hooks/usePullToRefresh'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
 export default function AlertQueue({ isDark }) {
   const queryClient = useQueryClient()
   const clearSelectionRef = useRef(null)
+
+  const handlePullRefresh = useCallback(() => {
+    return queryClient.invalidateQueries()
+  }, [queryClient])
+
+  const { isRefreshing, pullDistance } = usePullToRefresh(handlePullRefresh)
 
   const [filters, setFilters] = useState({ status: '', scoreRange: '', category: '' })
   const [selectedRows, setSelectedRows] = useState([])
@@ -67,6 +75,16 @@ export default function AlertQueue({ isDark }) {
 
   return (
     <div className="space-y-4">
+      {/* Pull-to-refresh indicator (mobile) */}
+      {(isRefreshing || pullDistance > 0) && (
+        <div className="flex justify-center md:hidden">
+          <Loader2
+            className={`h-5 w-5 text-blue-500 ${isRefreshing ? 'animate-spin' : ''}`}
+            style={{ opacity: Math.min(pullDistance / 80, 1) }}
+          />
+        </div>
+      )}
+
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -97,14 +115,23 @@ export default function AlertQueue({ isDark }) {
         </div>
       </div>
 
-      {/* Enhanced table */}
-      <EnhancedAlertsTable
-        data={filteredAlerts}
-        isLoading={isLoading}
-        onRefetch={refetch}
-        onSelectionChange={setSelectedRows}
-        clearSelectionRef={clearSelectionRef}
-      />
+      {/* Enhanced table (desktop) / Cards (mobile) */}
+      <div className="hidden md:block">
+        <EnhancedAlertsTable
+          data={filteredAlerts}
+          isLoading={isLoading}
+          onRefetch={refetch}
+          onSelectionChange={setSelectedRows}
+          clearSelectionRef={clearSelectionRef}
+        />
+      </div>
+      <div className="md:hidden">
+        <MobileAlertCards
+          data={filteredAlerts}
+          isLoading={isLoading}
+          onRefetch={refetch}
+        />
+      </div>
     </div>
   )
 }

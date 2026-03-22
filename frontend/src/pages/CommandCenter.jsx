@@ -1,15 +1,22 @@
-import { useEffect } from 'react'
+import { useEffect, useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { KPICard } from '@/components/dashboard/KPICard'
 import { VolumeChart } from '@/components/dashboard/VolumeChart'
 import { LiveAlertFeed } from '@/components/dashboard/LiveAlertFeed'
 import { GeoMap } from '@/components/dashboard/GeoMap'
-import { Activity, AlertTriangle, ShieldAlert, Gauge } from 'lucide-react'
+import { Activity, AlertTriangle, ShieldAlert, Gauge, Loader2 } from 'lucide-react'
+import { usePullToRefresh } from '@/hooks/usePullToRefresh'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
 export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
   const queryClient = useQueryClient()
+
+  const handlePullRefresh = useCallback(() => {
+    return queryClient.invalidateQueries()
+  }, [queryClient])
+
+  const { isRefreshing, pullDistance } = usePullToRefresh(handlePullRefresh)
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['stats'],
@@ -48,6 +55,16 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
 
   return (
     <>
+      {/* Pull-to-refresh indicator (mobile) */}
+      {(isRefreshing || pullDistance > 0) && (
+        <div className="flex justify-center md:hidden">
+          <Loader2
+            className={`h-5 w-5 text-blue-500 ${isRefreshing ? 'animate-spin' : ''}`}
+            style={{ opacity: Math.min(pullDistance / 80, 1) }}
+          />
+        </div>
+      )}
+
       {/* Row 1: KPI Cards — horizontal scroll on mobile, 4-column grid on desktop */}
       <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 md:grid md:grid-cols-4 md:overflow-visible md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
         <KPICard
