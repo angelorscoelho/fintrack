@@ -1,43 +1,53 @@
 {
-	"_doc": "Project-level MCP config. Commit this file. Zero credentials. Overrides global mcp_settings.json for listed servers.",
-	"mcpServers": {
-		"serena": {
-			"command": "uvx",
-			"args": [
-				"--from",
-				"git+https://github.com/oraios/serena",
-				"serena",
-				"start-mcp-server",
-				"--context",
-				"ide-assistant",
-				"--project-from-cwd",
-				"--no-open-browser"
-			],
-			"alwaysAllow": [
-				"get_symbols_overview",
-				"search_for_pattern",
-				"list_dir"
-			]
-		},
-		"playwright": {
-			"command": "npx",
-			"args": [
-				"-y",
-				"@playwright/mcp@0.0.38"
-			]
-		},
-		"e2b": {
-			"command": "npx",
-			"args": [
-				"-y",
-				"@e2b/mcp-server"
-			],
-			"env": {
-				"E2B_API_KEY": "e2b_c1febdc56e0fb55540f7a2ad2213cb49bb880f1f"
-			}
-		},
-		"sentry": {
-			"url": "https://mcp.sentry.dev/mcp"
-		}
-	}
+  "_doc": "Project-level MCP config. Commit this file. Zero credentials. Overrides global mcp_settings.json for listed servers.",
+  "mcpServers": {
+    "serena": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/oraios/serena",
+        "serena",
+        "start-mcp-server",
+        "--context",
+        "ide-assistant",
+        "--project-from-cwd",
+        "--no-open-browser"
+      ],
+      "alwaysAllow": [
+        "get_symbols_overview",
+        "search_for_pattern",
+        "list_dir"
+      ]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@0.0.38"
+      ]
+    },
+    "e2b": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@e2b/mcp-server"
+      ],
+      "env": {
+        "E2B_API_KEY": "e2b_c1febdc56e0fb55540f7a2ad2213cb49bb880f1f"
+      }
+    },
+    "sentry": {
+      "url": "https://mcp.sentry.dev/mcp"
+    },
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ],
+      "env": {
+        "DEFAULT_MINIMUM_TOKENS": ""
+      }
+    }
+  }
 }
