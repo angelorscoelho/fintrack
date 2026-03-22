@@ -6,7 +6,8 @@ import {
 } from 'recharts'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { BarChart3 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { BarChart3, AlertTriangle } from 'lucide-react'
 import { startOfHour, subHours, format, parseISO } from 'date-fns'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
@@ -61,7 +62,7 @@ function CustomTooltip({ active, payload, label }) {
 }
 
 export function VolumeChart({ isDark = false }) {
-  const { data: rawData, isLoading } = useQuery({
+  const { data: rawData, isLoading, isError, refetch } = useQuery({
     queryKey: ['alerts-volume'],
     queryFn: async () => {
       const res = await fetch(`${API_BASE}/api/alerts?limit=200`)
@@ -92,6 +93,12 @@ export function VolumeChart({ isDark = false }) {
       <CardContent className="p-4 pt-0">
         {isLoading ? (
           <Skeleton className="h-[280px] w-full" />
+        ) : isError ? (
+          <div className="flex flex-col items-center justify-center h-[280px] gap-2">
+            <AlertTriangle className="h-6 w-6 text-destructive" />
+            <p className="text-sm text-muted-foreground">Erro ao carregar dados. Tente novamente.</p>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>Tentar novamente</Button>
+          </div>
         ) : !hasData ? (
           <div className="flex items-center justify-center h-[280px] text-sm text-muted-foreground">
             Sem dados suficientes para o gráfico

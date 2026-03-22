@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { format } from 'date-fns'
 import {
@@ -12,6 +13,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { SARExportButton, generateSARPdf, getExportCount } from '@/components/reports/SARExportButton'
 import {
   FileText,
@@ -107,12 +110,13 @@ const columns = [
 ]
 
 export default function ReportsPage() {
+  const navigate = useNavigate()
   const [sorting, setSorting] = useState([{ id: 'anomaly_score', desc: true }])
   const [zipLoading, setZipLoading] = useState(false)
   const [zipProgress, setZipProgress] = useState('')
   const [exportCount, setExportCount] = useState(getExportCount)
 
-  const { data: alerts = [], isLoading } = useQuery({
+  const { data: alerts = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['alerts-for-reports'],
     queryFn: async () => {
       const res = await axios.get('/api/alerts?limit=200')
@@ -301,9 +305,35 @@ export default function ReportsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-24 text-slate-400 gap-2">
-        <Loader2 className="h-5 w-5 animate-spin" />
-        <span>A carregar relatórios...</span>
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+        </div>
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full" />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-200">Relatórios SAR</h1>
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <span>Erro ao carregar dados. Tente novamente.</span>
+            <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-3 shrink-0">
+              Tentar novamente
+            </Button>
+          </AlertDescription>
+        </Alert>
       </div>
     )
   }
@@ -356,6 +386,9 @@ export default function ReportsPage() {
         <div className="flex flex-col items-center justify-center py-16 text-slate-400 gap-3">
           <FileText className="h-10 w-10" />
           <p className="text-sm">Nenhum SAR gerado ainda.</p>
+          <Button variant="outline" size="sm" onClick={() => navigate('/alerts')}>
+            Ver alertas
+          </Button>
         </div>
       ) : (
         <div className="rounded-lg border bg-white overflow-hidden">

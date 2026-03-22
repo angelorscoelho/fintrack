@@ -1,6 +1,8 @@
 import { useState, useMemo, useRef, useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, Loader2 } from 'lucide-react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 import { EnhancedAlertsTable } from '@/components/alerts/EnhancedAlertsTable'
 import { BulkActionBar } from '@/components/alerts/BulkActionBar'
 import { FilterBar } from '@/components/alerts/FilterBar'
@@ -23,7 +25,7 @@ export default function AlertQueue({ isDark }) {
   const [filters, setFilters] = useState({ status: '', scoreRange: '', category: '' })
   const [selectedRows, setSelectedRows] = useState([])
 
-  const { data: rawAlerts = [], isLoading } = useQuery({
+  const { data: rawAlerts = [], isLoading, isError } = useQuery({
     queryKey: ['alerts', filters.status],
     queryFn: async () => {
       const params = new URLSearchParams()
@@ -95,6 +97,19 @@ export default function AlertQueue({ isDark }) {
           </div>
         </div>
       </div>
+
+      {/* Error state */}
+      {isError && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <span>Erro ao carregar dados. Tente novamente.</span>
+            <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-3 shrink-0">
+              Tentar novamente
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Filters */}
       <FilterBar filters={filters} onFilterChange={setFilters} />
