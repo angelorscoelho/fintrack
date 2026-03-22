@@ -436,9 +436,13 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
       .filter(Boolean)
   }, [rowSelection, rows])
 
-  // Notify parent of selection changes
+  // Notify parent of selection changes — use ref to avoid infinite loop
+  const prevSelectionCountRef = useRef(0)
   useEffect(() => {
-    if (onSelectionChange) onSelectionChange(selectedRowData)
+    if (onSelectionChange && selectedRowData.length !== prevSelectionCountRef.current) {
+      prevSelectionCountRef.current = selectedRowData.length
+      onSelectionChange(selectedRowData)
+    }
   }, [selectedRowData, onSelectionChange])
 
   if (isLoading && data.length === 0) {
