@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import { format } from 'date-fns'
@@ -142,10 +142,10 @@ export default function ReportsPage() {
 
   // Poll export count periodically when page is active
   // (simpler than event bus — localStorage change detection)
-  useState(() => {
+  useEffect(() => {
     const interval = setInterval(refreshExportCount, 2000)
     return () => clearInterval(interval)
-  })
+  }, [refreshExportCount])
 
   const table = useReactTable({
     data: sarAlerts,
