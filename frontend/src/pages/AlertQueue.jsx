@@ -8,7 +8,7 @@ import { ScoreHistogram } from '@/components/alerts/ScoreHistogram'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
-export default function AlertQueue() {
+export default function AlertQueue({ isDark }) {
   const queryClient = useQueryClient()
   const clearSelectionRef = useRef(null)
 
@@ -84,7 +84,7 @@ export default function AlertQueue() {
       {/* Score histogram + Bulk actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="md:col-span-1">
-          <ScoreHistogram alerts={rawAlerts} onBucketClick={handleHistogramClick} />
+          <ScoreHistogram alerts={rawAlerts} onBucketClick={handleHistogramClick} isDark={isDark} />
         </div>
         <div className="md:col-span-2 flex items-end">
           {selectedRows.length > 0 && (

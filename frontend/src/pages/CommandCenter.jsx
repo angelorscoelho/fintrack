@@ -8,7 +8,7 @@ import { Activity, AlertTriangle, ShieldAlert, Gauge } from 'lucide-react'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
-export default function CommandCenter({ isIdle, setMutateAlerts }) {
+export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
   const queryClient = useQueryClient()
 
   const { data: stats, isLoading: statsLoading } = useQuery({
@@ -82,7 +82,7 @@ export default function CommandCenter({ isIdle, setMutateAlerts }) {
       {/* Row 2: Chart + Live Feed — stacked on mobile, 60/40 on desktop */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div className="md:col-span-3">
-          <VolumeChart />
+          <VolumeChart isDark={isDark} />
         </div>
         <div className="md:col-span-2">
           <LiveAlertFeed />

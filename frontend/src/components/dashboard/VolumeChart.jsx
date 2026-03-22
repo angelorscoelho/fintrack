@@ -60,7 +60,7 @@ function CustomTooltip({ active, payload, label }) {
   )
 }
 
-export function VolumeChart() {
+export function VolumeChart({ isDark = false }) {
   const { data: rawData, isLoading } = useQuery({
     queryKey: ['alerts-volume'],
     queryFn: async () => {
@@ -77,6 +77,9 @@ export function VolumeChart() {
   }, [rawData])
 
   const hasData = chartData.some(d => d.total > 0)
+
+  const gridColor = isDark ? '#334155' : '#e2e8f0'
+  const textColor = isDark ? '#94a3b8' : '#64748b'
 
   return (
     <Card>
@@ -96,28 +99,28 @@ export function VolumeChart() {
         ) : (
           <ResponsiveContainer width="100%" height={280}>
             <ComposedChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
               <XAxis
                 dataKey="hour"
-                tick={{ fontSize: 11, fill: '#94a3b8' }}
+                tick={{ fontSize: 11, fill: textColor }}
                 tickLine={false}
-                axisLine={{ stroke: '#e2e8f0' }}
+                axisLine={{ stroke: gridColor }}
               />
               <YAxis
                 yAxisId="left"
-                tick={{ fontSize: 11, fill: '#94a3b8' }}
+                tick={{ fontSize: 11, fill: textColor }}
                 tickLine={false}
                 axisLine={false}
-                label={{ value: 'Transações', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: '#94a3b8' } }}
+                label={{ value: 'Transações', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: textColor } }}
               />
               <YAxis
                 yAxisId="right"
                 orientation="right"
                 domain={[0, 100]}
-                tick={{ fontSize: 11, fill: '#94a3b8' }}
+                tick={{ fontSize: 11, fill: textColor }}
                 tickLine={false}
                 axisLine={false}
-                label={{ value: 'Fraude %', angle: 90, position: 'insideRight', style: { fontSize: 11, fill: '#94a3b8' } }}
+                label={{ value: 'Fraude %', angle: 90, position: 'insideRight', style: { fontSize: 11, fill: textColor } }}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend
@@ -129,7 +132,7 @@ export function VolumeChart() {
                 yAxisId="left"
                 dataKey="total"
                 name="Total"
-                fill="#cbd5e1"
+                fill={isDark ? '#475569' : '#cbd5e1'}
                 radius={[3, 3, 0, 0]}
                 maxBarSize={24}
               />

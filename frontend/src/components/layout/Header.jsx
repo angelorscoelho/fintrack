@@ -1,5 +1,6 @@
 import { useLocation } from 'react-router-dom'
-import { ShieldAlert, Wifi, WifiOff, Clock } from 'lucide-react'
+import { ShieldAlert, Wifi, WifiOff, Clock, Sun, Moon } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 const BREADCRUMBS = {
   '/':        'Visão Geral',
@@ -7,7 +8,7 @@ const BREADCRUMBS = {
   '/reports': 'Relatórios',
 }
 
-export function Header({ isConnected, isIdle }) {
+export function Header({ isConnected, isIdle, isDark, onToggleDark }) {
   const { pathname } = useLocation()
 
   // Resolve breadcrumb label — merchant paths get a special label
@@ -17,21 +18,26 @@ export function Header({ isConnected, isIdle }) {
   }
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-slate-200 px-4 md:px-6 py-3">
+    <header className="sticky top-0 z-40 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-4 md:px-6 py-3">
       <div className="flex items-center justify-between max-w-screen-xl mx-auto">
         {/* Left — brand */}
         <div className="flex items-center gap-2">
           <ShieldAlert className="h-5 w-5 text-blue-600" />
-          <span className="text-base font-bold text-slate-900">FinTrack AI</span>
+          <span className="text-base font-bold text-slate-900 dark:text-slate-100">FinTrack AI</span>
         </div>
 
         {/* Center — breadcrumb (desktop only) */}
         {crumb && (
-          <span className="hidden md:block text-sm text-slate-500">{crumb}</span>
+          <span className="hidden md:block text-sm text-slate-500 dark:text-slate-400">{crumb}</span>
         )}
 
-        {/* Right — status indicators */}
+        {/* Right — status indicators + dark mode toggle */}
         <div className="flex items-center gap-3">
+          {/* Dark mode toggle */}
+          <Button variant="ghost" size="icon" onClick={onToggleDark} className="h-8 w-8">
+            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
+
           {/* SSE connection */}
           <div className="flex items-center gap-1 text-xs text-slate-500">
             {isConnected ? (
@@ -43,7 +49,7 @@ export function Header({ isConnected, isIdle }) {
 
           {/* Inactivity */}
           {isIdle && (
-            <div className="flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-200">
+            <div className="flex items-center gap-1 text-xs text-amber-600 bg-amber-50 dark:bg-amber-900/30 px-2 py-1 rounded border border-amber-200 dark:border-amber-700">
               <Clock className="h-3 w-3" />
               <span className="hidden sm:inline">Inativo</span>
             </div>
