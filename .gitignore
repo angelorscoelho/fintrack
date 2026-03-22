@@ -48,3 +48,4 @@ tmp_lambda_response.json
 .serena/*.log
 .serena/server_state.json
 .serena/index/
+$null
