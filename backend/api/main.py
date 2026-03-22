@@ -6,8 +6,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.api.db.dynamo import init_dynamo_client
-from backend.api.routes import alerts, stats, resolve, stream
+from api.db.dynamo import init_dynamo_client
+from api.routes import alerts, stats, resolve, stream
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

@@ -179,12 +179,8 @@ async def get_stats() -> dict:
         fp_rate = round(fp / max(resolved + fp, 1), 3)
         avg_score = round(sum(scores) / max(len(scores), 1), 3)
 
-        # Rate limits from rate_limiter
-        try:
-            from backend.lambda_handler.rate_limiter import get_today_counts
-            rate_limits = get_today_counts()
-        except Exception:
-            rate_limits = {}
+        # Rate limits from rate_limiter (not available in API container)
+        rate_limits = {}
 
         return {"total": total, "pending": pending, "critical": critical,
                 "resolved": resolved, "false_positives": fp,

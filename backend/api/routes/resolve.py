@@ -6,7 +6,7 @@ from enum import Enum
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from backend.api.db.dynamo import get_alert_by_id, resolve_alert as _resolve
+from api.db.dynamo import get_alert_by_id, resolve_alert as _resolve
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Resolution"])
