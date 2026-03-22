@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import useSWR from 'swr'
 import { AlertsTable } from '@/components/AlertsTable'
 import { AlertDetail } from '@/components/AlertDetail'
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 const fetcher  = (url) => fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r.json() })
 
-export default function CommandCenter({ isIdle, mutateAlerts, setMutateAlerts }) {
+export default function CommandCenter({ isIdle, setMutateAlerts }) {
   const [statusFilter,  setStatusFilter]  = useState('all')
   const [selectedAlert, setSelectedAlert] = useState(null)
   const [detailOpen,    setDetailOpen]    = useState(false)
@@ -27,7 +27,9 @@ export default function CommandCenter({ isIdle, mutateAlerts, setMutateAlerts })
   )
 
   // Expose mutate to parent so SSE stream can trigger refetch
-  if (setMutateAlerts) setMutateAlerts(() => mutate)
+  useEffect(() => {
+    if (setMutateAlerts) setMutateAlerts(() => mutate)
+  }, [mutate, setMutateAlerts])
 
   const handleRowClick = (alert) => { setSelectedAlert(alert); setDetailOpen(true) }
   const handleResolved = () => { mutate(); setDetailOpen(false) }
