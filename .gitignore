@@ -41,3 +41,10 @@ Thumbs.db
 # Lambda Dependencies
 backend/lambda_layer
 .scratch/
+tmp_payload.json
+tmp_lambda_response.json
+
+# Serena MCP — cache files only (memories are committed)
+.serena/*.log
+.serena/server_state.json
+.serena/index/
