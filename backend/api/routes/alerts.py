@@ -4,8 +4,8 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
-from backend.api.db.dynamo import get_alert_by_id, get_alerts_by_status
-from backend.api.models import AlertListResponse, AlertResponse
+from api.db.dynamo import get_alert_by_id, get_alerts_by_status
+from api.models import AlertListResponse, AlertResponse
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Alerts"])

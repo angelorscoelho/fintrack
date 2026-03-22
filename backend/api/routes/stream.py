@@ -12,7 +12,7 @@ from decimal import Decimal
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
-from backend.api.db.dynamo import get_latest_alerts, _decimal_safe
+from api.db.dynamo import get_latest_alerts, _decimal_safe
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Streaming"])
