@@ -397,7 +397,7 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
   useEffect(() => {
     const handler = (e) => {
       // Don't intercept if typing in an input
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT' || e.target.isContentEditable) return
 
       if (e.key === 'j' || e.key === 'J') {
         e.preventDefault()
@@ -437,13 +437,14 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
   }, [rowSelection, rows])
 
   // Notify parent of selection changes — use ref to avoid infinite loop
-  const prevSelectionCountRef = useRef(0)
+  const prevSelectionKeyRef = useRef('')
   useEffect(() => {
-    if (onSelectionChange && selectedRowData.length !== prevSelectionCountRef.current) {
-      prevSelectionCountRef.current = selectedRowData.length
+    const key = Object.keys(rowSelection).filter((k) => rowSelection[k]).sort().join(',')
+    if (onSelectionChange && key !== prevSelectionKeyRef.current) {
+      prevSelectionKeyRef.current = key
       onSelectionChange(selectedRowData)
     }
-  }, [selectedRowData, onSelectionChange])
+  }, [selectedRowData, onSelectionChange, rowSelection])
 
   if (isLoading && data.length === 0) {
     return (
