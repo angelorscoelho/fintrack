@@ -6,7 +6,8 @@ import {
 } from 'recharts'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { BarChart3 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { BarChart3, AlertTriangle } from 'lucide-react'
 import { startOfHour, subHours, format, parseISO } from 'date-fns'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
@@ -60,8 +61,8 @@ function CustomTooltip({ active, payload, label }) {
   )
 }
 
-export function VolumeChart() {
-  const { data: rawData, isLoading } = useQuery({
+export function VolumeChart({ isDark = false }) {
+  const { data: rawData, isLoading, isError, refetch } = useQuery({
     queryKey: ['alerts-volume'],
     queryFn: async () => {
       const res = await fetch(`${API_BASE}/api/alerts?limit=200`)
@@ -78,6 +79,9 @@ export function VolumeChart() {
 
   const hasData = chartData.some(d => d.total > 0)
 
+  const gridColor = isDark ? '#334155' : '#e2e8f0'
+  const textColor = isDark ? '#94a3b8' : '#64748b'
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -89,6 +93,12 @@ export function VolumeChart() {
       <CardContent className="p-4 pt-0">
         {isLoading ? (
           <Skeleton className="h-[280px] w-full" />
+        ) : isError ? (
+          <div className="flex flex-col items-center justify-center h-[280px] gap-2">
+            <AlertTriangle className="h-6 w-6 text-destructive" />
+            <p className="text-sm text-muted-foreground">Erro ao carregar dados. Tente novamente.</p>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>Tentar novamente</Button>
+          </div>
         ) : !hasData ? (
           <div className="flex items-center justify-center h-[280px] text-sm text-muted-foreground">
             Sem dados suficientes para o gráfico
@@ -96,28 +106,28 @@ export function VolumeChart() {
         ) : (
           <ResponsiveContainer width="100%" height={280}>
             <ComposedChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
               <XAxis
                 dataKey="hour"
-                tick={{ fontSize: 11, fill: '#94a3b8' }}
+                tick={{ fontSize: 11, fill: textColor }}
                 tickLine={false}
-                axisLine={{ stroke: '#e2e8f0' }}
+                axisLine={{ stroke: gridColor }}
               />
               <YAxis
                 yAxisId="left"
-                tick={{ fontSize: 11, fill: '#94a3b8' }}
+                tick={{ fontSize: 11, fill: textColor }}
                 tickLine={false}
                 axisLine={false}
-                label={{ value: 'Transações', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: '#94a3b8' } }}
+                label={{ value: 'Transações', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: textColor } }}
               />
               <YAxis
                 yAxisId="right"
                 orientation="right"
                 domain={[0, 100]}
-                tick={{ fontSize: 11, fill: '#94a3b8' }}
+                tick={{ fontSize: 11, fill: textColor }}
                 tickLine={false}
                 axisLine={false}
-                label={{ value: 'Fraude %', angle: 90, position: 'insideRight', style: { fontSize: 11, fill: '#94a3b8' } }}
+                label={{ value: 'Fraude %', angle: 90, position: 'insideRight', style: { fontSize: 11, fill: textColor } }}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend
@@ -129,7 +139,7 @@ export function VolumeChart() {
                 yAxisId="left"
                 dataKey="total"
                 name="Total"
-                fill="#cbd5e1"
+                fill={isDark ? '#475569' : '#cbd5e1'}
                 radius={[3, 3, 0, 0]}
                 maxBarSize={24}
               />

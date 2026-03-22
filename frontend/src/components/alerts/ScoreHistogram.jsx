@@ -12,7 +12,7 @@ const BUCKETS = [
   { key: '90-100', label: '90–100%', min: 0.90, max: 1.01, color: '#ef4444' },
 ]
 
-export function ScoreHistogram({ alerts = [], onBucketClick }) {
+export function ScoreHistogram({ alerts = [], onBucketClick, isDark = false }) {
   const data = useMemo(() => {
     return BUCKETS.map((b) => ({
       ...b,
@@ -23,6 +23,8 @@ export function ScoreHistogram({ alerts = [], onBucketClick }) {
     }))
   }, [alerts])
 
+  const textColor = isDark ? '#94a3b8' : '#64748b'
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -31,8 +33,8 @@ export function ScoreHistogram({ alerts = [], onBucketClick }) {
       <CardContent>
         <ResponsiveContainer width="100%" height={140}>
           <BarChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
-            <XAxis dataKey="label" tick={{ fontSize: 10 }} />
-            <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
+            <XAxis dataKey="label" tick={{ fontSize: 10, fill: textColor }} />
+            <YAxis tick={{ fontSize: 10, fill: textColor }} allowDecimals={false} />
             <Tooltip
               formatter={(value) => [`${value} alertas`, 'Contagem']}
               contentStyle={{ fontSize: 12 }}

@@ -3,7 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Globe } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Globe, AlertTriangle } from 'lucide-react'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -68,7 +69,7 @@ function groupByCountry(items) {
 }
 
 export function GeoMap() {
-  const { data: rawData, isLoading } = useQuery({
+  const { data: rawData, isLoading, isError, refetch } = useQuery({
     queryKey: ['geo-alerts'],
     queryFn: async () => {
       const res = await fetch(`${API_BASE}/api/alerts?limit=200`)
@@ -95,7 +96,15 @@ export function GeoMap() {
       </CardHeader>
       <CardContent className="p-4 pt-0">
         {isLoading ? (
-          <Skeleton className="h-[280px] w-full rounded-lg" />
+          <div className="flex flex-col items-center justify-center h-[280px] rounded-lg bg-muted/30">
+            <p className="text-sm text-muted-foreground">A carregar mapa...</p>
+          </div>
+        ) : isError ? (
+          <div className="flex flex-col items-center justify-center h-[280px] gap-2">
+            <AlertTriangle className="h-6 w-6 text-destructive" />
+            <p className="text-sm text-muted-foreground">Erro ao carregar dados. Tente novamente.</p>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>Tentar novamente</Button>
+          </div>
         ) : !hasData ? (
           <div className="flex items-center justify-center h-[280px] text-sm text-muted-foreground">
             Sem dados geográficos disponíveis

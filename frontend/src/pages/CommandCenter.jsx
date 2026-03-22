@@ -1,17 +1,26 @@
-import { useEffect } from 'react'
+import { useEffect, useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { KPICard } from '@/components/dashboard/KPICard'
 import { VolumeChart } from '@/components/dashboard/VolumeChart'
 import { LiveAlertFeed } from '@/components/dashboard/LiveAlertFeed'
 import { GeoMap } from '@/components/dashboard/GeoMap'
-import { Activity, AlertTriangle, ShieldAlert, Gauge } from 'lucide-react'
+import { Activity, AlertTriangle, ShieldAlert, Gauge, Loader2 } from 'lucide-react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { usePullToRefresh } from '@/hooks/usePullToRefresh'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
-export default function CommandCenter({ isIdle, setMutateAlerts }) {
+export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
   const queryClient = useQueryClient()
 
-  const { data: stats, isLoading: statsLoading } = useQuery({
+  const handlePullRefresh = useCallback(() => {
+    return queryClient.invalidateQueries()
+  }, [queryClient])
+
+  const { isRefreshing, pullDistance } = usePullToRefresh(handlePullRefresh)
+
+  const { data: stats, isLoading: statsLoading, isError: statsError, refetch: refetchStats } = useQuery({
     queryKey: ['stats'],
     queryFn: async () => {
       const res = await fetch(`${API_BASE}/api/stats`)
@@ -48,6 +57,29 @@ export default function CommandCenter({ isIdle, setMutateAlerts }) {
 
   return (
     <>
+      {/* Pull-to-refresh indicator (mobile) */}
+      {(isRefreshing || pullDistance > 0) && (
+        <div className="flex justify-center md:hidden">
+          <Loader2
+            className={`h-5 w-5 text-blue-500 ${isRefreshing ? 'animate-spin' : ''}`}
+            style={{ opacity: Math.min(pullDistance / 80, 1) }}
+          />
+        </div>
+      )}
+
+      {/* Error state */}
+      {statsError && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <span>Erro ao carregar dados. Tente novamente.</span>
+            <Button variant="outline" size="sm" onClick={() => refetchStats()} className="ml-3 shrink-0">
+              Tentar novamente
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Row 1: KPI Cards — horizontal scroll on mobile, 4-column grid on desktop */}
       <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 md:grid md:grid-cols-4 md:overflow-visible md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
         <KPICard
@@ -82,7 +114,7 @@ export default function CommandCenter({ isIdle, setMutateAlerts }) {
       {/* Row 2: Chart + Live Feed — stacked on mobile, 60/40 on desktop */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div className="md:col-span-3">
-          <VolumeChart />
+          <VolumeChart isDark={isDark} />
         </div>
         <div className="md:col-span-2">
           <LiveAlertFeed />

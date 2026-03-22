@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-export function useKeyboardShortcuts({ onToggleShortcutsModal }) {
+export function useKeyboardShortcuts({ onToggleShortcutsModal, onToggleCommandPalette }) {
   const navigate = useNavigate()
   const pendingKey = useRef(null)
   const pendingTimer = useRef(null)
@@ -24,13 +24,18 @@ export function useKeyboardShortcuts({ onToggleShortcutsModal }) {
         tag === 'SELECT' ||
         e.target.isContentEditable
       ) {
+        // Still allow Ctrl+K in inputs
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+          e.preventDefault()
+          onToggleCommandPalette?.()
+        }
         return
       }
 
-      // Ctrl+K → command palette placeholder
+      // Ctrl+K → command palette
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault()
-        console.log('Command palette: Ctrl+K pressed (placeholder for Session 5)')
+        onToggleCommandPalette?.()
         return
       }
 
@@ -77,5 +82,5 @@ export function useKeyboardShortcuts({ onToggleShortcutsModal }) {
       window.removeEventListener('keydown', handleKeyDown)
       clearPending()
     }
-  }, [navigate, onToggleShortcutsModal, clearPending])
+  }, [navigate, onToggleShortcutsModal, onToggleCommandPalette, clearPending])
 }

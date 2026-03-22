@@ -9,8 +9,10 @@ import { pt } from 'date-fns/locale'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
-  ArrowLeft, Zap, TrendingUp, Globe, Moon, Loader2,
+  ArrowLeft, Zap, TrendingUp, Globe, Moon, Loader2, AlertTriangle,
   Clock, CheckCircle2, CircleDot, Check, PauseCircle, XCircle, ArrowUpCircle,
 } from 'lucide-react'
 
@@ -58,7 +60,7 @@ export default function MerchantProfile() {
   const { nif } = useParams()
   const navigate = useNavigate()
 
-  const { data: allAlerts = [], isLoading } = useQuery({
+  const { data: allAlerts = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['merchant-alerts', nif],
     queryFn: async () => {
       const res = await fetch(`${API_BASE}/api/alerts?limit=200`)
@@ -159,8 +161,63 @@ export default function MerchantProfile() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+      <div className="space-y-6">
+        <Skeleton className="h-6 w-24" />
+        <Skeleton className="h-10 w-48" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-16" />
+          ))}
+        </div>
+        <Skeleton className="h-[200px] w-full" />
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className="space-y-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-1.5 text-slate-600 -ml-2"
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Voltar
+        </Button>
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <span>Erro ao carregar dados. Tente novamente.</span>
+            <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-3 shrink-0">
+              Tentar novamente
+            </Button>
+          </AlertDescription>
+        </Alert>
+      </div>
+    )
+  }
+
+  if (!isLoading && allAlerts.length === 0) {
+    return (
+      <div className="space-y-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-1.5 text-slate-600 -ml-2"
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Voltar
+        </Button>
+        <div className="flex flex-col items-center justify-center py-16 text-slate-400 gap-3">
+          <AlertTriangle className="h-10 w-10" />
+          <p className="text-sm">Sem transacções para este merchant.</p>
+          <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+            Voltar
+          </Button>
+        </div>
       </div>
     )
   }
