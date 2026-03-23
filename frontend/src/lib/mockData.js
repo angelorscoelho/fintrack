@@ -92,7 +92,7 @@ function generateMockAlerts(count = 80) {
       : null
 
     alerts.push({
-      transaction_id: `TXN-DEMO-${String(i).padStart(6, '0')}`,
+      transaction_id: `TXN-${new Date(now).toISOString().slice(0, 10).replace(/-/g, '')}-${String(i).padStart(6, '0')}`,
       amount,
       merchant_nif: merchantNif,
       merchant_name: null,

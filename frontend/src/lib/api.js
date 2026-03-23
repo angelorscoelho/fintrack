@@ -49,9 +49,10 @@ export async function safeFetch(url, options) {
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     _demoMode = false
     return res
-  } catch {
+  } catch (err) {
+    console.warn(`[safeFetch] API unreachable (${url}), using demo data:`, err.message)
     const data = mockResponseFor(url)
-    if (data === null) throw new Error('No mock data available')
+    if (data === null) throw new Error(`No mock data available for ${url}`)
 
     _demoMode = true
     return {
