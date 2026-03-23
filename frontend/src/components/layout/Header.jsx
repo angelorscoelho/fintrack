@@ -7,6 +7,7 @@ const BREADCRUMBS = {
   '/alerts':        'Alerts',
   '/transactions':  'Transactions',
   '/reports':       'Reports',
+  '/budget':        'Budget',
 }
 
 export function Header({ isConnected, isIdle, isDark, onToggleDark }) {
