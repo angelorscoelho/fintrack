@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query'
 import {
   ArrowLeft,
   Wallet,
-  AlertTriangle,
   Pencil,
   Check,
   X,
@@ -12,12 +11,15 @@ import {
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { safeFetch } from '@/lib/api'
 import { useBudgets } from '@/hooks/useBudgets'
 import { BudgetProgressBar, getBudgetState } from '@/components/budget/BudgetProgressBar'
+import { TableSkeleton } from '@/components/feedback/LoadingSkeleton'
+import { ErrorState } from '@/components/feedback/ErrorState'
+import { toastBudgetUpdated } from '@/lib/toast'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
+const TABLE_COLS = 7  // Category, Budget Limit, Spent, Remaining, Progress, Status, Actions
 
 const CATEGORY_LABELS = {
   retail: 'Retail',
@@ -107,9 +109,11 @@ export default function BudgetPage() {
 
   const confirmEdit = useCallback(() => {
     if (editingCategory) {
+      const label = CATEGORY_LABELS[editingCategory] || editingCategory
       updateBudget(editingCategory, editValue)
       setEditingCategory(null)
       setEditValue('')
+      toastBudgetUpdated(label)
     }
   }, [editingCategory, editValue, updateBudget])
 
@@ -148,15 +152,7 @@ export default function BudgetPage() {
 
       {/* Error state */}
       {isError && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription className="flex items-center justify-between">
-            <span>Error loading data. Please try again.</span>
-            <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-3 shrink-0">
-              Try again
-            </Button>
-          </AlertDescription>
-        </Alert>
+        <ErrorState onRetry={() => refetch()} />
       )}
 
       {/* Summary cards */}
@@ -210,9 +206,7 @@ export default function BudgetPage() {
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="flex items-center justify-center py-16">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
-            </div>
+            <TableSkeleton rows={8} cols={TABLE_COLS} />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

@@ -5,11 +5,10 @@ import { VolumeChart } from '@/components/dashboard/VolumeChart'
 import { CategoryChart } from '@/components/dashboard/CategoryChart'
 import { LiveAlertFeed } from '@/components/dashboard/LiveAlertFeed'
 import { GeoMap } from '@/components/dashboard/GeoMap'
-import { Activity, AlertTriangle, ShieldAlert, Gauge, Loader2 } from 'lucide-react'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
+import { Activity, ShieldAlert, Gauge, Loader2 } from 'lucide-react'
 import { usePullToRefresh } from '@/hooks/usePullToRefresh'
 import { safeFetch } from '@/lib/api'
+import { ErrorState } from '@/components/feedback/ErrorState'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -71,15 +70,7 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
 
       {/* Error state */}
       {statsError && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription className="flex items-center justify-between">
-            <span>Error loading data. Please try again.</span>
-            <Button variant="outline" size="sm" onClick={() => refetchStats()} className="ml-3 shrink-0">
-              Try again
-            </Button>
-          </AlertDescription>
-        </Alert>
+        <ErrorState onRetry={() => refetchStats()} />
       )}
 
       {/* Row 1: KPI Cards — horizontal scroll on mobile, 4-column grid on desktop */}
