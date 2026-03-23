@@ -187,7 +187,7 @@ export default function BudgetPage() {
             <div className="flex items-center gap-2">
               {summary.warningCount > 0 && (
                 <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 text-xs">
-                  {summary.warningCount} warning
+                  {summary.warningCount} {summary.warningCount === 1 ? 'warning' : 'warnings'}
                 </Badge>
               )}
               {summary.exceededCount > 0 && (
