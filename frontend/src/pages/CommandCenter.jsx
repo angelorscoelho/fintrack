@@ -2,6 +2,7 @@ import { useEffect, useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { KpiNavigationCard } from '@/components/dashboard/KpiNavigationCard'
 import { VolumeChart } from '@/components/dashboard/VolumeChart'
+import { CategoryChart } from '@/components/dashboard/CategoryChart'
 import { LiveAlertFeed } from '@/components/dashboard/LiveAlertFeed'
 import { GeoMap } from '@/components/dashboard/GeoMap'
 import { Activity, AlertTriangle, ShieldAlert, Gauge, Loader2 } from 'lucide-react'
@@ -37,6 +38,7 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
         queryClient.invalidateQueries({ queryKey: ['stats'] })
         queryClient.invalidateQueries({ queryKey: ['feed-alerts'] })
         queryClient.invalidateQueries({ queryKey: ['alerts-volume'] })
+        queryClient.invalidateQueries({ queryKey: ['alerts-category'] })
         queryClient.invalidateQueries({ queryKey: ['geo-alerts'] })
       })
     }
@@ -129,7 +131,10 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
         </div>
       </div>
 
-      {/* Row 3: Geographic alert distribution map */}
+      {/* Row 3: Category breakdown chart */}
+      <CategoryChart />
+
+      {/* Row 4: Geographic alert distribution map */}
       <GeoMap />
     </>
   )
