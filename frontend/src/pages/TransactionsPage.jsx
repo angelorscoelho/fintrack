@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   ArrowLeft,
@@ -37,9 +37,12 @@ const categoryColors = {
 }
 
 export default function TransactionsPage() {
+  const [searchParams] = useSearchParams()
+  const initialCategory = searchParams.get('category') || 'all'
+
   // --- Filter state ---
   const [searchQuery, setSearchQuery] = useState('')
-  const [category, setCategory] = useState('all')
+  const [category, setCategory] = useState(initialCategory)
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
 
