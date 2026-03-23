@@ -3,9 +3,10 @@ import { ShieldAlert, Wifi, WifiOff, Clock, Sun, Moon, Globe } from 'lucide-reac
 import { Button } from '@/components/ui/button'
 
 const BREADCRUMBS = {
-  '/':        'Overview',
-  '/alerts':  'Alerts',
-  '/reports': 'Reports',
+  '/':              'Overview',
+  '/alerts':        'Alerts',
+  '/transactions':  'Transactions',
+  '/reports':       'Reports',
 }
 
 export function Header({ isConnected, isIdle, isDark, onToggleDark }) {
