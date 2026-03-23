@@ -3,10 +3,10 @@ import { Home, AlertTriangle, Building2, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const TABS = [
-  { to: '/',         label: 'Visão Geral', Icon: Home },
-  { to: '/alerts',   label: 'Alertas',     Icon: AlertTriangle },
-  { to: '/merchants', label: 'Comerciantes', Icon: Building2 },
-  { to: '/reports',  label: 'Relatórios',  Icon: FileText },
+  { to: '/',         label: 'Overview', Icon: Home },
+  { to: '/alerts',   label: 'Alerts',     Icon: AlertTriangle },
+  { to: '/merchants', label: 'Merchants', Icon: Building2 },
+  { to: '/reports',  label: 'Reports',  Icon: FileText },
 ]
 
 export function BottomNav() {

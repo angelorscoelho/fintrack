@@ -15,13 +15,13 @@ const API_BASE = import.meta.env.VITE_API_URL || ''
  */
 const COUNTRY_COORDS = {
   PT: { lat: 39.4, lon: -8.2, name: 'Portugal' },
-  ES: { lat: 40.5, lon: -3.7, name: 'Espanha' },
-  FR: { lat: 46.6, lon: 2.2, name: 'França' },
-  DE: { lat: 51.2, lon: 10.4, name: 'Alemanha' },
-  GB: { lat: 55.4, lon: -3.4, name: 'Reino Unido' },
-  US: { lat: 37.1, lon: -95.7, name: 'Estados Unidos' },
+  ES: { lat: 40.5, lon: -3.7, name: 'Spain' },
+  FR: { lat: 46.6, lon: 2.2, name: 'France' },
+  DE: { lat: 51.2, lon: 10.4, name: 'Germany' },
+  GB: { lat: 55.4, lon: -3.4, name: 'United Kingdom' },
+  US: { lat: 37.1, lon: -95.7, name: 'United States' },
   CN: { lat: 35.9, lon: 104.2, name: 'China' },
-  BR: { lat: -14.2, lon: -51.9, name: 'Brasil' },
+  BR: { lat: -14.2, lon: -51.9, name: 'Brazil' },
 }
 
 /* Circle marker sizing: base radius + count scaling, capped at max */
@@ -91,23 +91,23 @@ export function GeoMap() {
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
           <Globe className="h-4 w-4 text-muted-foreground" />
-          Mapa de Alertas
+          Alert Map
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4 pt-0">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center h-[280px] rounded-lg bg-muted/30">
-            <p className="text-sm text-muted-foreground">A carregar mapa...</p>
+            <p className="text-sm text-muted-foreground">Loading map...</p>
           </div>
         ) : isError ? (
           <div className="flex flex-col items-center justify-center h-[280px] gap-2">
             <AlertTriangle className="h-6 w-6 text-destructive" />
-            <p className="text-sm text-muted-foreground">Erro ao carregar dados. Tente novamente.</p>
-            <Button variant="outline" size="sm" onClick={() => refetch()}>Tentar novamente</Button>
+            <p className="text-sm text-muted-foreground">Error loading data. Please try again.</p>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>Try again</Button>
           </div>
         ) : !hasData ? (
           <div className="flex items-center justify-center h-[280px] text-sm text-muted-foreground">
-            Sem dados geográficos disponíveis
+            No geographic data available
           </div>
         ) : (
           <div className="h-[280px] rounded-lg overflow-hidden">
@@ -138,8 +138,8 @@ export function GeoMap() {
                   <Tooltip direction="top" opacity={0.95}>
                     <div className="text-xs leading-relaxed">
                       <p className="font-semibold">{c.name} ({c.code})</p>
-                      <p>Alertas: <span className="font-medium">{c.count}</span></p>
-                      <p>Score médio: <span className="font-medium">{(c.avgScore * 100).toFixed(1)}%</span></p>
+                      <p>Alerts: <span className="font-medium">{c.count}</span></p>
+                      <p>Average Score: <span className="font-medium">{(c.avgScore * 100).toFixed(1)}%</span></p>
                     </div>
                   </Tooltip>
                 </CircleMarker>

@@ -56,8 +56,8 @@ function CustomTooltip({ active, payload, label }) {
     <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-3 shadow-lg text-sm">
       <p className="font-semibold text-slate-800 dark:text-slate-200 mb-1">{label}</p>
       <p className="text-slate-600 dark:text-slate-400">Total: <span className="font-medium">{data.total}</span></p>
-      <p className="text-slate-600 dark:text-slate-400">Anomalias: <span className="font-medium text-red-600">{data.anomalies}</span></p>
-      <p className="text-slate-600 dark:text-slate-400">Taxa Fraude: <span className="font-medium text-red-600">{data.fraudRate}%</span></p>
+      <p className="text-slate-600 dark:text-slate-400">Anomalies: <span className="font-medium text-red-600">{data.anomalies}</span></p>
+      <p className="text-slate-600 dark:text-slate-400">Fraud Rate: <span className="font-medium text-red-600">{data.fraudRate}%</span></p>
     </div>
   )
 }
@@ -87,7 +87,7 @@ export function VolumeChart({ isDark = false }) {
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
           <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          Volume por Hora
+          Hourly Volume
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4 pt-0">
@@ -96,12 +96,12 @@ export function VolumeChart({ isDark = false }) {
         ) : isError ? (
           <div className="flex flex-col items-center justify-center h-[280px] gap-2">
             <AlertTriangle className="h-6 w-6 text-destructive" />
-            <p className="text-sm text-muted-foreground">Erro ao carregar dados. Tente novamente.</p>
-            <Button variant="outline" size="sm" onClick={() => refetch()}>Tentar novamente</Button>
+            <p className="text-sm text-muted-foreground">Error loading data. Please try again.</p>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>Try again</Button>
           </div>
         ) : !hasData ? (
           <div className="flex items-center justify-center h-[280px] text-sm text-muted-foreground">
-            Sem dados suficientes para o gráfico
+            Not enough data for chart
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={280}>
@@ -118,7 +118,7 @@ export function VolumeChart({ isDark = false }) {
                 tick={{ fontSize: 11, fill: textColor }}
                 tickLine={false}
                 axisLine={false}
-                label={{ value: 'Transações', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: textColor } }}
+                label={{ value: 'Transactions', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: textColor } }}
               />
               <YAxis
                 yAxisId="right"
@@ -127,7 +127,7 @@ export function VolumeChart({ isDark = false }) {
                 tick={{ fontSize: 11, fill: textColor }}
                 tickLine={false}
                 axisLine={false}
-                label={{ value: 'Fraude %', angle: 90, position: 'insideRight', style: { fontSize: 11, fill: textColor } }}
+                label={{ value: 'Fraud %', angle: 90, position: 'insideRight', style: { fontSize: 11, fill: textColor } }}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend
@@ -147,7 +147,7 @@ export function VolumeChart({ isDark = false }) {
                 yAxisId="right"
                 type="monotone"
                 dataKey="fraudRate"
-                name="Taxa Fraude %"
+                name="Fraud Rate %"
                 stroke="#ef4444"
                 strokeWidth={2}
                 dot={false}

@@ -9,11 +9,13 @@ import { Button } from '@/components/ui/button'
 import { ChevronUp, ChevronDown, ChevronsUpDown, Clock, CheckCircle2, CircleDot, Check, PauseCircle } from 'lucide-react'
 
 const STATUS_CONFIG = {
-  PENDING_REVIEW: { label: 'Pendente',      variant: 'warning',     Icon: Clock },
-  RESOLVED:       { label: 'Resolvido',     variant: 'success',     Icon: CheckCircle2 },
-  FALSE_POSITIVE: { label: 'Falso Positivo',variant: 'secondary',   Icon: CircleDot },
-  NORMAL:         { label: 'Normal',        variant: 'outline',     Icon: Check },
-  rate_limited:   { label: 'Limite API',    variant: 'outline',     Icon: PauseCircle },
+  PENDING_REVIEW: { label: 'Pending Review', variant: 'warning',     Icon: Clock },
+  RESOLVED:       { label: 'Resolved',      variant: 'success',     Icon: CheckCircle2 },
+  FALSE_POSITIVE: { label: 'False Positive',variant: 'secondary',   Icon: CircleDot },
+  CONFIRMED_FRAUD:{ label: 'Confirmed Fraud',variant: 'destructive', Icon: PauseCircle },
+  ESCALATED:      { label: 'Escalated',     variant: 'warning',    Icon: PauseCircle },
+  NORMAL:         { label: 'Normal',        variant: 'outline',   Icon: Check },
+  rate_limited:   { label: 'API Limit',     variant: 'outline',   Icon: PauseCircle },
 }
 
 function ScoreBadge({ score }) {
@@ -40,9 +42,9 @@ const COLUMNS = [
   },
   {
     accessorKey: 'timestamp',
-    header: 'Data/Hora',
+    header: 'Date/Time',
     cell: ({ getValue }) => getValue()
-      ? <span className="text-xs">{new Date(getValue()).toLocaleString('pt-PT')}</span>
+      ? <span className="text-xs">{new Date(getValue()).toLocaleString('en-US')}</span>
       : '–',
   },
   {
@@ -52,26 +54,26 @@ const COLUMNS = [
   },
   {
     accessorKey: 'amount',
-    header: 'Montante',
+    header: 'Amount',
     cell: ({ getValue }) => (
-      <span className="font-semibold text-slate-800">€{Number(getValue() || 0).toFixed(2)}</span>
+      <span className="font-semibold text-slate-800">€{Number(getValue() || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
     ),
   },
   {
     accessorKey: 'category',
-    header: 'Categoria',
+    header: 'Category',
     cell: ({ getValue }) => (
       <span className="text-xs capitalize text-slate-600">{getValue()?.replace(/_/g, ' ')}</span>
     ),
   },
   {
     accessorKey: 'anomaly_score',
-    header: 'Risco',
+    header: 'Risk',
     cell: ({ getValue }) => <ScoreBadge score={getValue()} />,
   },
   {
     accessorKey: 'status',
-    header: 'Estado',
+    header: 'Status',
     cell: ({ getValue }) => {
       const cfg = STATUS_CONFIG[getValue()] ?? STATUS_CONFIG.NORMAL
       const StatusIcon = cfg.Icon
@@ -102,7 +104,7 @@ export function AlertsTable({ data, isLoading, onRowClick }) {
   if (isLoading && data.length === 0) {
     return (
       <div className="flex items-center justify-center h-48 bg-white rounded-lg border border-slate-200">
-        <p className="text-sm text-slate-400 animate-pulse">A carregar alertas…</p>
+        <p className="text-sm text-slate-400 animate-pulse">Loading alerts…</p>
       </div>
     )
   }
@@ -110,7 +112,7 @@ export function AlertsTable({ data, isLoading, onRowClick }) {
   if (!isLoading && data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-48 bg-white rounded-lg border border-slate-200 gap-2">
-        <p className="text-sm text-slate-500">Sem alertas para o filtro selecionado.</p>
+        <p className="text-sm text-slate-500">No alerts for the selected filter.</p>
       </div>
     )
   }
@@ -160,16 +162,16 @@ export function AlertsTable({ data, isLoading, onRowClick }) {
       {/* Pagination */}
       <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 bg-slate-50">
         <p className="text-xs text-slate-500">
-          {data.length} alertas — Página {table.getState().pagination.pageIndex + 1}/{table.getPageCount()}
+          {data.length} alerts — Page {table.getState().pagination.pageIndex + 1}/{table.getPageCount()}
         </p>
         <div className="flex gap-2">
           <Button size="sm" variant="outline" className="h-7 text-xs"
             onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-            ← Anterior
+            ← Previous
           </Button>
           <Button size="sm" variant="outline" className="h-7 text-xs"
             onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-            Próxima →
+            Next →
           </Button>
         </div>
       </div>

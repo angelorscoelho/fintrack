@@ -92,8 +92,8 @@ export default function AlertQueue({ isDark }) {
         <div className="flex items-center gap-3">
           <AlertTriangle className="h-6 w-6 text-amber-500" />
           <div>
-            <h1 className="text-lg font-bold text-slate-800">Fila de Alertas</h1>
-            <p className="text-xs text-slate-500">{filteredAlerts.length} alertas</p>
+            <h1 className="text-lg font-bold text-slate-800">Alert Queue</h1>
+            <p className="text-xs text-slate-500">{filteredAlerts.length} alerts</p>
           </div>
         </div>
       </div>
@@ -103,9 +103,9 @@ export default function AlertQueue({ isDark }) {
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription className="flex items-center justify-between">
-            <span>Erro ao carregar dados. Tente novamente.</span>
+            <span>Error loading data. Please try again.</span>
             <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-3 shrink-0">
-              Tentar novamente
+              Try again
             </Button>
           </AlertDescription>
         </Alert>

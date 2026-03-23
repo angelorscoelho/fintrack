@@ -43,10 +43,10 @@ export function BulkActionBar({ selectedRows, onClearSelection, onComplete }) {
     setProgress({ current: 0, total: 0 })
 
     if (successCount > 0) {
-      toast.success(`${successCount} alerta(s) marcado(s) como ${label}.`)
+      toast.success(`${successCount} alert(s) marked as ${label}.`)
     }
     if (alreadyResolved > 0) {
-      toast.info(`${alreadyResolved} alerta(s) já resolvido(s).`)
+      toast.info(`${alreadyResolved} alert(s) already resolved.`)
     }
 
     onClearSelection()
@@ -57,8 +57,8 @@ export function BulkActionBar({ selectedRows, onClearSelection, onComplete }) {
     <div className="transform transition-all duration-300 ease-out translate-y-0 bg-slate-800 text-white rounded-lg px-4 py-3 flex flex-wrap items-center gap-3">
       <span className="text-sm font-medium">
         {loading
-          ? `Processando ${progress.current} de ${progress.total}...`
-          : `${count} alerta${count > 1 ? 's' : ''} seleccionado${count > 1 ? 's' : ''}`}
+          ? `Processing ${progress.current} of ${progress.total}...`
+          : `${count} alert${count > 1 ? 's' : ''} selected`}
       </span>
 
       <div className="flex items-center gap-2 ml-auto">
@@ -67,10 +67,10 @@ export function BulkActionBar({ selectedRows, onClearSelection, onComplete }) {
           variant="secondary"
           className="h-8 text-xs gap-1.5"
           disabled={loading}
-          onClick={() => handleBulk('FALSE_POSITIVE', 'Falso Positivo')}
+          onClick={() => handleBulk('FALSE_POSITIVE', 'False Positive')}
         >
           {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle className="h-3 w-3" />}
-          Marcar como Falso Positivo
+          Mark as False Positive
         </Button>
 
         <Button
@@ -78,10 +78,10 @@ export function BulkActionBar({ selectedRows, onClearSelection, onComplete }) {
           variant="secondary"
           className="h-8 text-xs gap-1.5 bg-amber-600 text-white hover:bg-amber-700"
           disabled={loading}
-          onClick={() => handleBulk('ESCALATED', 'Escalado')}
+          onClick={() => handleBulk('ESCALATED', 'Escalated')}
         >
           {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <ArrowUpCircle className="h-3 w-3" />}
-          Escalar todos
+          Escalate all
         </Button>
 
         <Button
@@ -92,7 +92,7 @@ export function BulkActionBar({ selectedRows, onClearSelection, onComplete }) {
           onClick={onClearSelection}
         >
           <XCircle className="h-3 w-3 mr-1" />
-          Limpar selecção
+          Clear selection
         </Button>
       </div>
     </div>

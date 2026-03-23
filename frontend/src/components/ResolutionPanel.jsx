@@ -7,9 +7,9 @@ import { cn } from '@/lib/utils'
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 const ACTIONS = [
-  { type: 'CONFIRMED_FRAUD', label: 'Confirmar Fraude', icon: AlertTriangle, variant: 'destructive', msg: 'Fraude confirmada.' },
-  { type: 'FALSE_POSITIVE', label: 'Falso Positivo', icon: CheckCircle, variant: 'outline', cls: 'border-blue-500 text-blue-700 hover:bg-blue-50', msg: 'Falso positivo registado.' },
-  { type: 'ESCALATED', label: 'Escalar', icon: ArrowUpCircle, variant: 'secondary', msg: 'Alerta escalado.' },
+  { type: 'CONFIRMED_FRAUD', label: 'Confirm Fraud', icon: AlertTriangle, variant: 'destructive', msg: 'Fraud confirmed.' },
+  { type: 'FALSE_POSITIVE', label: 'False Positive', icon: CheckCircle, variant: 'outline', cls: 'border-blue-500 text-blue-700 hover:bg-blue-50', msg: 'False positive registered.' },
+  { type: 'ESCALATED', label: 'Escalate', icon: ArrowUpCircle, variant: 'secondary', msg: 'Alert escalated.' },
 ]
 
 export function ResolutionPanel({ alert, onResolved }) {
@@ -26,8 +26,8 @@ export function ResolutionPanel({ alert, onResolved }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resolution_type: action.type }),
       })
-      if (res.status === 409) throw new Error('Este alerta já foi resolvido anteriormente.')
-      if (!res.ok) throw new Error(`Erro do servidor: HTTP ${res.status}`)
+      if (res.status === 409) throw new Error('This alert was already resolved.')
+      if (!res.ok) throw new Error(`Server error: HTTP ${res.status}`)
       toast.success(action.msg, { duration: 4000 })
       onResolved()
     } catch (e) {
@@ -40,7 +40,7 @@ export function ResolutionPanel({ alert, onResolved }) {
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-slate-700">Resolução</h3>
+      <h3 className="text-sm font-semibold text-slate-700">Resolution</h3>
       <div className="flex flex-wrap gap-2">
         {ACTIONS.map((action) => {
           const Icon = action.icon

@@ -9,13 +9,13 @@ import { Keyboard } from 'lucide-react'
 
 const SHORTCUTS = [
   { keys: 'G + C', action: 'Command Center' },
-  { keys: 'G + A', action: 'Alertas' },
-  { keys: 'G + R', action: 'Relatórios' },
-  { keys: 'J / K', action: 'Navegar tabela' },
-  { keys: 'Space', action: 'Expandir linha' },
-  { keys: 'F', action: 'Falso Positivo' },
-  { keys: 'X', action: 'Confirmar Fraude' },
-  { keys: '?', action: 'Esta ajuda' },
+  { keys: 'G + A', action: 'Alerts' },
+  { keys: 'G + R', action: 'Reports' },
+  { keys: 'J / K', action: 'Navigate table' },
+  { keys: 'Space', action: 'Expand row' },
+  { keys: 'F', action: 'False Positive' },
+  { keys: 'X', action: 'Confirm Fraud' },
+  { keys: '?', action: 'This help' },
 ]
 
 export function KeyboardShortcutsModal({ open, onClose }) {
@@ -25,10 +25,10 @@ export function KeyboardShortcutsModal({ open, onClose }) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Keyboard className="h-5 w-5" />
-            Atalhos de Teclado
+            Keyboard Shortcuts
           </DialogTitle>
           <DialogDescription>
-            Use estes atalhos para navegar rapidamente pela aplicação.
+            Use these shortcuts to quickly navigate the application.
           </DialogDescription>
         </DialogHeader>
 
@@ -36,8 +36,8 @@ export function KeyboardShortcutsModal({ open, onClose }) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-slate-50">
-                <th className="px-4 py-2 text-left font-medium text-slate-600">Atalho</th>
-                <th className="px-4 py-2 text-left font-medium text-slate-600">Ação</th>
+                <th className="px-4 py-2 text-left font-medium text-slate-600">Shortcut</th>
+                <th className="px-4 py-2 text-left font-medium text-slate-600">Action</th>
               </tr>
             </thead>
             <tbody>

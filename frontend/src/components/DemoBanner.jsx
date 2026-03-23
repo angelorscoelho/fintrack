@@ -22,11 +22,11 @@ export function DemoBanner() {
   return (
     <div className="bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-800 px-4 py-2 flex items-center justify-center gap-2 text-xs text-amber-800 dark:text-amber-300">
       <Info className="h-3.5 w-3.5 shrink-0" />
-      <span>Modo demonstração — a utilizar dados de exemplo porque a API não está acessível.</span>
+      <span>Demo mode — using sample data because the API is not accessible.</span>
       <button
         onClick={() => setDismissed(true)}
         className="ml-2 shrink-0 rounded p-0.5 hover:bg-amber-200/50 dark:hover:bg-amber-800/50"
-        aria-label="Fechar"
+        aria-label="Close"
       >
         <X className="h-3.5 w-3.5" />
       </button>

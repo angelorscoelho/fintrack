@@ -1,11 +1,11 @@
 import { useLocation } from 'react-router-dom'
-import { ShieldAlert, Wifi, WifiOff, Clock, Sun, Moon } from 'lucide-react'
+import { ShieldAlert, Wifi, WifiOff, Clock, Sun, Moon, Globe } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 const BREADCRUMBS = {
-  '/':        'Visão Geral',
-  '/alerts':  'Alertas',
-  '/reports': 'Relatórios',
+  '/':        'Overview',
+  '/alerts':  'Alerts',
+  '/reports': 'Reports',
 }
 
 export function Header({ isConnected, isIdle, isDark, onToggleDark }) {
@@ -14,7 +14,7 @@ export function Header({ isConnected, isIdle, isDark, onToggleDark }) {
   // Resolve breadcrumb label — merchant paths get a special label
   let crumb = BREADCRUMBS[pathname]
   if (!crumb && pathname.startsWith('/merchants/')) {
-    crumb = 'Perfil Comerciante'
+    crumb = 'Merchant Profile'
   }
 
   return (
@@ -33,8 +33,14 @@ export function Header({ isConnected, isIdle, isDark, onToggleDark }) {
 
         {/* Right — status indicators + dark mode toggle */}
         <div className="flex items-center gap-3">
+          {/* Language indicator (English only for now) */}
+          <div className="flex items-center gap-1 text-xs text-slate-500 px-2 py-1 rounded border border-slate-200 dark:border-slate-700">
+            <Globe className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">EN</span>
+          </div>
+
           {/* Dark mode toggle */}
-          <Button variant="ghost" size="icon" onClick={onToggleDark} className="h-8 w-8" aria-label="Alternar modo escuro">
+          <Button variant="ghost" size="icon" onClick={onToggleDark} className="h-8 w-8" aria-label="Toggle dark mode">
             {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
 
@@ -51,7 +57,7 @@ export function Header({ isConnected, isIdle, isDark, onToggleDark }) {
           {isIdle && (
             <div className="flex items-center gap-1 text-xs text-amber-600 bg-amber-50 dark:bg-amber-900/30 px-2 py-1 rounded border border-amber-200 dark:border-amber-700">
               <Clock className="h-3 w-3" />
-              <span className="hidden sm:inline">Inativo</span>
+              <span className="hidden sm:inline">Inactive</span>
             </div>
           )}
         </div>

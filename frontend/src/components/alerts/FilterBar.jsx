@@ -3,28 +3,28 @@ import { Button } from '@/components/ui/button'
 import { RotateCcw } from 'lucide-react'
 
 const STATUS_OPTIONS = [
-  { value: 'all', label: 'Todos os estados' },
-  { value: 'PENDING_REVIEW', label: 'Pendente Revisão' },
-  { value: 'CONFIRMED_FRAUD', label: 'Fraude Confirmada' },
-  { value: 'FALSE_POSITIVE', label: 'Falso Positivo' },
-  { value: 'ESCALATED', label: 'Escalado' },
+  { value: 'all', label: 'All statuses' },
+  { value: 'PENDING_REVIEW', label: 'Pending Review' },
+  { value: 'CONFIRMED_FRAUD', label: 'Confirmed Fraud' },
+  { value: 'FALSE_POSITIVE', label: 'False Positive' },
+  { value: 'ESCALATED', label: 'Escalated' },
   { value: 'NORMAL', label: 'Normal' },
 ]
 
 const SCORE_OPTIONS = [
-  { value: 'all', label: 'Todos os scores' },
-  { value: '0.90-1.00', label: '≥ 90% — Crítico' },
-  { value: '0.70-0.90', label: '70–90% — Alto' },
-  { value: '0.40-0.70', label: '40–70% — Médio' },
-  { value: '0.00-0.40', label: '< 40% — Baixo' },
+  { value: 'all', label: 'All scores' },
+  { value: '0.90-1.00', label: '≥ 90% — Critical' },
+  { value: '0.70-0.90', label: '70–90% — High' },
+  { value: '0.40-0.70', label: '40–70% — Medium' },
+  { value: '0.00-0.40', label: '< 40% — Low' },
 ]
 
 const CATEGORY_OPTIONS = [
-  { value: 'all', label: 'Todas as categorias' },
-  { value: 'online_purchase', label: 'Compra online' },
-  { value: 'in_store', label: 'Em loja' },
-  { value: 'atm_withdrawal', label: 'Levantamento ATM' },
-  { value: 'wire_transfer', label: 'Transferência' },
+  { value: 'all', label: 'All categories' },
+  { value: 'online_purchase', label: 'Online Purchase' },
+  { value: 'in_store', label: 'In Store' },
+  { value: 'atm_withdrawal', label: 'ATM Withdrawal' },
+  { value: 'wire_transfer', label: 'Wire Transfer' },
   { value: 'contactless', label: 'Contactless' },
 ]
 
@@ -46,7 +46,7 @@ export function FilterBar({ filters, onFilterChange }) {
         onValueChange={(v) => handleChange('status', v)}
       >
         <SelectTrigger className="w-[180px] h-9 text-xs">
-          <SelectValue placeholder="Estado" />
+          <SelectValue placeholder="Status" />
         </SelectTrigger>
         <SelectContent>
           {STATUS_OPTIONS.map((o) => (
@@ -78,7 +78,7 @@ export function FilterBar({ filters, onFilterChange }) {
         onValueChange={(v) => handleChange('category', v)}
       >
         <SelectTrigger className="w-[180px] h-9 text-xs">
-          <SelectValue placeholder="Categoria" />
+          <SelectValue placeholder="Category" />
         </SelectTrigger>
         <SelectContent>
           {CATEGORY_OPTIONS.map((o) => (
@@ -92,7 +92,7 @@ export function FilterBar({ filters, onFilterChange }) {
       {hasFilters && (
         <Button variant="ghost" size="sm" onClick={handleReset} className="h-9 text-xs gap-1.5">
           <RotateCcw className="h-3 w-3" />
-          Limpar
+          Clear
         </Button>
       )}
     </div>

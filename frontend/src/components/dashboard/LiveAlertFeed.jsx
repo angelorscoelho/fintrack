@@ -9,8 +9,9 @@ import { useAlertStream } from '@/hooks/useAlertStream'
 import { formatDistanceToNow, parseISO } from 'date-fns'
 import { pt } from 'date-fns/locale'
 import { toast } from 'sonner'
-import { Radio } from 'lucide-react'
+import { Radio, Info } from 'lucide-react'
 import { safeFetch } from '@/lib/api'
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 const MAX_ALERTS = 20
@@ -83,8 +84,8 @@ export function LiveAlertFeed() {
     // Critical alert toast
     const score = Number(alert.anomaly_score || 0)
     if (score > 0.90) {
-      const amount = Number(alert.amount || 0).toLocaleString('pt-PT', { minimumFractionDigits: 2 })
-      toast.error(`Alerta Crítico: €${amount}`, { duration: 8000 })
+      const amount = Number(alert.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })
+      toast.error(`Critical Alert: €${amount}`, { duration: 8000 })
     }
 
     // Scroll to top
@@ -96,72 +97,82 @@ export function LiveAlertFeed() {
   useAlertStream(handleNewAlert, false, setSseConnected)
 
   return (
-    <Card className="flex flex-col">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold flex items-center justify-between">
-          <span className="flex items-center gap-2">
-            <Radio className="h-4 w-4 text-muted-foreground" />
-            Alertas em Tempo Real
-          </span>
-          {sseConnected && (
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+    <TooltipProvider delayDuration={300}>
+      <Card className="flex flex-col">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-semibold flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <Radio className="h-4 w-4 text-muted-foreground" />
+              High Risk Transactions
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help shrink-0" />
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  <p>Real-time alerts for transactions with high anomaly scores requiring analyst review</p>
+                </TooltipContent>
+              </Tooltip>
             </span>
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-4 pt-0">
-        <div
-          ref={listRef}
-          className="h-[320px] overflow-y-auto space-y-2 pr-1"
-        >
-          {isLoading && alerts.length === 0 ? (
-            Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full" />
-            ))
-          ) : alerts.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-              Sem alertas recentes
-            </div>
-          ) : (
-            alerts.map((alert) => {
-              const score = Number(alert.anomaly_score || 0)
-              const isCritical = score > 0.90
-              return (
-                <div
-                  key={alert.transaction_id}
-                  className={`flex items-center gap-3 p-3 rounded-lg border bg-white dark:bg-slate-900 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 ${
-                    isCritical ? 'border-l-4 border-l-red-500' : ''
-                  }`}
-                >
-                  <ScoreBadge score={alert.anomaly_score} />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-mono text-xs text-slate-700 dark:text-slate-300 truncate">
-                      {alert.merchant_nif || alert.transaction_id?.substring(0, 12)}
-                    </p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                      <span className="font-semibold text-slate-800 dark:text-slate-200">
-                        €{Number(alert.amount || 0).toLocaleString('pt-PT', { minimumFractionDigits: 2 })}
-                      </span>
-                      <span>·</span>
-                      <span>{timeAgo(alert.timestamp)}</span>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs shrink-0 h-7"
-                    onClick={() => navigate('/alerts', { state: { alertId: alert.transaction_id } })}
+            {sseConnected && (
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+              </span>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 pt-0">
+          <div
+            ref={listRef}
+            className="h-[320px] overflow-y-auto space-y-2 pr-1"
+          >
+            {isLoading && alerts.length === 0 ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))
+            ) : alerts.length === 0 ? (
+              <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+                No recent alerts
+              </div>
+            ) : (
+              alerts.map((alert) => {
+                const score = Number(alert.anomaly_score || 0)
+                const isCritical = score > 0.90
+                return (
+                  <div
+                    key={alert.transaction_id}
+                    className={`flex items-center gap-3 p-3 rounded-lg border bg-white dark:bg-slate-900 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 ${
+                      isCritical ? 'border-l-4 border-l-red-500' : ''
+                    }`}
                   >
-                    Ver
-                  </Button>
-                </div>
-              )
-            })
-          )}
-        </div>
-      </CardContent>
-    </Card>
+                    <ScoreBadge score={alert.anomaly_score} />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-mono text-xs text-slate-700 dark:text-slate-300 truncate">
+                        {alert.merchant_nif || alert.transaction_id?.substring(0, 12)}
+                      </p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                        <span className="font-semibold text-slate-800 dark:text-slate-200">
+                          €{Number(alert.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        </span>
+                        <span>·</span>
+                        <span>{timeAgo(alert.timestamp)}</span>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs shrink-0 h-7"
+                      onClick={() => navigate('/alerts', { state: { alertId: alert.transaction_id } })}
+                    >
+                      View
+                    </Button>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </TooltipProvider>
   )
 }

@@ -39,7 +39,7 @@ function XAIPanel({ explanation }) {
     <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-4">
       <div className="flex items-center gap-2 mb-3">
         <Cpu className="h-4 w-4 text-amber-600" />
-        <h3 className="text-sm font-semibold text-amber-800">Análise IA — Gemini Flash</h3>
+        <h3 className="text-sm font-semibold text-amber-800">AI Analysis — Gemini Flash</h3>
       </div>
       <p className="text-xs text-amber-700 italic mb-3">{explanation.summary_pt}</p>
       <ul className="space-y-2">
@@ -62,7 +62,7 @@ function SARPanel({ markdown, transactionId, merchantNif, score }) {
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <FileText className="h-4 w-4 text-red-600" />
-          <h3 className="text-sm font-semibold text-red-800">Rascunho SAR — Gemini Pro</h3>
+          <h3 className="text-sm font-semibold text-red-800">SAR Draft — Gemini Pro</h3>
         </div>
         <Button
           variant="ghost"
@@ -71,7 +71,7 @@ function SARPanel({ markdown, transactionId, merchantNif, score }) {
           className="text-xs text-red-700 gap-1"
         >
           {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-          {expanded ? 'Recolher' : 'Expandir'}
+          {expanded ? 'Collapse' : 'Expand'}
         </Button>
       </div>
       {expanded && (
@@ -109,11 +109,13 @@ export function AlertDetail({ alert, open, onClose, onResolved }) {
   }
 
   const statusMap = {
-    PENDING_REVIEW: { label: 'Pendente Revisão', variant: 'warning' },
-    RESOLVED: { label: 'Resolvido', variant: 'success' },
-    FALSE_POSITIVE: { label: 'Falso Positivo', variant: 'secondary' },
+    PENDING_REVIEW: { label: 'Pending Review', variant: 'warning' },
+    RESOLVED: { label: 'Resolved', variant: 'success' },
+    FALSE_POSITIVE: { label: 'False Positive', variant: 'secondary' },
+    CONFIRMED_FRAUD: { label: 'Confirmed Fraud', variant: 'destructive' },
+    ESCALATED: { label: 'Escalated', variant: 'default' },
     NORMAL: { label: 'Normal', variant: 'outline' },
-    rate_limited: { label: 'Limite API', variant: 'outline' },
+    rate_limited: { label: 'API Limit', variant: 'outline' },
   }
   const st = statusMap[alert.status] || { label: alert.status, variant: 'outline' }
 
@@ -123,7 +125,7 @@ export function AlertDetail({ alert, open, onClose, onResolved }) {
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-amber-500" />
-            Detalhe do Alerta
+            Alert Detail
           </SheetTitle>
         </SheetHeader>
 
@@ -142,23 +144,23 @@ export function AlertDetail({ alert, open, onClose, onResolved }) {
             <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription className="text-xs">
-                Este alerta não foi analisado pela IA porque o limite diário da API Gemini foi atingido.
+                This alert was not analyzed by AI because the daily Gemini API limit has been reached.
               </AlertDescription>
             </Alert>
           )}
 
           {/* Data fields */}
           <div className="rounded-lg border border-slate-200 bg-white p-3">
-            <DataRow icon={Clock} label="Data/Hora" value={alert.timestamp} />
-            <DataRow icon={Globe} label="NIF Comerciante" value={alert.merchant_nif} />
-            <DataRow icon={Globe} label="Comerciante" value={alert.merchant_name} />
-            <DataRow icon={Globe} label="País" value={alert.merchant_country} />
-            <DataRow icon={FileText} label="Montante" value={alert.amount != null ? `€${Number(alert.amount).toFixed(2)}` : null} />
-            <DataRow icon={FileText} label="Categoria" value={alert.category} />
-            <DataRow icon={Clock} label="IP" value={alert.ip_address} />
-            <DataRow icon={FileText} label="Média Anterior" value={alert.previous_avg_amount != null ? `€${Number(alert.previous_avg_amount).toFixed(2)}` : null} />
-            <DataRow icon={Clock} label="Hora do Dia" value={alert.hour_of_day} />
-            <DataRow icon={Clock} label="Transações (10min)" value={alert.transactions_last_10min} />
+            <DataRow icon={Clock} label="Date/Time" value={alert.timestamp} />
+            <DataRow icon={Globe} label="Merchant NIF" value={alert.merchant_nif} />
+            <DataRow icon={Globe} label="Merchant" value={alert.merchant_name} />
+            <DataRow icon={Globe} label="Country" value={alert.merchant_country} />
+            <DataRow icon={FileText} label="Amount" value={alert.amount != null ? `€${Number(alert.amount).toFixed(2)}` : null} />
+            <DataRow icon={FileText} label="Category" value={alert.category} />
+            <DataRow icon={Clock} label="IP Address" value={alert.ip_address} />
+            <DataRow icon={FileText} label="Previous Average" value={alert.previous_avg_amount != null ? `€${Number(alert.previous_avg_amount).toFixed(2)}` : null} />
+            <DataRow icon={Clock} label="Hour of Day" value={alert.hour_of_day} />
+            <DataRow icon={Clock} label="Transactions (10min)" value={alert.transactions_last_10min} />
           </div>
 
           {/* XAI Panel — null-guarded */}
@@ -180,7 +182,7 @@ export function AlertDetail({ alert, open, onClose, onResolved }) {
           {/* Analyst notes */}
           {alert.analyst_notes && (
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <h3 className="text-xs font-semibold text-slate-600 mb-1">Notas do Analista</h3>
+              <h3 className="text-xs font-semibold text-slate-600 mb-1">Analyst Notes</h3>
               <p className="text-sm text-slate-700">{alert.analyst_notes}</p>
             </div>
           )}

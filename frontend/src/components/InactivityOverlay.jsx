@@ -15,22 +15,22 @@ export function InactivityOverlay({ isVisible, onResume }) {
             <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center">
               <Clock className="h-5 w-5 text-amber-600" />
             </div>
-            <DialogTitle>Sessão pausada por inatividade</DialogTitle>
+            <DialogTitle>Session paused due to inactivity</DialogTitle>
           </div>
           <DialogDescription className="text-sm leading-relaxed">
-            A ligação foi interrompida após <strong>30 minutos</strong> sem atividade.
-            Os dados existentes continuam visíveis. Clique em <strong>Continuar</strong> para retomar.
+            The connection was interrupted after <strong>30 minutes</strong> of inactivity.
+            The existing data is still visible. Click <strong>Continue</strong> to resume.
           </DialogDescription>
         </DialogHeader>
         <div className="bg-amber-50 border border-amber-200 rounded-md p-3 text-xs text-amber-800">
-          💡 Pode também <strong>refrescar a página</strong> para retomar.
+          💡 You can also <strong>refresh the page</strong> to resume.
         </div>
         <DialogFooter className="flex gap-2 sm:justify-start">
           <Button onClick={onResume} className="gap-2 bg-blue-600 hover:bg-blue-700 text-white">
-            <Play className="h-4 w-4" />Continuar
+            <Play className="h-4 w-4" />Continue
           </Button>
           <Button variant="outline" onClick={() => window.close()} className="gap-2 text-slate-600">
-            <X className="h-4 w-4" />Fechar sessão
+            <X className="h-4 w-4" />Close session
           </Button>
         </DialogFooter>
       </DialogContent>

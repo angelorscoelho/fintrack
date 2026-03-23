@@ -58,16 +58,16 @@ export default function CommandPalette({ open, onClose, isDark, onToggleDark }) 
           <Command.Input
             value={search}
             onValueChange={setSearch}
-            placeholder="Pesquisar comandos..."
+            placeholder="Search commands..."
             className="w-full px-4 py-3 text-sm border-b border-slate-200 dark:border-slate-700 bg-transparent text-foreground placeholder:text-muted-foreground outline-none"
           />
           <Command.List className="max-h-80 overflow-y-auto p-2">
             <Command.Empty className="py-6 text-center text-sm text-muted-foreground">
-              Nenhum resultado encontrado.
+              No results found.
             </Command.Empty>
 
             {/* Navigation group */}
-            <Command.Group heading="Navegação" className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-muted-foreground">
+            <Command.Group heading="Navigation" className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-muted-foreground">
               <CommandItem
                 icon={Home}
                 label="Command Center"
@@ -76,37 +76,37 @@ export default function CommandPalette({ open, onClose, isDark, onToggleDark }) 
               />
               <CommandItem
                 icon={AlertTriangle}
-                label="Fila de Alertas"
+                label="Alert Queue"
                 shortcut="G A"
                 onSelect={() => runCommand(() => navigate('/alerts'))}
               />
               <CommandItem
                 icon={FileText}
-                label="Relatórios SAR"
+                label="SAR Reports"
                 shortcut="G R"
                 onSelect={() => runCommand(() => navigate('/reports'))}
               />
             </Command.Group>
 
             {/* Filter presets group */}
-            <Command.Group heading="Filtros" className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-muted-foreground">
+            <Command.Group heading="Filters" className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-muted-foreground">
               <CommandItem
                 icon={Filter}
-                label="Ver alertas críticos"
+                label="View critical alerts"
                 onSelect={() =>
                   runCommand(() => navigate('/alerts', { state: { scoreRange: '0.90-1.00' } }))
                 }
               />
               <CommandItem
                 icon={Clock}
-                label="Ver pendentes"
+                label="View pending"
                 onSelect={() =>
                   runCommand(() => navigate('/alerts', { state: { status: 'PENDING_REVIEW' } }))
                 }
               />
               <CommandItem
                 icon={CircleDot}
-                label="Ver falsos positivos"
+                label="View false positives"
                 onSelect={() =>
                   runCommand(() => navigate('/alerts', { state: { status: 'FALSE_POSITIVE' } }))
                 }
@@ -114,25 +114,25 @@ export default function CommandPalette({ open, onClose, isDark, onToggleDark }) 
             </Command.Group>
 
             {/* Actions group */}
-            <Command.Group heading="Ações" className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-muted-foreground">
+            <Command.Group heading="Actions" className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-muted-foreground">
               <CommandItem
                 icon={isDark ? Sun : Moon}
-                label={isDark ? 'Desactivar dark mode' : 'Activar dark mode'}
+                label={isDark ? 'Disable dark mode' : 'Enable dark mode'}
                 onSelect={() => runCommand(() => onToggleDark())}
               />
               <CommandItem
                 icon={Download}
-                label="Exportar todos os SARs"
+                label="Export all SARs"
                 onSelect={() => runCommand(() => navigate('/reports', { state: { exportAll: true } }))}
               />
             </Command.Group>
 
             {/* Dynamic merchant search */}
             {merchantNif && (
-              <Command.Group heading="Comerciante" className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-muted-foreground">
+              <Command.Group heading="Merchant" className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-muted-foreground">
                 <CommandItem
                   icon={Building2}
-                  label={`Ver merchant ${merchantNif}`}
+                  label={`View merchant ${merchantNif}`}
                   onSelect={() => runCommand(() => navigate(`/merchants/${merchantNif}`))}
                 />
               </Command.Group>

@@ -72,9 +72,9 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription className="flex items-center justify-between">
-            <span>Erro ao carregar dados. Tente novamente.</span>
+            <span>Error loading data. Please try again.</span>
             <Button variant="outline" size="sm" onClick={() => refetchStats()} className="ml-3 shrink-0">
-              Tentar novamente
+              Try again
             </Button>
           </AlertDescription>
         </Alert>
@@ -83,31 +83,35 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
       {/* Row 1: KPI Cards — horizontal scroll on mobile, 4-column grid on desktop */}
       <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 md:grid md:grid-cols-4 md:overflow-visible md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
         <KPICard
-          title="Transações Hoje"
+          title="Transactions Today"
           value={total}
           icon={Activity}
           loading={statsLoading}
+          tooltip="Total number of transactions processed in the last 24 hours"
         />
         <KPICard
-          title="Taxa de Fraude"
+          title="Fraud Rate"
           value={fraudRateDisplay}
           icon={AlertTriangle}
           variant={fraudRateVariant}
           loading={statsLoading}
+          tooltip="Percentage of transactions flagged as potentially fraudulent"
         />
         <KPICard
-          title="Alertas Críticos"
+          title="Critical Alerts"
           value={critical}
           icon={ShieldAlert}
           variant={critical > 0 ? 'critical' : 'default'}
           loading={statsLoading}
+          tooltip="Number of high-risk transactions requiring immediate analyst review"
         />
         <KPICard
-          title="Score Médio"
+          title="Average Score"
           value={avgScoreDisplay}
           icon={Gauge}
           variant={avgScoreVariant}
           loading={statsLoading}
+          tooltip="Represents the rolling average of risk scores over the last 24 hours."
         />
       </div>
 

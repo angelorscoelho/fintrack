@@ -20,29 +20,29 @@ import { safeFetch } from '@/lib/api'
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
 const STATUS_CONFIG = {
-  PENDING_REVIEW:  { label: 'Pendente',       variant: 'warning',   Icon: Clock },
-  CONFIRMED_FRAUD: { label: 'Fraude',         variant: 'destructive', Icon: XCircle },
-  RESOLVED:        { label: 'Resolvido',      variant: 'success',   Icon: CheckCircle2 },
-  FALSE_POSITIVE:  { label: 'Falso Positivo', variant: 'secondary', Icon: CircleDot },
-  ESCALATED:       { label: 'Escalado',       variant: 'warning',   Icon: ArrowUpCircle },
-  NORMAL:          { label: 'Normal',         variant: 'outline',   Icon: Check },
-  rate_limited:    { label: 'Limite API',     variant: 'outline',   Icon: PauseCircle },
+  PENDING_REVIEW:  { label: 'Pending Review',       variant: 'warning',   Icon: Clock },
+  CONFIRMED_FRAUD: { label: 'Confirmed Fraud',        variant: 'destructive', Icon: XCircle },
+  RESOLVED:        { label: 'Resolved',              variant: 'success',   Icon: CheckCircle2 },
+  FALSE_POSITIVE:  { label: 'False Positive',        variant: 'secondary', Icon: CircleDot },
+  ESCALATED:       { label: 'Escalated',              variant: 'warning',   Icon: ArrowUpCircle },
+  NORMAL:          { label: 'Normal',                variant: 'outline',   Icon: Check },
+  rate_limited:    { label: 'API Limit',              variant: 'outline',   Icon: PauseCircle },
 }
 
 function getRiskLevel(avg) {
-  if (avg > 0.90) return { label: 'CRÍTICO', color: 'bg-red-100 text-red-800 border-red-200' }
-  if (avg > 0.70) return { label: 'ALTO', color: 'bg-orange-100 text-orange-800 border-orange-200' }
-  if (avg >= 0.40) return { label: 'MÉDIO', color: 'bg-amber-100 text-amber-800 border-amber-200' }
-  return { label: 'BAIXO', color: 'bg-green-100 text-green-800 border-green-200' }
+  if (avg > 0.90) return { label: 'CRITICAL', color: 'bg-red-100 text-red-800 border-red-200' }
+  if (avg > 0.70) return { label: 'HIGH', color: 'bg-orange-100 text-orange-800 border-orange-200' }
+  if (avg >= 0.40) return { label: 'MEDIUM', color: 'bg-amber-100 text-amber-800 border-amber-200' }
+  return { label: 'LOW', color: 'bg-green-100 text-green-800 border-green-200' }
 }
 
 function getSignalSeverity(level) {
   const map = {
-    CRÍTICO: { variant: 'destructive', color: 'text-red-600' },
-    ALTO: { variant: 'warning', color: 'text-orange-600' },
-    BAIXO: { variant: 'outline', color: 'text-green-600' },
+    CRITICAL: { variant: 'destructive', color: 'text-red-600' },
+    HIGH: { variant: 'warning', color: 'text-orange-600' },
+    LOW: { variant: 'outline', color: 'text-green-600' },
   }
-  return map[level] || map.BAIXO
+  return map[level] || map.LOW
 }
 
 const COUNTRY_FLAGS = {
@@ -126,28 +126,28 @@ export default function MerchantProfile() {
 
     return [
       {
-        name: 'Velocidade',
+        name: 'Velocity',
         icon: Zap,
         value: `${maxTx10min} tx / 10min`,
-        severity: maxTx10min > 15 ? 'CRÍTICO' : maxTx10min >= 8 ? 'ALTO' : 'BAIXO',
+        severity: maxTx10min > 15 ? 'CRITICAL' : maxTx10min >= 8 ? 'HIGH' : 'LOW',
       },
       {
-        name: 'Desvio de Montante',
+        name: 'Amount Deviation',
         icon: TrendingUp,
-        value: `${maxRatio.toFixed(1)}x média`,
-        severity: maxRatio > 5 ? 'CRÍTICO' : maxRatio >= 2 ? 'ALTO' : 'BAIXO',
+        value: `${maxRatio.toFixed(1)}x avg`,
+        severity: maxRatio > 5 ? 'CRITICAL' : maxRatio >= 2 ? 'HIGH' : 'LOW',
       },
       {
-        name: 'Países Incomuns',
+        name: 'Unusual Countries',
         icon: Globe,
-        value: `${distinctCountries} país${distinctCountries !== 1 ? 'es' : ''}`,
-        severity: distinctCountries > 3 ? 'CRÍTICO' : distinctCountries >= 2 ? 'ALTO' : 'BAIXO',
+        value: `${distinctCountries} countrie${distinctCountries !== 1 ? 's' : ''}`,
+        severity: distinctCountries > 3 ? 'CRITICAL' : distinctCountries >= 2 ? 'HIGH' : 'LOW',
       },
       {
-        name: 'Horário Nocturno',
+        name: 'Night Hours',
         icon: Moon,
-        value: `${nightTx} transacções 0h-5h`,
-        severity: nightTx > 3 ? 'CRÍTICO' : nightTx >= 1 ? 'ALTO' : 'BAIXO',
+        value: `${nightTx} transactions 0h-5h`,
+        severity: nightTx > 3 ? 'CRITICAL' : nightTx >= 1 ? 'HIGH' : 'LOW',
       },
     ]
   }, [allAlerts, countries])
@@ -184,14 +184,14 @@ export default function MerchantProfile() {
           onClick={() => navigate(-1)}
         >
           <ArrowLeft className="h-4 w-4" />
-          Voltar
+          Back
         </Button>
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription className="flex items-center justify-between">
-            <span>Erro ao carregar dados. Tente novamente.</span>
+            <span>Error loading data. Please try again.</span>
             <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-3 shrink-0">
-              Tentar novamente
+              Try again
             </Button>
           </AlertDescription>
         </Alert>
@@ -209,13 +209,13 @@ export default function MerchantProfile() {
           onClick={() => navigate(-1)}
         >
           <ArrowLeft className="h-4 w-4" />
-          Voltar
+          Back
         </Button>
         <div className="flex flex-col items-center justify-center py-16 text-slate-400 gap-3">
           <AlertTriangle className="h-10 w-10" />
-          <p className="text-sm">Sem transacções para este merchant.</p>
+          <p className="text-sm">No transactions for this merchant.</p>
           <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
-            Voltar
+            Back
           </Button>
         </div>
       </div>
@@ -233,7 +233,7 @@ export default function MerchantProfile() {
           onClick={() => navigate(-1)}
         >
           <ArrowLeft className="h-4 w-4" />
-          Voltar
+          Back
         </Button>
 
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -242,7 +242,7 @@ export default function MerchantProfile() {
             <div className="flex items-center gap-3">
               <Badge className={`${riskLevel.color} text-xs`}>{riskLevel.label}</Badge>
               <span className="text-xs text-slate-500">
-                Score médio: {(stats.avgScore * 100).toFixed(1)}%
+                Average Score: {(stats.avgScore * 100).toFixed(1)}%
               </span>
             </div>
           </div>
@@ -259,10 +259,10 @@ export default function MerchantProfile() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <StatCard label="Total transacções" value={stats.total} />
-          <StatCard label="Alertas pendentes" value={stats.pending} highlight={stats.pending > 0} />
-          <StatCard label="Resolvidos" value={stats.resolved} />
-          <StatCard label="Falsos positivos" value={stats.falsePositives} />
+          <StatCard label="Total transactions" value={stats.total} />
+          <StatCard label="Pending alerts" value={stats.pending} highlight={stats.pending > 0} />
+          <StatCard label="Resolved" value={stats.resolved} />
+          <StatCard label="False positives" value={stats.falsePositives} />
         </div>
       </div>
 
@@ -270,7 +270,7 @@ export default function MerchantProfile() {
       {timelineData.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Actividade ao Longo do Tempo</CardTitle>
+            <CardTitle className="text-sm font-semibold">Activity Over Time</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={200}>
@@ -280,18 +280,18 @@ export default function MerchantProfile() {
                 <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `€${v}`} />
                 <Tooltip
                   formatter={(value, name) => {
-                    if (name === 'amount') return [`€${Number(value).toFixed(2)}`, 'Montante']
+                    if (name === 'amount') return [`€${Number(value).toFixed(2)}`, 'Amount']
                     if (name === 'score') return [`${(Number(value) * 100).toFixed(1)}%`, 'Score']
                     return [value, name]
                   }}
-                  labelFormatter={(label) => `Data: ${label}`}
+                  labelFormatter={(label) => `Date: ${label}`}
                   contentStyle={{ fontSize: 12 }}
                 />
                 <ReferenceLine
                   y={avgAmount}
                   stroke="#ef4444"
                   strokeDasharray="5 5"
-                  label={{ value: `Média €${avgAmount.toFixed(0)}`, fontSize: 10, fill: '#ef4444' }}
+                  label={{ value: `Avg €${avgAmount.toFixed(0)}`, fontSize: 10, fill: '#ef4444' }}
                 />
                 <Line
                   type="monotone"
@@ -324,7 +324,7 @@ export default function MerchantProfile() {
 
       {/* SECTION 3 — RiskSignals */}
       <div>
-        <h2 className="text-sm font-semibold text-slate-700 mb-3">Sinais de Risco</h2>
+        <h2 className="text-sm font-semibold text-slate-700 mb-3">Risk Signals</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {riskSignals.map((signal) => {
             const sev = getSignalSeverity(signal.severity)
@@ -347,17 +347,17 @@ export default function MerchantProfile() {
 
       {/* SECTION 4 — Transaction History */}
       <div>
-        <h2 className="text-sm font-semibold text-slate-700 mb-3">Últimas Transacções</h2>
+        <h2 className="text-sm font-semibold text-slate-700 mb-3">Recent Transactions</h2>
         <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600">Data/Hora</th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-slate-600">Montante</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600">Date/Time</th>
+                  <th className="px-3 py-2 text-right text-xs font-semibold text-slate-600">Amount</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600">Score</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600">Estado</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600">Categoria</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600">Status</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600">Category</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -370,7 +370,7 @@ export default function MerchantProfile() {
                         {tx.timestamp ? format(new Date(tx.timestamp), 'dd/MM/yyyy HH:mm', { locale: pt }) : '–'}
                       </td>
                       <td className="px-3 py-2 text-right font-semibold text-slate-800">
-                        €{Number(tx.amount || 0).toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        €{Number(tx.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                       <td className="px-3 py-2"><ScoreBadge score={tx.anomaly_score} /></td>
                       <td className="px-3 py-2">
@@ -387,7 +387,7 @@ export default function MerchantProfile() {
                 {recentTx.length === 0 && (
                   <tr>
                     <td colSpan={5} className="px-3 py-8 text-center text-sm text-slate-400">
-                      Sem transacções para este comerciante.
+                      No transactions for this merchant.
                     </td>
                   </tr>
                 )}
