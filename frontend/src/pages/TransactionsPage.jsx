@@ -7,23 +7,26 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  AlertTriangle,
   ChevronLeft,
   ChevronRight,
   SearchX,
+  PlusCircle,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { safeFetch } from '@/lib/api'
 import { useDebounce } from '@/hooks/useDebounce'
 import { TransactionFilters } from '@/components/transactions/TransactionFilters'
 import { TransactionDetailModal } from '@/components/transactions/TransactionDetailModal'
+import { TableSkeleton } from '@/components/feedback/LoadingSkeleton'
+import { EmptyState } from '@/components/feedback/EmptyState'
+import { ErrorState } from '@/components/feedback/ErrorState'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 const PAGE_SIZE = 20
+const TABLE_COLS = 6  // Transaction, Merchant, Category, Amount, Date, Status
 
 const categoryColors = {
   retail: 'secondary',
@@ -187,15 +190,7 @@ export default function TransactionsPage() {
 
       {/* Error state */}
       {isError && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription className="flex items-center justify-between">
-            <span>Error loading data. Please try again.</span>
-            <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-3 shrink-0">
-              Try again
-            </Button>
-          </AlertDescription>
-        </Alert>
+        <ErrorState onRetry={() => refetch()} />
       )}
 
       {/* Filters */}
@@ -223,20 +218,24 @@ export default function TransactionsPage() {
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="flex items-center justify-center py-16">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
-            </div>
+            <TableSkeleton rows={6} cols={TABLE_COLS} />
           ) : filteredCount === 0 ? (
-            /* Empty state */
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-              <SearchX className="h-12 w-12 mb-4 opacity-50" />
-              <p className="text-sm font-medium mb-3">No transactions match your filters.</p>
-              {hasActiveFilters && (
-                <Button variant="outline" size="sm" onClick={resetFilters}>
-                  Reset filters
-                </Button>
-              )}
-            </div>
+            /* Empty state — distinguish "no data at all" vs "filtered away" */
+            transactions.length === 0 ? (
+              <EmptyState
+                icon={PlusCircle}
+                title="No transactions yet."
+                description="Once transactions are processed they will appear here."
+              />
+            ) : (
+              <EmptyState
+                icon={SearchX}
+                title="No transactions match your filters."
+                description="Try adjusting or clearing the active filters."
+                actionLabel="Reset filters"
+                onAction={resetFilters}
+              />
+            )
           ) : (
             <>
               {/* Table — desktop */}
