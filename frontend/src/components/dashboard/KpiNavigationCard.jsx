@@ -24,7 +24,7 @@ export function KpiNavigationCard({
   const variantClass = VARIANT_STYLES[variant] || VARIANT_STYLES.default
 
   const isFraudMetric = variant === 'critical' || variant === 'warning'
-  const changeIsPositive = change > 0
+  const changeIsPositive = change != null && change > 0
   const changeColor = isFraudMetric
     ? changeIsPositive ? 'text-red-600' : 'text-green-600'
     : changeIsPositive ? 'text-green-600' : 'text-red-600'
@@ -87,7 +87,7 @@ export function KpiNavigationCard({
 
   if (route) {
     return (
-      <Link to={route} className="no-underline" aria-label={`${title}: ${value ?? 'loading'}`}>
+      <Link to={route} className="no-underline" aria-label={loading ? `${title}: loading` : `${title}: ${value}`}>
         {wrappedCard}
       </Link>
     )
