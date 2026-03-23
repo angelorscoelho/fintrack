@@ -20,6 +20,7 @@ const MerchantIndex = lazy(() => import('@/pages/MerchantIndex'))
 const MerchantProfile = lazy(() => import('@/pages/MerchantProfile'))
 const ReportsPage = lazy(() => import('@/pages/ReportsPage'))
 const TransactionsPage = lazy(() => import('@/pages/TransactionsPage'))
+const BudgetPage = lazy(() => import('@/pages/BudgetPage'))
 
 function PageFallback() {
   return (
@@ -126,6 +127,7 @@ export default function App() {
             <Route path="merchants" element={<MerchantIndex />} />
             <Route path="merchants/:nif" element={<MerchantProfile />} />
             <Route path="reports" element={<ReportsPage />} />
+            <Route path="budget" element={<BudgetPage />} />
             <Route path="dashboard" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
