@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, Loader2 } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { safeFetch } from '@/lib/api'
 import { EnhancedAlertsTable } from '@/components/alerts/EnhancedAlertsTable'
 import { BulkActionBar } from '@/components/alerts/BulkActionBar'
 import { FilterBar } from '@/components/alerts/FilterBar'
@@ -31,8 +32,7 @@ export default function AlertQueue({ isDark }) {
       const params = new URLSearchParams()
       if (filters.status) params.set('status', filters.status)
       params.set('limit', '200')
-      const res = await fetch(`${API_BASE}/api/alerts?${params.toString()}`)
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const res = await safeFetch(`${API_BASE}/api/alerts?${params.toString()}`)
       const json = await res.json()
       return Array.isArray(json) ? json : json.alerts || json.items || []
     },

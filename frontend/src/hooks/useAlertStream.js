@@ -35,7 +35,12 @@ export function useAlertStream(onNewAlert, isIdle, setIsConnected) {
           chRef.current?.postMessage({ type: MSG.NEW_ALERT, data: a })
         } catch { /* ignore parse errors */ }
       }
-      es.onerror = () => setIsConnected?.(false)
+      es.onerror = () => {
+        // Close and nullify on error to avoid reconnect loops when backend is down
+        es.close()
+        esRef.current = null
+        setIsConnected?.(false)
+      }
     } catch { setIsConnected?.(false) }
   }, [setIsConnected])
 

@@ -6,6 +6,7 @@ import { Header } from '@/components/layout/Header'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { InactivityOverlay } from '@/components/InactivityOverlay'
 import { KeyboardShortcutsModal } from '@/components/KeyboardShortcutsModal'
+import { DemoBanner } from '@/components/DemoBanner'
 import { useAlertStream } from '@/hooks/useAlertStream'
 import { useInactivityTimer } from '@/hooks/useInactivityTimer'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
@@ -101,6 +102,9 @@ export default function App() {
         isDark={isDark}
         onToggleDark={toggleDark}
       />
+
+      {/* Demo mode banner — shown when backend API is unreachable */}
+      <DemoBanner />
 
       {/* Page content */}
       <main {...swipeHandlers} className="p-4 md:p-6 max-w-screen-xl mx-auto space-y-4">
