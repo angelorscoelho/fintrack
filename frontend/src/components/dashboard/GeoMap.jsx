@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Globe, AlertTriangle } from 'lucide-react'
+import { safeFetch } from '@/lib/api'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -72,8 +73,7 @@ export function GeoMap() {
   const { data: rawData, isLoading, isError, refetch } = useQuery({
     queryKey: ['geo-alerts'],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/api/alerts?limit=200`)
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const res = await safeFetch(`${API_BASE}/api/alerts?limit=200`)
       return res.json()
     },
     refetchInterval: 30000,

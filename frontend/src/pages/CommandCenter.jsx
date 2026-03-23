@@ -8,6 +8,7 @@ import { Activity, AlertTriangle, ShieldAlert, Gauge, Loader2 } from 'lucide-rea
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { usePullToRefresh } from '@/hooks/usePullToRefresh'
+import { safeFetch } from '@/lib/api'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -23,8 +24,7 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
   const { data: stats, isLoading: statsLoading, isError: statsError, refetch: refetchStats } = useQuery({
     queryKey: ['stats'],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/api/stats`)
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const res = await safeFetch(`${API_BASE}/api/stats`)
       return res.json()
     },
     refetchInterval: isIdle ? false : 15000,

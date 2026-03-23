@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { BarChart3, AlertTriangle } from 'lucide-react'
 import { startOfHour, subHours, format, parseISO } from 'date-fns'
+import { safeFetch } from '@/lib/api'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -65,8 +66,7 @@ export function VolumeChart({ isDark = false }) {
   const { data: rawData, isLoading, isError, refetch } = useQuery({
     queryKey: ['alerts-volume'],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/api/alerts?limit=200`)
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const res = await safeFetch(`${API_BASE}/api/alerts?limit=200`)
       return res.json()
     },
     refetchInterval: 30000,

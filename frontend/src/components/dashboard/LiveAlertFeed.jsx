@@ -10,6 +10,7 @@ import { formatDistanceToNow, parseISO } from 'date-fns'
 import { pt } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { Radio } from 'lucide-react'
+import { safeFetch } from '@/lib/api'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 const MAX_ALERTS = 20
@@ -50,8 +51,7 @@ export function LiveAlertFeed() {
   const { data: seedData, isLoading } = useQuery({
     queryKey: ['feed-alerts'],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/api/alerts?status=PENDING_REVIEW&limit=5`)
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const res = await safeFetch(`${API_BASE}/api/alerts?status=PENDING_REVIEW&limit=5`)
       return res.json()
     },
     refetchInterval: 8000,

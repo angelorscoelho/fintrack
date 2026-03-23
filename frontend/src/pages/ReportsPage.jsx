@@ -1,7 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
 import { format } from 'date-fns'
 import {
   useReactTable,
@@ -26,6 +25,9 @@ import {
   ArrowUpDown,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { safeFetch } from '@/lib/api'
+
+const API_BASE = import.meta.env.VITE_API_URL || ''
 
 function ScoreBadge({ score }) {
   const s = Number(score || 0)
@@ -119,8 +121,10 @@ export default function ReportsPage() {
   const { data: alerts = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['alerts-for-reports'],
     queryFn: async () => {
-      const res = await axios.get('/api/alerts?limit=200')
-      return res.data
+      const res = await safeFetch(`${API_BASE}/api/alerts?limit=200`)
+      const json = await res.json()
+      const arr = Array.isArray(json) ? json : json.alerts || json.items || []
+      return arr
     },
     staleTime: 10000,
   })
