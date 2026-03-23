@@ -1,6 +1,6 @@
 import { useEffect, useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { KPICard } from '@/components/dashboard/KPICard'
+import { KpiNavigationCard } from '@/components/dashboard/KpiNavigationCard'
 import { VolumeChart } from '@/components/dashboard/VolumeChart'
 import { LiveAlertFeed } from '@/components/dashboard/LiveAlertFeed'
 import { GeoMap } from '@/components/dashboard/GeoMap'
@@ -82,36 +82,40 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
 
       {/* Row 1: KPI Cards — horizontal scroll on mobile, 4-column grid on desktop */}
       <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 md:grid md:grid-cols-4 md:overflow-visible md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
-        <KPICard
+        <KpiNavigationCard
           title="Transactions Today"
           value={total}
           icon={Activity}
           loading={statsLoading}
           tooltip="Total number of transactions processed in the last 24 hours"
+          route="/transactions"
         />
-        <KPICard
+        <KpiNavigationCard
           title="Fraud Rate"
           value={fraudRateDisplay}
           icon={AlertTriangle}
           variant={fraudRateVariant}
           loading={statsLoading}
           tooltip="Percentage of transactions flagged as potentially fraudulent"
+          route="/alerts"
         />
-        <KPICard
+        <KpiNavigationCard
           title="Critical Alerts"
           value={critical}
           icon={ShieldAlert}
           variant={critical > 0 ? 'critical' : 'default'}
           loading={statsLoading}
           tooltip="Number of high-risk transactions requiring immediate analyst review"
+          route="/alerts"
         />
-        <KPICard
+        <KpiNavigationCard
           title="Average Score"
           value={avgScoreDisplay}
           icon={Gauge}
           variant={avgScoreVariant}
           loading={statsLoading}
           tooltip="Represents the rolling average of risk scores over the last 24 hours."
+          route="/reports"
         />
       </div>
 
