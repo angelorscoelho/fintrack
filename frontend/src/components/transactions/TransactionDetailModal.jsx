@@ -112,9 +112,18 @@ export function TransactionDetailModal({ transaction, open, onOpenChange }) {
             <div className="border-t pt-3">
               <span className="text-sm text-muted-foreground block mb-1">AI Analysis</span>
               <p className="text-sm bg-muted rounded-md p-3">
-                {typeof transaction.ai_explanation === 'string'
-                  ? transaction.ai_explanation
-                  : transaction.ai_explanation.summary_pt}
+                {(() => {
+                  const explanation = transaction.ai_explanation
+                  if (typeof explanation === 'string') {
+                    try {
+                      const parsed = JSON.parse(explanation)
+                      return parsed.summary_pt || explanation
+                    } catch {
+                      return explanation
+                    }
+                  }
+                  return explanation.summary_pt || JSON.stringify(explanation)
+                })()}
               </p>
             </div>
           )}

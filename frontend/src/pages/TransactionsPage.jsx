@@ -187,7 +187,7 @@ export default function TransactionsPage() {
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription className="flex items-center justify-between">
-            <span>Erro ao carregar dados. Tente novamente.</span>
+            <span>Error loading data. Please try again.</span>
             <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-3 shrink-0">
               Try again
             </Button>
