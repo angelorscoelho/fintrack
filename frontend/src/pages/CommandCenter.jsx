@@ -88,6 +88,7 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
           icon={Activity}
           loading={statsLoading}
           tooltip="Total number of transactions processed in the last 24 hours"
+          to="/transactions"
         />
         <KPICard
           title="Fraud Rate"
@@ -104,6 +105,7 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
           variant={critical > 0 ? 'critical' : 'default'}
           loading={statsLoading}
           tooltip="Number of high-risk transactions requiring immediate analyst review"
+          to="/alerts"
         />
         <KPICard
           title="Average Score"
@@ -112,6 +114,7 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
           variant={avgScoreVariant}
           loading={statsLoading}
           tooltip="Represents the rolling average of risk scores over the last 24 hours."
+          to="/score-evolution"
         />
       </div>
 

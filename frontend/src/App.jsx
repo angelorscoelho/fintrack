@@ -13,18 +13,20 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { useDarkMode } from '@/hooks/useDarkMode'
 import { Loader2 } from 'lucide-react'
 
-// Lazy-loaded pages (Task 5)
+// Lazy-loaded pages
 const CommandCenter = lazy(() => import('@/pages/CommandCenter'))
 const AlertQueue = lazy(() => import('@/pages/AlertQueue'))
 const MerchantIndex = lazy(() => import('@/pages/MerchantIndex'))
 const MerchantProfile = lazy(() => import('@/pages/MerchantProfile'))
 const ReportsPage = lazy(() => import('@/pages/ReportsPage'))
+const Transactions = lazy(() => import('@/pages/Transactions'))
+const ScoreEvolution = lazy(() => import('@/pages/ScoreEvolution'))
 
 function PageFallback() {
   return (
     <div className="flex items-center justify-center py-24">
       <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden="true" />
-      <span className="sr-only">Carregando página</span>
+      <span className="sr-only">Loading page</span>
     </div>
   )
 }
@@ -124,6 +126,8 @@ export default function App() {
             <Route path="merchants" element={<MerchantIndex />} />
             <Route path="merchants/:nif" element={<MerchantProfile />} />
             <Route path="reports" element={<ReportsPage />} />
+            <Route path="transactions" element={<Transactions />} />
+            <Route path="score-evolution" element={<ScoreEvolution />} />
           </Routes>
         </Suspense>
       </main>
