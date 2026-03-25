@@ -9,6 +9,7 @@ import { Activity, ShieldAlert, Gauge, Loader2, AlertTriangle } from 'lucide-rea
 import { usePullToRefresh } from '@/hooks/usePullToRefresh'
 import { safeFetch } from '@/lib/api'
 import { ErrorState } from '@/components/feedback/ErrorState'
+import { KPI_THRESHOLDS } from '@/lib/constants'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -53,8 +54,8 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
   const fraudRateDisplay = total > 0 ? fraudRate.toFixed(1) + '%' : '–'
   const avgScoreDisplay = (avgScore * 100).toFixed(1) + '%'
 
-  const fraudRateVariant = fraudRate > 10 ? 'critical' : fraudRate > 5 ? 'warning' : 'default'
-  const avgScoreVariant = avgScore >= 0.70 ? 'critical' : avgScore >= 0.50 ? 'warning' : 'default'
+  const fraudRateVariant = fraudRate > KPI_THRESHOLDS.critical_fraud_rate ? 'critical' : fraudRate > KPI_THRESHOLDS.warning_fraud_rate ? 'warning' : 'default'
+  const avgScoreVariant = avgScore >= KPI_THRESHOLDS.critical_avg_score ? 'critical' : avgScore >= KPI_THRESHOLDS.warning_avg_score ? 'warning' : 'default'
 
   return (
     <>

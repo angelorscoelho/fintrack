@@ -26,7 +26,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { safeFetch } from '@/lib/api'
-import { getScoreVariant, SAR_THRESHOLD } from '@/lib/thresholds'
+import { getScoreVariant, SAR_THRESHOLD } from '@/lib/constants'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 

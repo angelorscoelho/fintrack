@@ -8,7 +8,7 @@ import { AlertTriangle, Clock, Globe, Cpu, FileText, ChevronDown, ChevronUp } fr
 import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { Button } from '@/components/ui/button'
-import { getScoreRingColors } from '@/lib/thresholds'
+import { getScoreRingColors } from '@/lib/constants'
 
 function ScoreRing({ score }) {
   const s = Number(score || 0)

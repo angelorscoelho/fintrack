@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Globe, AlertTriangle } from 'lucide-react'
 import { safeFetch } from '@/lib/api'
-import { getGeoMapColor } from '@/lib/thresholds'
+import { getGeoMapColor } from '@/lib/constants'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 

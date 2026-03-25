@@ -12,14 +12,15 @@ import { toast } from 'sonner'
 import { Radio, Info } from 'lucide-react'
 import { safeFetch } from '@/lib/api'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
+import { XAI_THRESHOLD, SAR_THRESHOLD } from '@/lib/constants'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 const MAX_ALERTS = 20
 
 function ScoreBadge({ score }) {
   const s = Number(score || 0)
-  const isCritical = s > 0.90
-  const isWarning = s >= 0.70
+  const isCritical = s > SAR_THRESHOLD
+  const isWarning = s >= XAI_THRESHOLD
   const variant = isCritical ? 'destructive' : isWarning ? 'warning' : 'outline'
   return (
     <Badge
@@ -83,7 +84,7 @@ export function LiveAlertFeed() {
 
     // Critical alert toast
     const score = Number(alert.anomaly_score || 0)
-    if (score > 0.90) {
+    if (score > SAR_THRESHOLD) {
       const amount = Number(alert.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })
       toast.error(`Critical Alert: €${amount}`, { duration: 8000 })
     }
@@ -137,7 +138,7 @@ export function LiveAlertFeed() {
             ) : (
               alerts.map((alert) => {
                 const score = Number(alert.anomaly_score || 0)
-                const isCritical = score > 0.90
+                const isCritical = score > SAR_THRESHOLD
                 return (
                   <div
                     key={alert.transaction_id}

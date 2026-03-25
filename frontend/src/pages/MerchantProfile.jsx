@@ -16,7 +16,7 @@ import {
   Clock, CheckCircle2, CircleDot, Check, PauseCircle, XCircle, ArrowUpCircle,
 } from 'lucide-react'
 import { safeFetch } from '@/lib/api'
-import { getMerchantRiskLevel, getScoreVariant, getScoreBadgeBg, XAI_THRESHOLD } from '@/lib/thresholds'
+import { getMerchantRiskLevel, getScoreVariant, getScoreBadgeBg, XAI_THRESHOLD } from '@/lib/constants'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
