@@ -8,6 +8,8 @@ from typing import Any, Optional, Tuple, List
 import boto3
 from boto3.dynamodb.conditions import Key
 
+from shared.thresholds import SAR_THRESHOLD
+
 logger = logging.getLogger(__name__)
 
 _table = None
@@ -179,7 +181,7 @@ async def get_stats() -> dict:
         fp = sum(1 for i in items if i.get("status") == "FALSE_POSITIVE")
         rl = sum(1 for i in items if i.get("status") == "rate_limited")
         scores = [float(i.get("anomaly_score", 0)) for i in items if i.get("anomaly_score")]
-        critical = sum(1 for s in scores if s > 0.90)
+        critical = sum(1 for s in scores if s > SAR_THRESHOLD)
         fp_rate = round(fp / max(resolved + fp, 1), 3)
         avg_score = round(sum(scores) / max(len(scores), 1), 3)
 

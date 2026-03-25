@@ -7,7 +7,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.db.dynamo import init_dynamo_client
-from api.routes import alerts, health, stats, resolve, stream
+from api.routes import alerts, health, stats, resolve, stream, config
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -43,6 +43,7 @@ app.include_router(alerts.router, prefix="/api")
 app.include_router(stats.router, prefix="/api")
 app.include_router(resolve.router, prefix="/api")
 app.include_router(health.router, prefix="/api")
+app.include_router(config.router)
 
 
 @app.get("/health")
