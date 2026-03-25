@@ -26,13 +26,14 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { safeFetch } from '@/lib/api'
+import { getScoreVariant, SAR_THRESHOLD } from '@/lib/thresholds'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
 function ScoreBadge({ score }) {
   const s = Number(score || 0)
   const pct = (s * 100).toFixed(1)
-  const variant = s > 0.90 ? 'destructive' : s >= 0.70 ? 'warning' : 'outline'
+  const variant = getScoreVariant(s)
   return <Badge variant={variant}>{pct}%</Badge>
 }
 
@@ -143,7 +144,7 @@ export default function ReportsPage() {
     () =>
       sarAlerts.filter(
         (a) =>
-          a.status === 'PENDING_REVIEW' && Number(a.anomaly_score) > 0.90
+          a.status === 'PENDING_REVIEW' && Number(a.anomaly_score) > SAR_THRESHOLD
       ).length,
     [sarAlerts]
   )

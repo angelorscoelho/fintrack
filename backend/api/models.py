@@ -3,7 +3,9 @@ import json
 from decimal import Decimal
 from enum import Enum
 from typing import Any, List, Optional
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, computed_field, field_validator
+
+from shared.thresholds import classify_risk
 
 
 class AlertStatus(str, Enum):
@@ -53,6 +55,12 @@ class AlertResponse(BaseModel):
     resolved_at: Optional[str] = None
     resolution_type: Optional[str] = None
     analyst_notes: Optional[str] = None
+
+    @computed_field
+    @property
+    def risk_level(self) -> str:
+        """Computed from anomaly_score using shared thresholds — CRITICAL/HIGH/MEDIUM/LOW."""
+        return classify_risk(self.anomaly_score)
 
     @field_validator("ai_explanation", mode="before")
     @classmethod

@@ -22,8 +22,20 @@ TABLE_NAME  = os.environ["DYNAMODB_TABLE"]
 table       = dynamodb.Table(TABLE_NAME)
 
 GENAI_URL           = os.environ.get("GENAI_SERVICE_URL", "http://localhost:8001")
-XAI_THRESHOLD       = 0.70
-SAR_THRESHOLD       = 0.90
+
+# Thresholds from shared single source of truth
+# At Lambda deploy time, shared/ is in the layer alongside lambda_handler/
+try:
+    from shared.thresholds import XAI_THRESHOLD, SAR_THRESHOLD
+except ImportError:
+    # Fallback: read JSON directly (e.g. when shared/ is a sibling directory)
+    import pathlib as _pl
+    _thresholds_path = _pl.Path(__file__).resolve().parent.parent / "shared" / "thresholds.json"
+    with open(_thresholds_path) as _f:
+        _th = json.load(_f)
+    XAI_THRESHOLD = _th["score"]["xai"]
+    SAR_THRESHOLD = _th["score"]["sar"]
+
 GENAI_INVOKE_TIMEOUT = 2  # seconds — fire-and-forget, non-blocking
 
 

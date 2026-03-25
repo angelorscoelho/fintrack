@@ -8,12 +8,12 @@ import { AlertTriangle, Clock, Globe, Cpu, FileText, ChevronDown, ChevronUp } fr
 import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { Button } from '@/components/ui/button'
+import { getScoreRingColors } from '@/lib/thresholds'
 
 function ScoreRing({ score }) {
   const s = Number(score || 0)
   const pct = (s * 100).toFixed(1)
-  const col = s > 0.90 ? 'text-red-600' : s >= 0.70 ? 'text-amber-500' : 'text-slate-500'
-  const bg = s > 0.90 ? 'bg-red-50' : s >= 0.70 ? 'bg-amber-50' : 'bg-slate-50'
+  const { text: col, bg } = getScoreRingColors(s)
   return (
     <div className={`flex flex-col items-center justify-center rounded-xl ${bg} p-4`}>
       <span className={`text-3xl font-bold ${col}`}>{pct}%</span>

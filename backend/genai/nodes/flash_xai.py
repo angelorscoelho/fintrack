@@ -1,6 +1,6 @@
 """
 FinTrack AI — Gemini 1.5 Flash XAI Node
-Generates 3-bullet anomaly explanation in Portuguese for scores 0.70–0.90.
+Generates 3-bullet anomaly explanation in Portuguese for scores >= XAI_THRESHOLD.
 """
 import json
 import logging
@@ -11,6 +11,7 @@ import google.generativeai as genai
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from backend.genai.graph import TransactionState
+from shared.thresholds import FLASH_RISK_ALTO
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +59,7 @@ def _build_prompt(payload: dict, score: float) -> str:
     amount   = float(payload.get("amount", 0))
     prev_avg = float(payload.get("previous_avg_amount", 1)) or 1.0
     ratio    = amount / prev_avg
-    risk     = "ALTO" if score > 0.85 else "MÉDIO"
+    risk     = "ALTO" if score > FLASH_RISK_ALTO else "MÉDIO"
     hour     = int(payload.get("hour_of_day", 0))
     days     = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"]
     day_name = days[int(payload.get("day_of_week", 0)) % 7]
