@@ -13,7 +13,7 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { useDarkMode } from '@/hooks/useDarkMode'
 import { Loader2 } from 'lucide-react'
 
-// Lazy-loaded pages (Task 5)
+// Lazy-loaded pages
 const CommandCenter = lazy(() => import('@/pages/CommandCenter'))
 const AlertQueue = lazy(() => import('@/pages/AlertQueue'))
 const MerchantIndex = lazy(() => import('@/pages/MerchantIndex'))
@@ -26,7 +26,7 @@ function PageFallback() {
   return (
     <div className="flex items-center justify-center py-24">
       <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden="true" />
-      <span className="sr-only">Carregando página</span>
+      <span className="sr-only">Loading page</span>
     </div>
   )
 }

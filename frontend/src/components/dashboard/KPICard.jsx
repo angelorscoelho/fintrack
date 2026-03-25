@@ -3,6 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { TrendingUp, TrendingDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Info } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 
 const VARIANT_STYLES = {
@@ -11,7 +12,7 @@ const VARIANT_STYLES = {
   critical: 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800',
 }
 
-export function KPICard({ title, value, change, trend, variant = 'default', icon: Icon, loading = false, tooltip }) {
+export function KPICard({ title, value, change, trend, variant = 'default', icon: Icon, loading = false, tooltip, to }) {
   const variantClass = VARIANT_STYLES[variant] || VARIANT_STYLES.default
 
   // For fraud metrics (critical/warning), positive change is bad (red), negative is good (green)
@@ -22,8 +23,9 @@ export function KPICard({ title, value, change, trend, variant = 'default', icon
     : (changeIsPositive ? 'text-green-600' : 'text-red-600')
   const ChangeIcon = changeIsPositive ? TrendingUp : TrendingDown
 
-  const cardContent = (
-    <Card className={cn('min-w-[160px] snap-start shrink-0 md:shrink md:min-w-0', variantClass)}>
+  // Card content structure
+  const cardInnerContent = (
+    <>
       <CardContent className="p-4 md:p-6">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide truncate">
@@ -63,16 +65,36 @@ export function KPICard({ title, value, change, trend, variant = 'default', icon
           </>
         )}
       </CardContent>
-    </Card>
+    </>
   )
 
-  if (tooltip) {
+  // Wrap with Link if 'to' prop is provided
+  if (to) {
     return (
       <TooltipProvider delayDuration={300}>
-        {cardContent}
+        <Link
+          to={to}
+          className={cn(
+            'min-w-[160px] snap-start shrink-0 md:shrink md:min-w-0 block rounded-lg transition-all duration-200 cursor-pointer',
+            'hover:bg-slate-100 hover:dark:bg-slate-800 hover:shadow-md',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2',
+            variantClass
+          )}
+        >
+          <Card className={cn('border-0 bg-transparent', variantClass)}>
+            {cardInnerContent}
+          </Card>
+        </Link>
       </TooltipProvider>
     )
   }
 
-  return cardContent
+  // Non-clickable card (for cards without navigation)
+  return (
+    <TooltipProvider delayDuration={300}>
+      <Card className={cn('min-w-[160px] snap-start shrink-0 md:shrink md:min-w-0', variantClass)}>
+        {cardInnerContent}
+      </Card>
+    </TooltipProvider>
+  )
 }
