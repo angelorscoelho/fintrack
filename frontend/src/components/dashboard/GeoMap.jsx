@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Globe, AlertTriangle } from 'lucide-react'
 import { safeFetch } from '@/lib/api'
-import { getGeoMapColor } from '@/lib/constants'
+import { getGeoMapColor, API_MAX_LIMIT } from '@/lib/constants'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -72,7 +72,7 @@ export function GeoMap() {
   const { data: rawData, isLoading, isError, refetch } = useQuery({
     queryKey: ['geo-alerts'],
     queryFn: async () => {
-      const res = await safeFetch(`${API_BASE}/api/alerts?limit=200`)
+      const res = await safeFetch(`${API_BASE}/api/alerts?limit=${API_MAX_LIMIT}`)
       return res.json()
     },
     refetchInterval: 30000,

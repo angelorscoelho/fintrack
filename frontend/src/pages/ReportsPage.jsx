@@ -26,7 +26,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { safeFetch } from '@/lib/api'
-import { getScoreVariant, SAR_THRESHOLD } from '@/lib/constants'
+import { getScoreVariant, SAR_THRESHOLD, API_MAX_LIMIT } from '@/lib/constants'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -127,7 +127,7 @@ export default function ReportsPage() {
   const { data: alerts = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['alerts-for-reports'],
     queryFn: async () => {
-      const res = await safeFetch(`${API_BASE}/api/alerts?limit=200`)
+      const res = await safeFetch(`${API_BASE}/api/alerts?limit=${API_MAX_LIMIT}`)
       const json = await res.json()
       const arr = Array.isArray(json) ? json : json.alerts || json.items || []
       return arr

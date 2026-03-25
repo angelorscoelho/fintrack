@@ -16,7 +16,7 @@ import {
   Clock, CheckCircle2, CircleDot, Check, PauseCircle, XCircle, ArrowUpCircle,
 } from 'lucide-react'
 import { safeFetch } from '@/lib/api'
-import { getMerchantRiskLevel, getScoreVariant, getScoreBadgeBg, XAI_THRESHOLD } from '@/lib/constants'
+import { getMerchantRiskLevel, getScoreVariant, getScoreBadgeBg, XAI_THRESHOLD, API_MAX_LIMIT } from '@/lib/constants'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -62,7 +62,7 @@ export default function MerchantProfile() {
   const { data: allAlerts = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['merchant-alerts', nif],
     queryFn: async () => {
-      const res = await safeFetch(`${API_BASE}/api/alerts?limit=200`)
+      const res = await safeFetch(`${API_BASE}/api/alerts?limit=${API_MAX_LIMIT}`)
       const json = await res.json()
       const arr = Array.isArray(json) ? json : json.alerts || json.items || []
       return arr.filter((a) => a.merchant_nif === nif)
