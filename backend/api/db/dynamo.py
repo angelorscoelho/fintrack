@@ -34,10 +34,14 @@ def _decimal_safe(obj):
 
 
 def _deserialize_item(item: dict) -> dict:
-    """Parse ai_explanation from JSON string to dict."""
-    if item.get("ai_explanation") and isinstance(item["ai_explanation"], str):
+    """Parse ai_explanation from JSON string to dict; return None for empty/malformed."""
+    raw = item.get("ai_explanation")
+    if raw is None or raw == "" or raw == "null":
+        item["ai_explanation"] = None
+    elif isinstance(raw, str):
         try:
-            item["ai_explanation"] = json.loads(item["ai_explanation"])
+            parsed = json.loads(raw)
+            item["ai_explanation"] = parsed if isinstance(parsed, dict) else None
         except (json.JSONDecodeError, TypeError):
             item["ai_explanation"] = None
     return item

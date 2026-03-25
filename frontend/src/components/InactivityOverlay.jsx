@@ -22,7 +22,7 @@ export function InactivityOverlay({ isVisible, onResume }) {
             The existing data is still visible. Click <strong>Continue</strong> to resume.
           </DialogDescription>
         </DialogHeader>
-        <div className="bg-amber-50 border border-amber-200 rounded-md p-3 text-xs text-amber-800">
+        <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-md p-3 text-xs text-amber-800 dark:text-amber-300">
           💡 You can also <strong>refresh the page</strong> to resume.
         </div>
         <DialogFooter className="flex gap-2 sm:justify-start">

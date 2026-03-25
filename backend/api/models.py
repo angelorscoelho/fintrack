@@ -1,4 +1,5 @@
 """Pydantic v2 response models for FinTrack AI API."""
+import json
 from decimal import Decimal
 from enum import Enum
 from typing import Any, List, Optional
@@ -46,12 +47,28 @@ class AlertResponse(BaseModel):
     transactions_last_10min: Optional[int] = None
     anomaly_score: float
     status: AlertStatus
-    ai_explanation: Optional[XAIExplanation] = None
+    ai_explanation: Optional[dict] = None
     sar_draft: Optional[str] = None
     processed_at: Optional[str] = None
     resolved_at: Optional[str] = None
     resolution_type: Optional[str] = None
     analyst_notes: Optional[str] = None
+
+    @field_validator("ai_explanation", mode="before")
+    @classmethod
+    def parse_ai_explanation(cls, v: Any) -> Optional[dict]:
+        """Safely coerce ai_explanation to dict or None; never raise on bad data."""
+        if v is None or v == "" or v == "null":
+            return None
+        if isinstance(v, str):
+            try:
+                parsed = json.loads(v)
+                return parsed if isinstance(parsed, dict) else None
+            except (json.JSONDecodeError, TypeError):
+                return None
+        if isinstance(v, dict):
+            return v
+        return None
 
     @field_validator("anomaly_score", "amount", "previous_avg_amount", mode="before")
     @classmethod

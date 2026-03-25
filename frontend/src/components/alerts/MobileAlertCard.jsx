@@ -6,6 +6,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { pt } from 'date-fns/locale'
 import { Loader2, Clock, CheckCircle2, CircleDot, Check, PauseCircle, XCircle, ArrowUpCircle, Cpu, FileText } from 'lucide-react'
 import { toast } from 'sonner'
+import { ErrorBoundary } from '@/components/feedback/ErrorBoundary'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -141,36 +142,38 @@ export function MobileAlertCard({ alert, onRefetch }) {
 
       {/* Expanded XAI panel */}
       {expanded && (
-        <div className="bg-slate-50 dark:bg-slate-800/50 border border-t-0 border-slate-200 dark:border-slate-700 rounded-b-lg px-3 py-3 space-y-2 -mt-1">
-          {explanation && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold text-amber-800 dark:text-amber-400">
-                <Cpu className="h-3.5 w-3.5" />
-                AI Analysis
+        <ErrorBoundary>
+          <div className="bg-slate-50 dark:bg-slate-800/50 border border-t-0 border-slate-200 dark:border-slate-700 rounded-b-lg px-3 py-3 space-y-2 -mt-1">
+            {explanation && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs font-semibold text-amber-800 dark:text-amber-400">
+                  <Cpu className="h-3.5 w-3.5" />
+                  AI Analysis
+                </div>
+                {explanation.summary_pt && (
+                  <p className="text-xs text-slate-600 dark:text-slate-400 italic">{explanation.summary_pt}</p>
+                )}
+                <ul className="space-y-1">
+                  {(explanation.bullets || []).map((b) => (
+                    <li key={b.id} className="flex gap-2 text-xs text-slate-700 dark:text-slate-300">
+                      <span>{b.icon}</span>
+                      <span>{b.text}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              {explanation.summary_pt && (
-                <p className="text-xs text-slate-600 dark:text-slate-400 italic">{explanation.summary_pt}</p>
-              )}
-              <ul className="space-y-1">
-                {(explanation.bullets || []).map((b) => (
-                  <li key={b.id} className="flex gap-2 text-xs text-slate-700 dark:text-slate-300">
-                    <span>{b.icon}</span>
-                    <span>{b.text}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {alert.sar_draft && (
-            <div className="flex items-center gap-2">
-              <FileText className="h-3.5 w-3.5 text-red-600" />
-              <Badge variant="destructive" className="text-xs">SAR Available</Badge>
-            </div>
-          )}
-          {!explanation && !alert.sar_draft && (
-            <p className="text-xs text-muted-foreground">No AI analysis available.</p>
-          )}
-        </div>
+            )}
+            {alert.sar_draft && (
+              <div className="flex items-center gap-2">
+                <FileText className="h-3.5 w-3.5 text-red-600" />
+                <Badge variant="destructive" className="text-xs">SAR Available</Badge>
+              </div>
+            )}
+            {!explanation && !alert.sar_draft && (
+              <p className="text-xs text-muted-foreground">No AI analysis available.</p>
+            )}
+          </div>
+        </ErrorBoundary>
       )}
     </div>
   )

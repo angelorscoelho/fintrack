@@ -92,7 +92,7 @@ export default function AlertQueue({ isDark }) {
         <div className="flex items-center gap-3">
           <AlertTriangle className="h-6 w-6 text-amber-500" />
           <div>
-            <h1 className="text-lg font-bold text-slate-800">Alert Queue</h1>
+            <h1 className="text-lg font-bold text-slate-800 dark:text-slate-200">Alert Queue</h1>
             <p className="text-xs text-slate-500">{filteredAlerts.length} alerts</p>
           </div>
         </div>
