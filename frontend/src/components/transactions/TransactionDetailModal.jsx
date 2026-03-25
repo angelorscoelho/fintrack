@@ -7,6 +7,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
+import { ErrorBoundary } from '@/components/feedback/ErrorBoundary'
 
 const categoryColors = {
   retail: 'secondary',
@@ -109,23 +110,25 @@ export function TransactionDetailModal({ transaction, open, onOpenChange }) {
 
           {/* AI Explanation */}
           {transaction.ai_explanation && (
-            <div className="border-t pt-3">
-              <span className="text-sm text-muted-foreground block mb-1">AI Analysis</span>
-              <p className="text-sm bg-muted rounded-md p-3">
-                {(() => {
-                  const explanation = transaction.ai_explanation
-                  if (typeof explanation === 'string') {
-                    try {
-                      const parsed = JSON.parse(explanation)
-                      return parsed.summary_pt || explanation
-                    } catch {
-                      return explanation
+            <ErrorBoundary>
+              <div className="border-t pt-3">
+                <span className="text-sm text-muted-foreground block mb-1">AI Analysis</span>
+                <p className="text-sm bg-muted rounded-md p-3">
+                  {(() => {
+                    const explanation = transaction.ai_explanation
+                    if (typeof explanation === 'string') {
+                      try {
+                        const parsed = JSON.parse(explanation)
+                        return parsed.summary_pt || explanation
+                      } catch {
+                        return explanation
+                      }
                     }
-                  }
-                  return explanation.summary_pt || JSON.stringify(explanation)
-                })()}
-              </p>
-            </div>
+                    return explanation.summary_pt || JSON.stringify(explanation)
+                  })()}
+                </p>
+              </div>
+            </ErrorBoundary>
           )}
         </div>
       </DialogContent>
