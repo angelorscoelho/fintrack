@@ -47,7 +47,7 @@ const STATUS_CONFIG = {
 function ScoreBadge({ score }) {
   const s = Number(score || 0)
   const variant = s > 0.90 ? 'destructive' : s >= 0.70 ? 'warning' : 'outline'
-  const bg = s > 0.90 ? 'bg-red-100 text-red-800 border-red-200' : s >= 0.70 ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-slate-100 text-slate-700 border-slate-200'
+  const bg = s > 0.90 ? 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/40 dark:text-red-300 dark:border-red-800' : s >= 0.70 ? 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800' : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600'
   return <Badge variant={variant} className={`font-mono text-xs ${bg}`}>{(s * 100).toFixed(1)}%</Badge>
 }
 
@@ -82,20 +82,20 @@ function ExpandedRowPanel({ alert, onOpenDetail, onResolved }) {
   }
 
   return (
-    <div className="bg-slate-50 border-t border-b border-slate-200 px-6 py-4 space-y-3">
+    <div className="bg-slate-50 dark:bg-slate-800 border-t border-b border-slate-200 dark:border-slate-700 px-6 py-4 space-y-3">
       {/* XAI bullets */}
       {explanation && (
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-xs font-semibold text-amber-800">
+          <div className="flex items-center gap-2 text-xs font-semibold text-amber-800 dark:text-amber-300">
             <Cpu className="h-3.5 w-3.5" />
             AI Analysis
           </div>
           {explanation.summary_pt && (
-            <p className="text-xs text-slate-600 italic">{explanation.summary_pt}</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400 italic">{explanation.summary_pt}</p>
           )}
           <ul className="space-y-1">
             {(explanation.bullets || []).map((b) => (
-              <li key={b.id} className="flex gap-2 text-xs text-slate-700">
+              <li key={b.id} className="flex gap-2 text-xs text-slate-700 dark:text-slate-300">
                 <span>{b.icon}</span>
                 <span>{b.text}</span>
               </li>
@@ -282,7 +282,7 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
         accessorKey: 'amount',
         header: () => <span className="w-full text-right block">Amount</span>,
         cell: ({ getValue }) => (
-          <span className="font-semibold text-slate-800 block text-right">
+          <span className="font-semibold text-slate-800 dark:text-slate-200 block text-right">
             €{Number(getValue() || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
         ),
@@ -292,7 +292,7 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
         accessorKey: 'category',
         header: 'Category',
         cell: ({ getValue }) => (
-          <span className="text-xs text-slate-600 lowercase">
+          <span className="text-xs text-slate-600 dark:text-slate-400 lowercase">
             {getValue()?.replace(/_/g, ' ')}
           </span>
         ),
@@ -448,7 +448,7 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
 
   if (isLoading && data.length === 0) {
     return (
-      <div className="flex items-center justify-center h-48 bg-white rounded-lg border border-slate-200">
+      <div className="flex items-center justify-center h-48 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-2 text-sm text-slate-400">
           <Loader2 className="h-4 w-4 animate-spin" />
           Loading alerts…
@@ -459,7 +459,7 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
 
   if (!isLoading && data.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-48 bg-white rounded-lg border border-slate-200 gap-2">
+      <div className="flex flex-col items-center justify-center h-48 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 gap-2">
         <p className="text-sm text-slate-500">No alerts for the selected filter.</p>
       </div>
     )
@@ -467,21 +467,21 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
 
   return (
     <>
-      <div ref={tableRef} className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+      <div ref={tableRef} className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
               {table.getHeaderGroups().map((hg) => (
                 <tr key={hg.id}>
                   {hg.headers.map((h) => (
                     <th
                       key={h.id}
-                      className="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide"
+                      className="px-3 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide"
                       style={{ width: h.getSize() }}
                     >
                       {h.isPlaceholder ? null : h.column.getCanSort() ? (
                         <button
-                          className="flex items-center gap-1 hover:text-slate-900 transition-colors"
+                          className="flex items-center gap-1 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
                           onClick={h.column.getToggleSortingHandler()}
                         >
                           {flexRender(h.column.columnDef.header, h.getContext())}
@@ -495,13 +495,13 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
                 </tr>
               ))}
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {pageRows.map((row, idx) => (
                 <Fragment key={row.id}>
                   <tr
                     className={`transition-colors cursor-pointer ${
-                      idx === focusedRowIndex ? 'bg-blue-50/70 ring-1 ring-inset ring-blue-200' : 'hover:bg-slate-50/50'
-                    } ${row.getIsExpanded() ? 'bg-slate-50' : ''}`}
+                      idx === focusedRowIndex ? 'bg-blue-50/70 dark:bg-blue-900/30 ring-1 ring-inset ring-blue-200 dark:ring-blue-800' : 'hover:bg-slate-50/50 dark:hover:bg-slate-800/50'
+                    } ${row.getIsExpanded() ? 'bg-slate-50 dark:bg-slate-800' : ''}`}
                     onClick={() => row.toggleExpanded()}
                   >
                     {row.getVisibleCells().map((cell) => (
@@ -528,8 +528,8 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
         </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 bg-slate-50">
-          <p className="text-xs text-slate-500">
+        <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             {data.length} alerts — Page {table.getState().pagination.pageIndex + 1} of{' '}
             {table.getPageCount()}
           </p>
