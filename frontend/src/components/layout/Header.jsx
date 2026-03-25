@@ -1,4 +1,4 @@
-import { useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { ShieldAlert, Wifi, WifiOff, Clock, Sun, Moon, Globe } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -23,10 +23,10 @@ export function Header({ isConnected, isIdle, isDark, onToggleDark }) {
     <header className="sticky top-0 z-40 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-4 md:px-6 py-3">
       <div className="flex items-center justify-between max-w-screen-xl mx-auto">
         {/* Left — brand */}
-        <div className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2 no-underline cursor-pointer">
           <ShieldAlert className="h-5 w-5 text-blue-600" />
           <span className="text-base font-bold text-slate-900 dark:text-slate-100">FinTrack AI</span>
-        </div>
+        </Link>
 
         {/* Center — breadcrumb (desktop only) */}
         {crumb && (
