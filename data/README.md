@@ -55,7 +55,7 @@ mirrors this distribution.
 
 Normal (non-anomalous) transactions use a **lognormal** score distribution:
 
-- **μ = −4.5, σ = 0.7** (frontend mock data)
+- **μ = -4.5, σ = 0.7** (frontend mock data)
 - Median score ≈ 0.011 (1.1 %)
 - Mean score ≈ 0.014 (1.4 %)
 - 90th percentile ≈ 0.026 (2.6 %)

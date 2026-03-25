@@ -67,7 +67,9 @@ def generate_transaction(index: int, hours_ago: float = 0) -> dict:
         anomaly_score = round(random.uniform(0.90, 1.0), 3)    # Critical
         status = "PENDING_REVIEW"
     
-    # Resolved some percentage of flagged transactions
+    # Resolve ~15 % of flagged transactions:
+    #   effective CONFIRMED_FRAUD ≈ 15 % × 35 % ≈ 5 % of flagged
+    #   effective FALSE_POSITIVE  ≈ 15 % × 65 % ≈ 10 % of flagged
     resolution_type = None
     if status == "PENDING_REVIEW" and random.random() < 0.15:
         if random.random() < 0.35:

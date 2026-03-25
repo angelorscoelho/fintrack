@@ -43,12 +43,19 @@ function randInt(min, max) {
 
 /* ── Box-Muller transform → standard normal variate ─────────────────────── */
 function boxMuller() {
-  const u1 = Math.max(rand(), 1e-10) // avoid log(0)
+  let u1 = rand()
+  // Regenerate if u1 is too close to 0 to avoid log(0) instability
+  while (u1 < 1e-10) u1 = rand()
   const u2 = rand()
   return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2)
 }
 
-/* ── Lognormal score for NORMAL transactions (clipped to [0.001, 0.35]) ── */
+/* ── Lognormal score for NORMAL transactions (clipped to [0.001, 0.35]) ──
+ * Parameters chosen to match real-world fraud-score distributions:
+ *   mu = -4.5 → median ≈ exp(-4.5) ≈ 0.011  (most scores near 1 %)
+ *   sigma = 0.7 → moderate right-skew so a few scores reach 5–15 %
+ * Combined with 16 flagged transactions, this yields avg_score ≈ 14–18 %.
+ */
 function lognormalScore() {
   const mu = -4.5   // median ≈ exp(−4.5) ≈ 0.011
   const sigma = 0.7  // moderate spread
