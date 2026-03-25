@@ -27,7 +27,7 @@ function DataRow({ icon: Icon, label, value }) {
       <Icon className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
       <div className="flex-1 min-w-0">
         <div className="text-xs text-slate-500">{label}</div>
-        <div className="text-sm font-medium text-slate-800 truncate">{value ?? '—'}</div>
+        <div className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{value ?? '—'}</div>
       </div>
     </div>
   )
@@ -44,7 +44,7 @@ function XAIPanel({ explanation }) {
       <p className="text-xs text-amber-700 italic mb-3">{explanation.summary_pt}</p>
       <ul className="space-y-2">
         {(explanation.bullets || []).map((b) => (
-          <li key={b.id} className="flex gap-2.5 text-sm text-slate-700">
+          <li key={b.id} className="flex gap-2.5 text-sm text-slate-700 dark:text-slate-300">
             <span className="text-base leading-none mt-0.5">{b.icon}</span>
             <span>{b.text}</span>
           </li>
@@ -76,7 +76,7 @@ function SARPanel({ markdown, transactionId, merchantNif, score }) {
       </div>
       {expanded && (
         <>
-          <div className="prose prose-sm max-w-none text-slate-700">
+          <div className="prose prose-sm max-w-none text-slate-700 dark:text-slate-300">
             <ReactMarkdown>{markdown}</ReactMarkdown>
           </div>
           <div className="mt-3 flex justify-end">
@@ -150,7 +150,7 @@ export function AlertDetail({ alert, open, onClose, onResolved }) {
           )}
 
           {/* Data fields */}
-          <div className="rounded-lg border border-slate-200 bg-white p-3">
+          <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3">
             <DataRow icon={Clock} label="Date/Time" value={alert.timestamp} />
             <DataRow icon={Globe} label="Merchant NIF" value={alert.merchant_nif} />
             <DataRow icon={Globe} label="Merchant" value={alert.merchant_name} />
@@ -181,9 +181,9 @@ export function AlertDetail({ alert, open, onClose, onResolved }) {
 
           {/* Analyst notes */}
           {alert.analyst_notes && (
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <h3 className="text-xs font-semibold text-slate-600 mb-1">Analyst Notes</h3>
-              <p className="text-sm text-slate-700">{alert.analyst_notes}</p>
+            <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-3">
+              <h3 className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Analyst Notes</h3>
+              <p className="text-sm text-slate-700 dark:text-slate-300">{alert.analyst_notes}</p>
             </div>
           )}
         </div>
