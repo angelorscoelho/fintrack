@@ -4,3 +4,4 @@ boto3>=1.34.0
 sse-starlette>=2.1.0
 pydantic>=2.7.0
 pydantic-settings>=2.3.0
+google-generativeai>=0.7.0
