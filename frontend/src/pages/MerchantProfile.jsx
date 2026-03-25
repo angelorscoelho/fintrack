@@ -367,6 +367,7 @@ export default function MerchantProfile() {
                   return (
                     <tr key={tx.transaction_id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
                       <td className="px-3 py-2 text-xs text-slate-600 dark:text-slate-400">
+                        {tx.timestamp ? format(new Date(tx.timestamp), 'dd/MM/yyyy HH:mm', { locale: pt }) : '–'}
                       </td>
                       <td className="px-3 py-2 text-right font-semibold text-slate-800 dark:text-slate-200">
                         €{Number(tx.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
