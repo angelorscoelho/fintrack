@@ -344,7 +344,7 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-800">SAR Reports</h1>
+      <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-200">SAR Reports</h1>
 
       {/* SECTION 1 — Stats bar */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -395,14 +395,14 @@ export default function ReportsPage() {
           </Button>
         </div>
       ) : (
-        <div className="rounded-lg border bg-white overflow-hidden">
+        <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 {table.getHeaderGroups().map((hg) => (
-                  <tr key={hg.id} className="border-b bg-slate-50">
+                  <tr key={hg.id} className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
                     {hg.headers.map((header) => (
-                      <th key={header.id} className="px-4 py-3 text-left font-medium text-slate-600">
+                      <th key={header.id} className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">
                         {header.isPlaceholder
                           ? null
                           : flexRender(header.column.columnDef.header, header.getContext())}
@@ -413,9 +413,9 @@ export default function ReportsPage() {
               </thead>
               <tbody>
                 {table.getRowModel().rows.map((row) => (
-                  <tr key={row.id} className="border-b hover:bg-slate-50/50 transition-colors">
+                  <tr key={row.id} className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
                     {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="px-4 py-3">
+                      <td key={cell.id} className="px-4 py-3 text-slate-700 dark:text-slate-300">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     ))}
@@ -426,8 +426,8 @@ export default function ReportsPage() {
           </div>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between px-4 py-3 border-t bg-slate-50">
-            <span className="text-xs text-slate-500">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+            <span className="text-xs text-slate-500 dark:text-slate-400">
               Page {table.getState().pagination.pageIndex + 1} of{' '}
               {table.getPageCount()}
             </span>
