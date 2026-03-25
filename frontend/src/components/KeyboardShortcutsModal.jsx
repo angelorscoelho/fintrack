@@ -35,7 +35,7 @@ export function KeyboardShortcutsModal({ open, onClose }) {
         <div className="rounded-lg border overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b bg-slate-50 dark:bg-slate-800">
+              <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
                 <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Shortcut</th>
                 <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Action</th>
               </tr>

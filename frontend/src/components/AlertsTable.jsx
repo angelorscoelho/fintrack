@@ -161,7 +161,7 @@ export function AlertsTable({ data, isLoading, onRowClick }) {
 
       {/* Pagination */}
       <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
           {data.length} alerts — Page {table.getState().pagination.pageIndex + 1}/{table.getPageCount()}
         </p>
         <div className="flex gap-2">
