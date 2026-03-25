@@ -1,14 +1,14 @@
 import { useEffect, useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { KPICard } from '@/components/dashboard/KPICard'
+import { KpiNavigationCard } from '@/components/dashboard/KpiNavigationCard'
 import { VolumeChart } from '@/components/dashboard/VolumeChart'
+import { CategoryChart } from '@/components/dashboard/CategoryChart'
 import { LiveAlertFeed } from '@/components/dashboard/LiveAlertFeed'
 import { GeoMap } from '@/components/dashboard/GeoMap'
-import { Activity, AlertTriangle, ShieldAlert, Gauge, Loader2 } from 'lucide-react'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
+import { Activity, ShieldAlert, Gauge, Loader2, AlertTriangle } from 'lucide-react'
 import { usePullToRefresh } from '@/hooks/usePullToRefresh'
 import { safeFetch } from '@/lib/api'
+import { ErrorState } from '@/components/feedback/ErrorState'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -37,6 +37,7 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
         queryClient.invalidateQueries({ queryKey: ['stats'] })
         queryClient.invalidateQueries({ queryKey: ['feed-alerts'] })
         queryClient.invalidateQueries({ queryKey: ['alerts-volume'] })
+        queryClient.invalidateQueries({ queryKey: ['alerts-category'] })
         queryClient.invalidateQueries({ queryKey: ['geo-alerts'] })
       })
     }
@@ -69,52 +70,45 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
 
       {/* Error state */}
       {statsError && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription className="flex items-center justify-between">
-            <span>Error loading data. Please try again.</span>
-            <Button variant="outline" size="sm" onClick={() => refetchStats()} className="ml-3 shrink-0">
-              Try again
-            </Button>
-          </AlertDescription>
-        </Alert>
+        <ErrorState onRetry={() => refetchStats()} />
       )}
 
       {/* Row 1: KPI Cards — horizontal scroll on mobile, 4-column grid on desktop */}
       <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 md:grid md:grid-cols-4 md:overflow-visible md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
-        <KPICard
+        <KpiNavigationCard
           title="Transactions Today"
           value={total}
           icon={Activity}
           loading={statsLoading}
           tooltip="Total number of transactions processed in the last 24 hours"
-          to="/transactions"
+          route="/transactions"
         />
-        <KPICard
+        <KpiNavigationCard
           title="Fraud Rate"
           value={fraudRateDisplay}
           icon={AlertTriangle}
           variant={fraudRateVariant}
           loading={statsLoading}
           tooltip="Percentage of transactions flagged as potentially fraudulent"
+          route="/alerts"
         />
-        <KPICard
+        <KpiNavigationCard
           title="Critical Alerts"
           value={critical}
           icon={ShieldAlert}
           variant={critical > 0 ? 'critical' : 'default'}
           loading={statsLoading}
           tooltip="Number of high-risk transactions requiring immediate analyst review"
-          to="/alerts"
+          route="/alerts"
         />
-        <KPICard
+        <KpiNavigationCard
           title="Average Score"
           value={avgScoreDisplay}
           icon={Gauge}
           variant={avgScoreVariant}
           loading={statsLoading}
           tooltip="Represents the rolling average of risk scores over the last 24 hours."
-          to="/score-evolution"
+          route="/reports"
         />
       </div>
 
@@ -128,7 +122,10 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
         </div>
       </div>
 
-      {/* Row 3: Geographic alert distribution map */}
+      {/* Row 3: Category breakdown chart */}
+      <CategoryChart />
+
+      {/* Row 4: Geographic alert distribution map */}
       <GeoMap />
     </>
   )

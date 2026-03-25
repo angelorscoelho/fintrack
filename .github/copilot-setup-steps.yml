@@ -1,0 +1,58 @@
+# .github/copilot-setup-steps.yml
+# Pre-installs dependencies for the Copilot Coding Agent environment
+# Runs before Copilot starts working on any task
+
+name: Copilot Setup Steps
+
+steps:
+  # --- Node.js / Frontend ---
+  - name: Setup Node.js 20
+    uses: actions/setup-node@v4
+    with:
+      node-version: '20'
+      cache: 'npm'
+      cache-dependency-path: frontend/package-lock.json
+
+  - name: Install frontend dependencies
+    working-directory: frontend
+    run: npm ci
+
+  # --- Python / Backend ---
+  - name: Setup Python 3.11
+    uses: actions/setup-python@v5
+    with:
+      python-version: '3.11'
+      cache: 'pip'
+
+  - name: Install backend dependencies
+    run: |
+      pip install -r backend/api/requirements.txt
+      pip install -r backend/lambda_handler/requirements.txt
+      pip install -r backend/genai/requirements.txt
+
+  # --- AWS CLI (for DynamoDB local interaction) ---
+  - name: Install AWS SAM CLI
+    run: pip install aws-sam-cli
+
+  # --- Linting ---
+  - name: Install frontend linting tools
+    working-directory: frontend
+    run: |
+      npm install --save-dev eslint @eslint/js
+      npx eslint --version
+
+  - name: Install Python linting
+    run: pip install ruff black
+
+  # --- Testing ---
+  - name: Install test dependencies
+    run: |
+      pip install pytest pytest-asyncio httpx
+
+  # --- Verify setup ---
+  - name: Verify setup
+    run: |
+      node --version
+      npm --version
+      python --version
+      echo "✅ Copilot dev environment ready"

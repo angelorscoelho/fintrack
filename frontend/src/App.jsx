@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, lazy, Suspense } from 'react'
-import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useSwipeable } from 'react-swipeable'
 import { Toaster } from 'sonner'
 import { Header } from '@/components/layout/Header'
@@ -19,8 +19,8 @@ const AlertQueue = lazy(() => import('@/pages/AlertQueue'))
 const MerchantIndex = lazy(() => import('@/pages/MerchantIndex'))
 const MerchantProfile = lazy(() => import('@/pages/MerchantProfile'))
 const ReportsPage = lazy(() => import('@/pages/ReportsPage'))
-const Transactions = lazy(() => import('@/pages/Transactions'))
-const ScoreEvolution = lazy(() => import('@/pages/ScoreEvolution'))
+const TransactionsPage = lazy(() => import('@/pages/TransactionsPage'))
+const BudgetPage = lazy(() => import('@/pages/BudgetPage'))
 
 function PageFallback() {
   return (
@@ -123,11 +123,12 @@ export default function App() {
               }
             />
             <Route path="alerts" element={<AlertQueue isDark={isDark} />} />
+            <Route path="transactions" element={<TransactionsPage />} />
             <Route path="merchants" element={<MerchantIndex />} />
             <Route path="merchants/:nif" element={<MerchantProfile />} />
             <Route path="reports" element={<ReportsPage />} />
-            <Route path="transactions" element={<Transactions />} />
-            <Route path="score-evolution" element={<ScoreEvolution />} />
+            <Route path="budget" element={<BudgetPage />} />
+            <Route path="dashboard" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
       </main>
