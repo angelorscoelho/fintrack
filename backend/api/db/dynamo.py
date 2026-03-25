@@ -8,7 +8,7 @@ from typing import Any, Optional, Tuple, List
 import boto3
 from boto3.dynamodb.conditions import Key
 
-from shared.thresholds import SAR_THRESHOLD
+from shared.project_constants import SAR_THRESHOLD
 
 logger = logging.getLogger(__name__)
 

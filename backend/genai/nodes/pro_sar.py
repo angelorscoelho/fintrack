@@ -11,16 +11,21 @@ import google.generativeai as genai
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from backend.genai.graph import TransactionState
+from shared.project_constants import (
+    GEMINI_PRO_MODEL,
+    GEMINI_PRO_MAX_TOKENS,
+    GEMINI_PRO_TEMPERATURE,
+)
 
 logger = logging.getLogger(__name__)
 
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY", ""))
 
 _pro_model = genai.GenerativeModel(
-    model_name="gemini-1.5-pro-latest",
+    model_name=GEMINI_PRO_MODEL,
     generation_config=genai.types.GenerationConfig(
-        temperature=0.2,           # Slight creativity for natural language drafting
-        max_output_tokens=2048,    # SAR needs space
+        temperature=GEMINI_PRO_TEMPERATURE,
+        max_output_tokens=GEMINI_PRO_MAX_TOKENS,
     ),
 )
 
