@@ -54,8 +54,8 @@ function ScoreBadge({ score }) {
 function SortIcon({ column }) {
   if (!column.getIsSorted()) return <ChevronsUpDown className="h-3 w-3 text-muted-foreground" />
   return column.getIsSorted() === 'desc'
-    ? <ChevronDown className="h-3 w-3 text-blue-600" />
-    : <ChevronUp className="h-3 w-3 text-blue-600" />
+    ? <ChevronDown className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+    : <ChevronUp className="h-3 w-3 text-blue-600 dark:text-blue-400" />
 }
 
 function InlineActionButton({ icon: Icon, title, className, loading, onClick }) {
