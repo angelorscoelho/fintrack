@@ -32,6 +32,7 @@ import { pt } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { AlertDetail } from '@/components/AlertDetail'
 import { ErrorBoundary } from '@/components/feedback/ErrorBoundary'
+import { getScoreVariant, getScoreBadgeBg } from '@/lib/thresholds'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -47,8 +48,8 @@ const STATUS_CONFIG = {
 
 function ScoreBadge({ score }) {
   const s = Number(score || 0)
-  const variant = s > 0.90 ? 'destructive' : s >= 0.70 ? 'warning' : 'outline'
-  const bg = s > 0.90 ? 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/40 dark:text-red-300 dark:border-red-800' : s >= 0.70 ? 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800' : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+  const variant = getScoreVariant(s)
+  const bg = getScoreBadgeBg(s)
   return <Badge variant={variant} className={`font-mono text-xs ${bg}`}>{(s * 100).toFixed(1)}%</Badge>
 }
 

@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Globe, AlertTriangle } from 'lucide-react'
 import { safeFetch } from '@/lib/api'
+import { getGeoMapColor } from '@/lib/thresholds'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -31,9 +32,7 @@ const MARKER_RADIUS_MAX = 30
 
 /** Colour ramp based on average anomaly score for the cluster. */
 function scoreColor(avgScore) {
-  if (avgScore > 0.90) return '#ef4444' // red-500  — critical
-  if (avgScore >= 0.70) return '#f59e0b' // amber-500 — warning
-  return '#64748b' // slate-500 — normal
+  return getGeoMapColor(avgScore)
 }
 
 /**
