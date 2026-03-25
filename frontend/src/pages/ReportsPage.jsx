@@ -58,7 +58,7 @@ const columns = [
       const v = getValue()
       if (!v) return '—'
       try {
-        return format(new Date(v), 'dd MMM yyyy HH:mm')
+        return format(new Date(v), 'MMM dd, yyyy HH:mm')
       } catch {
         return v
       }
@@ -67,6 +67,10 @@ const columns = [
   {
     accessorKey: 'merchant_nif',
     header: 'Merchant NIF',
+    cell: ({ getValue }) => {
+      const v = getValue()
+      return v ? <span className="font-mono text-xs">{v}</span> : '—'
+    },
   },
   {
     accessorKey: 'anomaly_score',
