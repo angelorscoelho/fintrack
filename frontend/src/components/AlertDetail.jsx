@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ResolutionPanel } from './ResolutionPanel'
 import { SARExportButton } from './reports/SARExportButton'
+import { ErrorBoundary } from '@/components/feedback/ErrorBoundary'
 import { AlertTriangle, Clock, Globe, Cpu, FileText, ChevronDown, ChevronUp } from 'lucide-react'
 import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
@@ -163,8 +164,10 @@ export function AlertDetail({ alert, open, onClose, onResolved }) {
             <DataRow icon={Clock} label="Transactions (10min)" value={alert.transactions_last_10min} />
           </div>
 
-          {/* XAI Panel — null-guarded */}
-          <XAIPanel explanation={explanation} />
+          {/* XAI Panel — null-guarded + error boundary */}
+          <ErrorBoundary>
+            <XAIPanel explanation={explanation} />
+          </ErrorBoundary>
 
           {/* SAR Panel — null-guarded */}
           <SARPanel

@@ -31,6 +31,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { pt } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { AlertDetail } from '@/components/AlertDetail'
+import { ErrorBoundary } from '@/components/feedback/ErrorBoundary'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -513,11 +514,13 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
                   {row.getIsExpanded() && (
                     <tr>
                       <td colSpan={columns.length}>
-                        <ExpandedRowPanel
-                          alert={row.original}
-                          onOpenDetail={setDetailAlert}
-                          onResolved={() => onRefetch && onRefetch()}
-                        />
+                        <ErrorBoundary>
+                          <ExpandedRowPanel
+                            alert={row.original}
+                            onOpenDetail={setDetailAlert}
+                            onResolved={() => onRefetch && onRefetch()}
+                          />
+                        </ErrorBoundary>
                       </td>
                     </tr>
                   )}
