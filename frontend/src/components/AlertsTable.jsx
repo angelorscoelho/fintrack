@@ -56,14 +56,14 @@ const COLUMNS = [
     accessorKey: 'amount',
     header: 'Amount',
     cell: ({ getValue }) => (
-      <span className="font-semibold text-slate-800">€{Number(getValue() || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span className="font-semibold text-slate-800 dark:text-slate-200">€{Number(getValue() || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
     ),
   },
   {
     accessorKey: 'category',
     header: 'Category',
     cell: ({ getValue }) => (
-      <span className="text-xs capitalize text-slate-600">{getValue()?.replace(/_/g, ' ')}</span>
+      <span className="text-xs capitalize text-slate-600 dark:text-slate-400">{getValue()?.replace(/_/g, ' ')}</span>
     ),
   },
   {
@@ -127,7 +127,7 @@ export function AlertsTable({ data, isLoading, onRowClick }) {
                 {hg.headers.map(h => (
                   <th
                     key={h.id}
-                    className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide"
+                    className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide"
                   >
                     <button
                       className="flex items-center gap-1 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
@@ -141,7 +141,7 @@ export function AlertsTable({ data, isLoading, onRowClick }) {
               </tr>
             ))}
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {table.getRowModel().rows.map(row => (
               <tr
                 key={row.id}

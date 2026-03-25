@@ -476,7 +476,7 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
                   {hg.headers.map((h) => (
                     <th
                       key={h.id}
-                      className="px-3 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide"
+                      className="px-3 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide"
                       style={{ width: h.getSize() }}
                     >
                       {h.isPlaceholder ? null : h.column.getCanSort() ? (
@@ -495,12 +495,12 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
                 </tr>
               ))}
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {pageRows.map((row, idx) => (
                 <Fragment key={row.id}>
                   <tr
                     className={`transition-colors cursor-pointer ${
-                      idx === focusedRowIndex ? 'bg-blue-50/70 dark:bg-blue-900/30 ring-1 ring-inset ring-blue-200 dark:ring-blue-700' : 'hover:bg-slate-50/50 dark:hover:bg-slate-800/50'
+                      idx === focusedRowIndex ? 'bg-blue-50/70 dark:bg-blue-900/30 ring-1 ring-inset ring-blue-200 dark:ring-blue-800' : 'hover:bg-slate-50/50 dark:hover:bg-slate-800/50'
                     } ${row.getIsExpanded() ? 'bg-slate-50 dark:bg-slate-800' : ''}`}
                     onClick={() => row.toggleExpanded()}
                   >

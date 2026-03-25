@@ -395,14 +395,14 @@ export default function ReportsPage() {
           </Button>
         </div>
       ) : (
-        <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden">
+        <div className="rounded-lg border bg-white dark:bg-slate-900 dark:border-slate-700 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 {table.getHeaderGroups().map((hg) => (
                   <tr key={hg.id} className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
                     {hg.headers.map((header) => (
-                      <th key={header.id} className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-300">
+                      <th key={header.id} className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-400">
                         {header.isPlaceholder
                           ? null
                           : flexRender(header.column.columnDef.header, header.getContext())}

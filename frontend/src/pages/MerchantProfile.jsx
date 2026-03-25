@@ -238,7 +238,7 @@ export default function MerchantProfile() {
 
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold font-mono text-slate-800">{nif}</h1>
+            <h1 className="text-2xl font-bold font-mono text-slate-800 dark:text-slate-200">{nif}</h1>
             <div className="flex items-center gap-3">
               <Badge className={`${riskLevel.color} text-xs`}>{riskLevel.label}</Badge>
               <span className="text-xs text-slate-500">
@@ -324,7 +324,7 @@ export default function MerchantProfile() {
 
       {/* SECTION 3 — RiskSignals */}
       <div>
-        <h2 className="text-sm font-semibold text-slate-700 mb-3">Risk Signals</h2>
+        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Risk Signals</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {riskSignals.map((signal) => {
             const sev = getSignalSeverity(signal.severity)
@@ -334,9 +334,9 @@ export default function MerchantProfile() {
                 <CardContent className="p-4 space-y-2">
                   <div className="flex items-center gap-2">
                     <SignalIcon className={`h-4 w-4 ${sev.color}`} />
-                    <span className="text-xs font-semibold text-slate-700">{signal.name}</span>
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{signal.name}</span>
                   </div>
-                  <p className="text-sm font-medium text-slate-800">{signal.value}</p>
+                  <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{signal.value}</p>
                   <Badge variant={sev.variant} className="text-xs">{signal.severity}</Badge>
                 </CardContent>
               </Card>
@@ -353,23 +353,23 @@ export default function MerchantProfile() {
             <table className="w-full text-sm">
               <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                 <tr>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600">Date/Time</th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-slate-600">Amount</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600">Score</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600">Status</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600">Category</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 dark:text-slate-400">Date/Time</th>
+                  <th className="px-3 py-2 text-right text-xs font-semibold text-slate-600 dark:text-slate-400">Amount</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 dark:text-slate-400">Score</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 dark:text-slate-400">Status</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 dark:text-slate-400">Category</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {recentTx.map((tx) => {
                   const cfg = STATUS_CONFIG[tx.status] ?? STATUS_CONFIG.NORMAL
                   const StatusIcon = cfg.Icon
                   return (
-                    <tr key={tx.transaction_id} className="hover:bg-slate-50/50">
-                      <td className="px-3 py-2 text-xs text-slate-600">
+                    <tr key={tx.transaction_id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                      <td className="px-3 py-2 text-xs text-slate-600 dark:text-slate-400">
                         {tx.timestamp ? format(new Date(tx.timestamp), 'dd/MM/yyyy HH:mm', { locale: pt }) : '–'}
                       </td>
-                      <td className="px-3 py-2 text-right font-semibold text-slate-800">
+                      <td className="px-3 py-2 text-right font-semibold text-slate-800 dark:text-slate-200">
                         €{Number(tx.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                       <td className="px-3 py-2"><ScoreBadge score={tx.anomaly_score} /></td>
@@ -378,7 +378,7 @@ export default function MerchantProfile() {
                           <StatusIcon className="h-3 w-3" />{cfg.label}
                         </Badge>
                       </td>
-                      <td className="px-3 py-2 text-xs text-slate-600 lowercase">
+                      <td className="px-3 py-2 text-xs text-slate-600 dark:text-slate-400 lowercase">
                         {tx.category?.replace(/_/g, ' ')}
                       </td>
                     </tr>
@@ -402,8 +402,8 @@ export default function MerchantProfile() {
 
 function StatCard({ label, value, highlight = false }) {
   return (
-    <div className={`rounded-lg border p-3 ${highlight ? 'border-amber-200 bg-amber-50 dark:border-amber-700 dark:bg-amber-900/30' : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900'}`}>
-      <p className="text-xs text-slate-500">{label}</p>
+    <div className={`rounded-lg border p-3 ${highlight ? 'border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/30' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900'}`}>
+      <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
       <p className={`text-lg font-bold ${highlight ? 'text-amber-800 dark:text-amber-300' : 'text-slate-800 dark:text-slate-200'}`}>{value}</p>
     </div>
   )

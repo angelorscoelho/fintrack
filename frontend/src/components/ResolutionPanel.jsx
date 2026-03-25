@@ -40,7 +40,7 @@ export function ResolutionPanel({ alert, onResolved }) {
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-slate-700">Resolution</h3>
+      <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Resolution</h3>
       <div className="flex flex-wrap gap-2">
         {ACTIONS.map((action) => {
           const Icon = action.icon
