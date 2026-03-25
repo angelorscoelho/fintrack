@@ -199,3 +199,17 @@ Before marking your PR as ready for review, verify:
 - [ ] Filters synchronized with URL query params (where applicable)
 - [ ] Mock data distribution is realistic (not implausibly high fraud rates)
 - [ ] Component tested at 1280px and 1920px viewport width
+
+
+## Conflict Resolution Protocol
+
+When you detect that your branch conflicts with another open PR:
+
+1. **Do NOT force push** to main or any other branch
+2. Run `git fetch origin main && git rebase origin/main` on your branch
+3. If conflicts exist in files also modified by another open PR, 
+   leave a comment tagging the human reviewer: 
+   "@ângelo Conflict detected with #XXX — please advise which changes to keep"
+4. Never silently discard changes from a conflicting PR
+5. After rebasing successfully, push with `git push --force-with-lease`
+   (never plain `--force`)
