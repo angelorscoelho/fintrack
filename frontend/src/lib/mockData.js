@@ -1,6 +1,15 @@
 /**
  * Mock data for FinTrack AI dashboard — used as fallback when the API is unreachable.
  * Data mirrors the structure produced by backend/api/scripts/seed_dynamodb.py.
+ *
+ * Distribution (realistic fraud rate ≤3%, lognormal scores):
+ *   - 2  CONFIRMED_FRAUD  (RESOLVED, score 0.82–0.97)  → fraud_rate ≈ 2.5%
+ *   - 4  PENDING_REVIEW   score > 0.90  (critical)
+ *   - 8  PENDING_REVIEW   score 0.70–0.90  (high)
+ *   - 2  FALSE_POSITIVE   (resolved, score 0.70–0.82)
+ *   - 64 NORMAL           lognormal scores (median ≈ 0.02)
+ *
+ * Targets: avg_score 10–18 %, fraud_rate 1.5–3.5 %
  */
 
 const CATEGORIES = ['retail', 'online', 'restaurant', 'gas_station', 'supermarket', 'electronics', 'travel', 'pharmacy']
@@ -8,7 +17,7 @@ const COUNTRIES = ['PT', 'ES', 'FR', 'DE', 'IT', 'GB', 'US', 'BR']
 const NIF_PREFIXES = ['PT', 'ES', 'FR', 'DE', 'IT']
 const IP_PREFIXES = ['185.15.', '91.22.', '78.34.', '186.20.', '201.45.', '54.23.']
 
-/* Deterministic pseudo-random number generator (mulberry32) */
+/* ── Deterministic pseudo-random number generator (mulberry32) ──────────── */
 function mulberry32(seed) {
   return function () {
     let t = (seed += 0x6d2b79f5)
@@ -32,10 +41,43 @@ function randInt(min, max) {
   return Math.floor(randRange(min, max + 1))
 }
 
+/* ── Box-Muller transform → standard normal variate ─────────────────────── */
+function boxMuller() {
+  const u1 = Math.max(rand(), 1e-10) // avoid log(0)
+  const u2 = rand()
+  return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2)
+}
+
+/* ── Lognormal score for NORMAL transactions (clipped to [0.001, 0.35]) ── */
+function lognormalScore() {
+  const mu = -4.5   // median ≈ exp(−4.5) ≈ 0.011
+  const sigma = 0.7  // moderate spread
+  const raw = Math.exp(mu + sigma * boxMuller())
+  return Math.round(Math.max(0.001, Math.min(raw, 0.35)) * 1000) / 1000
+}
+
 function generateMockAlerts(count = 80) {
   const now = Date.now()
   const alerts = []
 
+  /* ── Controlled slot assignment ─────────────────────────────────────────
+   * Guarantees exact counts that satisfy the acceptance criteria.
+   */
+  const slots = []
+  const addN = (type, n) => { for (let k = 0; k < n; k++) slots.push(type) }
+  addN('CONFIRMED_FRAUD', 2)   // 2/80 = 2.5 %  (fraud_rate)
+  addN('CRITICAL_PENDING', 4)  // PENDING_REVIEW, score > 0.90
+  addN('HIGH_PENDING', 8)      // PENDING_REVIEW, score 0.70–0.90
+  addN('FALSE_POSITIVE', 2)    // resolved as FP, score 0.70–0.82
+  addN('NORMAL', count - slots.length) // 64 normal (lognormal scores)
+
+  // Fisher-Yates shuffle with deterministic PRNG
+  for (let k = slots.length - 1; k > 0; k--) {
+    const j = Math.floor(rand() * (k + 1))
+    ;[slots[k], slots[j]] = [slots[j], slots[k]]
+  }
+
+  /* ── Generate transactions ──────────────────────────────────────────── */
   for (let i = 0; i < count; i++) {
     const hoursAgo = randRange(0, 24)
     const ts = new Date(now - hoursAgo * 3600 * 1000)
@@ -55,24 +97,33 @@ function generateMockAlerts(count = 80) {
 
     const ip = `${pick(IP_PREFIXES)}${randInt(1, 255)}.${randInt(1, 255)}`
 
-    let anomalyScore, status
-    const roll = rand()
-    if (roll < 0.6) {
-      anomalyScore = Math.round(randRange(0.0, 0.5) * 1000) / 1000
-      status = 'NORMAL'
-    } else if (roll < 0.8) {
-      anomalyScore = Math.round(randRange(0.5, 0.7) * 1000) / 1000
-      status = 'PENDING_REVIEW'
-    } else if (roll < 0.93) {
-      anomalyScore = Math.round(randRange(0.7, 0.9) * 1000) / 1000
-      status = 'PENDING_REVIEW'
-    } else {
-      anomalyScore = Math.round(randRange(0.9, 1.0) * 1000) / 1000
-      status = 'PENDING_REVIEW'
-    }
+    /* ── Score & status by slot type ──────────────────────────────────── */
+    let anomalyScore, status, resolutionType = null
+    const slot = slots[i]
 
-    if (status === 'PENDING_REVIEW' && rand() < 0.3) {
-      status = rand() < 0.5 ? 'RESOLVED' : 'FALSE_POSITIVE'
+    switch (slot) {
+      case 'NORMAL':
+        anomalyScore = lognormalScore()
+        status = 'NORMAL'
+        break
+      case 'HIGH_PENDING':
+        anomalyScore = Math.round(randRange(0.70, 0.90) * 1000) / 1000
+        status = 'PENDING_REVIEW'
+        break
+      case 'CRITICAL_PENDING':
+        anomalyScore = Math.round(randRange(0.90, 0.995) * 1000) / 1000
+        status = 'PENDING_REVIEW'
+        break
+      case 'CONFIRMED_FRAUD':
+        anomalyScore = Math.round(randRange(0.82, 0.97) * 1000) / 1000
+        status = 'RESOLVED'
+        resolutionType = 'CONFIRMED_FRAUD'
+        break
+      case 'FALSE_POSITIVE':
+        anomalyScore = Math.round(randRange(0.70, 0.82) * 1000) / 1000
+        status = 'FALSE_POSITIVE'
+        resolutionType = 'FALSE_POSITIVE'
+        break
     }
 
     const sarDraft = anomalyScore >= 0.7
@@ -108,7 +159,7 @@ function generateMockAlerts(count = 80) {
       status,
       processed_at: new Date(ts.getTime() + randInt(1, 30) * 1000).toISOString(),
       resolved_at: ['RESOLVED', 'FALSE_POSITIVE'].includes(status) ? new Date(ts.getTime() + 3600000).toISOString() : null,
-      resolution_type: status === 'RESOLVED' ? 'CONFIRMED_FRAUD' : status === 'FALSE_POSITIVE' ? 'FALSE_POSITIVE' : null,
+      resolution_type: resolutionType,
       analyst_notes: null,
       ai_explanation: aiExplanation,
       sar_draft: sarDraft,

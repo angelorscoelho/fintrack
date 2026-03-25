@@ -55,14 +55,15 @@ COUNTRY_WEIGHTS = {
 COUNTRIES = list(COUNTRY_WEIGHTS.keys())
 COUNTRY_PROBS = list(COUNTRY_WEIGHTS.values())
 
-# Anomaly type distribution (must sum to 0.30)
+# Anomaly type distribution — realistic fraud rate ≈ 2 % (Visa/MC: 0.1–0.5 %)
+# We use 2 % for PoC so the ML model has enough positive samples to train.
 ANOMALY_DISTRIBUTION = {
-    "velocity_fraud":       0.08,
-    "amount_spike":         0.08,
-    "geo_hopping":          0.07,
-    "invoice_manipulation": 0.07,
+    "velocity_fraud":       0.005,
+    "amount_spike":         0.005,
+    "geo_hopping":          0.005,
+    "invoice_manipulation": 0.005,
 }
-NORMAL_RATIO = 0.70
+NORMAL_RATIO = 0.98
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

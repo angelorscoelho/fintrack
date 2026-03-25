@@ -51,24 +51,31 @@ def generate_transaction(index: int, hours_ago: float = 0) -> dict:
     # Timestamps
     timestamp = datetime.now(timezone.utc) - timedelta(hours=hours_ago, minutes=random.randint(0, 59))
     
-    # Anomaly score - most transactions are normal, some are suspicious
+    # Anomaly score — realistic distribution (≈2 % fraud rate)
+    # Most transactions are normal with very low scores (lognormal-like).
     score = random.random()
-    if score < 0.7:
-        anomaly_score = round(random.uniform(0.0, 0.5), 3)  # Normal
+    if score < 0.80:
+        anomaly_score = round(random.uniform(0.0, 0.15), 3)    # Normal — low risk
         status = "NORMAL"
-    elif score < 0.9:
-        anomaly_score = round(random.uniform(0.5, 0.7), 3)  # Suspicious
-        status = "PENDING_REVIEW"
-    elif score < 0.97:
-        anomaly_score = round(random.uniform(0.7, 0.9), 3)  # Flagged
+    elif score < 0.90:
+        anomaly_score = round(random.uniform(0.15, 0.50), 3)   # Normal — slightly elevated
+        status = "NORMAL"
+    elif score < 0.975:
+        anomaly_score = round(random.uniform(0.70, 0.90), 3)   # Flagged — high
         status = "PENDING_REVIEW"
     else:
-        anomaly_score = round(random.uniform(0.9, 1.0), 3)  # Critical
+        anomaly_score = round(random.uniform(0.90, 1.0), 3)    # Critical
         status = "PENDING_REVIEW"
     
     # Resolved some percentage of flagged transactions
-    if status == "PENDING_REVIEW" and random.random() < 0.3:
-        status = random.choice(["RESOLVED", "FALSE_POSITIVE"])
+    resolution_type = None
+    if status == "PENDING_REVIEW" and random.random() < 0.15:
+        if random.random() < 0.35:
+            status = "RESOLVED"
+            resolution_type = "CONFIRMED_FRAUD"
+        else:
+            status = "FALSE_POSITIVE"
+            resolution_type = "FALSE_POSITIVE"
     
     # Create item matching Lambda handler output
     item = {
