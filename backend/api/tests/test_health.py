@@ -1,5 +1,5 @@
 """Tests for Gemini health-check endpoints."""
-import asyncio
+import time
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -45,7 +45,6 @@ def mock_generate_flash_error():
 def mock_generate_timeout():
     """Patch so model calls block beyond the timeout."""
     def slow_generate(*args, **kwargs):
-        import time
         time.sleep(10)
 
     mock_model_instance = MagicMock()

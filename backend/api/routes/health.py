@@ -15,10 +15,8 @@ router = APIRouter(tags=["Health"])
 _HEALTH_PROMPT = "Responde apenas com OK"
 _TIMEOUT_SECONDS = 5
 
-
-def _configure_gemini() -> None:
-    """Configure the Gemini API key (idempotent)."""
-    genai.configure(api_key=settings.gemini_api_key)
+# Configure once at module load (same pattern as genai/nodes/*.py)
+genai.configure(api_key=settings.gemini_api_key)
 
 
 def _ping_model(model_name: str) -> tuple[str, float]:
@@ -56,8 +54,6 @@ async def gemini_health():
     Health-check for Gemini Flash and Pro models.
     Each model receives a trivial prompt with a 5 s timeout.
     """
-    _configure_gemini()
-
     flash_status, flash_latency, flash_err = await _check_model(
         "gemini-1.5-flash-latest",
     )
@@ -82,8 +78,6 @@ async def get_gemini_status() -> dict:
     Return a summary dict suitable for inclusion in the main /health response.
     Re-uses the same logic as the dedicated endpoint.
     """
-    _configure_gemini()
-
     flash_status, _, flash_err = await _check_model("gemini-1.5-flash-latest")
     pro_status, _, pro_err = await _check_model("gemini-1.5-pro-latest")
 
