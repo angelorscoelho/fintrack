@@ -103,6 +103,7 @@ class AlertListResponse(BaseModel):
 
 class StatsResponse(BaseModel):
     total: int
+    last_24h: int = 0
     pending: int
     critical: int
     resolved: int

@@ -184,7 +184,10 @@ function generateMockAlerts(count = 80) {
 export const MOCK_ALERTS = generateMockAlerts(80)
 
 export const MOCK_STATS = (() => {
+  const now = Date.now()
+  const cutoff = now - 86400 * 1000
   const total = MOCK_ALERTS.length
+  const last24h = MOCK_ALERTS.filter((a) => new Date(a.timestamp).getTime() >= cutoff).length
   const pending = MOCK_ALERTS.filter((a) => a.status === 'PENDING_REVIEW').length
   const critical = MOCK_ALERTS.filter(
     (a) => Number(a.anomaly_score) > SAR_THRESHOLD && a.status === 'PENDING_REVIEW'
@@ -197,6 +200,7 @@ export const MOCK_STATS = (() => {
 
   return {
     total,
+    last_24h: last24h,
     pending,
     critical,
     resolved,

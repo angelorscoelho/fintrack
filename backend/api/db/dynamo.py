@@ -2,6 +2,7 @@
 import json
 import logging
 import os
+from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any, Optional, Tuple, List
 
@@ -164,8 +165,8 @@ async def get_stats() -> dict:
     try:
         items: List[dict] = []
         scan_kwargs = {
-            "ProjectionExpression": "anomaly_score, #s, resolution_type",
-            "ExpressionAttributeNames": {"#s": "status"},
+            "ProjectionExpression": "anomaly_score, #s, resolution_type, #ts",
+            "ExpressionAttributeNames": {"#s": "status", "#ts": "timestamp"},
         }
         while True:
             result = table.scan(**scan_kwargs)
@@ -189,16 +190,30 @@ async def get_stats() -> dict:
         fp_rate = round(fp / max(resolved + fp, 1), 3)
         avg_score = round(sum(scores) / max(len(scores), 1), 3)
 
+        # Sliding 24-hour window count
+        cutoff = datetime.now(timezone.utc).timestamp() - 86400
+        last_24h = 0
+        for i in items:
+            ts_str = i.get("timestamp")
+            if ts_str:
+                try:
+                    ts_dt = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+                    if ts_dt.timestamp() >= cutoff:
+                        last_24h += 1
+                except (ValueError, TypeError):
+                    pass
+
         # Rate limits from rate_limiter (not available in API container)
         rate_limits = {}
 
-        return {"total": total, "pending": pending, "critical": critical,
+        return {"total": total, "last_24h": last_24h,
+                "pending": pending, "critical": critical,
                 "resolved": resolved, "false_positives": fp,
                 "rate_limited": rl,
                 "fp_rate": fp_rate, "avg_score": avg_score,
                 "rate_limits": rate_limits}
     except Exception as exc:
         logger.error(f"Stats query failed: {exc}")
-        return {"total": 0, "pending": 0, "critical": 0, "resolved": 0,
+        return {"total": 0, "last_24h": 0, "pending": 0, "critical": 0, "resolved": 0,
                 "false_positives": 0, "rate_limited": 0,
                 "fp_rate": 0.0, "avg_score": 0.0, "rate_limits": {}}
