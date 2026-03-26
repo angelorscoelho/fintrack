@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { useLanguage } from '@/i18n/LanguageContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -43,6 +44,7 @@ function timeAgo(timestamp) {
 }
 
 export function LiveAlertFeed() {
+  const { t } = useLanguage()
   const [alerts, setAlerts] = useState([])
   const [sseConnected, setSseConnected] = useState(false)
   const listRef = useRef(null)
@@ -104,13 +106,13 @@ export function LiveAlertFeed() {
           <CardTitle className="text-sm font-semibold flex items-center justify-between">
             <span className="flex items-center gap-2">
               <Radio className="h-4 w-4 text-muted-foreground" />
-              High Risk Transactions
+              {t('dashboard.highRiskTransactions')}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help shrink-0" />
                 </TooltipTrigger>
                 <TooltipContent side="top" className="max-w-xs">
-                  <p>Real-time alerts for transactions with high anomaly scores requiring analyst review</p>
+                  <p>{t('dashboard.highRiskTooltip')}</p>
                 </TooltipContent>
               </Tooltip>
             </span>
@@ -133,7 +135,7 @@ export function LiveAlertFeed() {
               ))
             ) : alerts.length === 0 ? (
               <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-                No recent alerts
+                {t('dashboard.noRecentAlerts')}
               </div>
             ) : (
               alerts.map((alert) => {
@@ -165,14 +167,14 @@ export function LiveAlertFeed() {
                           variant="ghost"
                           size="sm"
                           className="text-xs shrink-0 h-7"
-                          aria-label="Ver detalhes desta transação"
+                          aria-label={t('dashboard.viewDetails')}
                           onClick={() => navigate('/alerts', { state: { alertId: alert.transaction_id } })}
                         >
-                          View
+                          {t('actions.view')}
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent side="top">
-                        <p>Ver detalhes desta transação</p>
+                        <p>{t('dashboard.viewDetails')}</p>
                       </TooltipContent>
                     </Tooltip>
                   </div>
