@@ -150,7 +150,17 @@
     "dateFrom": "Date from",
     "dateTo": "Date to",
     "page": "Page {current} of {total} · {count} total",
-    "notes": "Notes"
+    "notes": "Notes",
+    "copyId": "Copy Transaction ID",
+    "copiedId": "Copied!",
+    "originCountry": "Origin Country",
+    "destinationCountry": "Destination Country",
+    "sections": {
+      "identification": "Identification",
+      "financialData": "Financial Data",
+      "riskAnalysis": "Risk Analysis",
+      "context": "Context"
+    }
   },
   "reports": {
     "title": "SAR Reports",

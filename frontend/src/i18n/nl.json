@@ -148,7 +148,17 @@
     "dateFrom": "Datum van",
     "dateTo": "Datum tot",
     "page": "Pagina {current} van {total} · {count} totaal",
-    "notes": "Notities"
+    "notes": "Notities",
+    "copyId": "Transactie-ID kopiëren",
+    "copiedId": "Gekopieerd!",
+    "originCountry": "Land van herkomst",
+    "destinationCountry": "Bestemmingsland",
+    "sections": {
+      "identification": "Identificatie",
+      "financialData": "Financiële gegevens",
+      "riskAnalysis": "Risicoanalyse",
+      "context": "Context"
+    }
   },
   "reports": {
     "title": "SAR-rapporten",
