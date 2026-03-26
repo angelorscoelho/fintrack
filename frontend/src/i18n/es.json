@@ -148,7 +148,17 @@
     "dateFrom": "Fecha desde",
     "dateTo": "Fecha hasta",
     "page": "Página {current} de {total} · {count} en total",
-    "notes": "Notas"
+    "notes": "Notas",
+    "copyId": "Copiar ID de Transacción",
+    "copiedId": "¡Copiado!",
+    "originCountry": "País de Origen",
+    "destinationCountry": "País de Destino",
+    "sections": {
+      "identification": "Identificación",
+      "financialData": "Datos Financieros",
+      "riskAnalysis": "Análisis de Riesgo",
+      "context": "Contexto"
+    }
   },
   "reports": {
     "title": "Informes SAR",
