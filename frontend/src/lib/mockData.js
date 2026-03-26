@@ -184,9 +184,11 @@ export const MOCK_STATS = (() => {
   const critical = MOCK_ALERTS.filter((a) => Number(a.anomaly_score) > 0.9).length
   const resolved = MOCK_ALERTS.filter((a) => a.status === 'RESOLVED').length
   const falsePositives = MOCK_ALERTS.filter((a) => a.status === 'FALSE_POSITIVE').length
+  const confirmedFraud = MOCK_ALERTS.filter((a) => a.resolution_type === 'CONFIRMED_FRAUD').length
   const rateLimited = 0
   const fpRate = resolved + falsePositives > 0 ? falsePositives / (resolved + falsePositives) : 0
   const avgScore = total > 0 ? MOCK_ALERTS.reduce((s, a) => s + Number(a.anomaly_score), 0) / total : 0
+  const fraudRate = total > 0 ? confirmedFraud / total : 0
 
   return {
     total,
@@ -197,6 +199,7 @@ export const MOCK_STATS = (() => {
     rate_limited: rateLimited,
     fp_rate: Math.round(fpRate * 1000) / 1000,
     avg_score: Math.round(avgScore * 1000) / 1000,
+    fraud_rate: Math.round(fraudRate * 1000) / 1000,
     rate_limits: {},
   }
 })()
