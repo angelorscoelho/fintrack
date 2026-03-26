@@ -186,7 +186,9 @@ export const MOCK_ALERTS = generateMockAlerts(80)
 export const MOCK_STATS = (() => {
   const total = MOCK_ALERTS.length
   const pending = MOCK_ALERTS.filter((a) => a.status === 'PENDING_REVIEW').length
-  const critical = MOCK_ALERTS.filter((a) => Number(a.anomaly_score) > SAR_THRESHOLD).length
+  const critical = MOCK_ALERTS.filter(
+    (a) => Number(a.anomaly_score) > SAR_THRESHOLD && a.status === 'PENDING_REVIEW'
+  ).length
   const resolved = MOCK_ALERTS.filter((a) => a.status === 'RESOLVED').length
   const falsePositives = MOCK_ALERTS.filter((a) => a.status === 'FALSE_POSITIVE').length
   const rateLimited = 0

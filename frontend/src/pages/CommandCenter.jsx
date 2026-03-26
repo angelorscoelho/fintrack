@@ -94,12 +94,12 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
           route="/alerts"
         />
         <KpiNavigationCard
-          title="Critical Alerts"
+          title="Critical Unreviewed"
           value={critical}
           icon={ShieldAlert}
           variant={critical > 0 ? 'critical' : 'default'}
           loading={statsLoading}
-          tooltip="Number of high-risk transactions requiring immediate analyst review"
+          tooltip="Critical alerts (score > 90%) still pending review"
           route="/alerts"
         />
         <KpiNavigationCard
