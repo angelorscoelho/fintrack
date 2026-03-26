@@ -1,11 +1,12 @@
 """
-FinTrack AI — Lambda Handler (v2)
-SQS trigger → ML score → persist DynamoDB → fire-and-forget GenAI microservice.
+FinTrack AI - Lambda Handler (v2)
+SQS trigger -> ML score -> persist DynamoDB -> fire-and-forget GenAI microservice.
 Rate limiting enforced via atomic DynamoDB counter before GenAI invocation.
 """
 import json
 import logging
 import os
+import time
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
@@ -98,12 +99,30 @@ def _process(payload: dict) -> None:
     logger.info(json.dumps({"event": "scored", "transaction_id": tid,
                              "score": score, "status": status}))
 
+    genai_invoked = False
+    genai_duration_ms = 0
+    genai_status = "skipped"
+
     if score >= XAI_THRESHOLD:
-        _maybe_invoke_genai(tid, score, payload)
+        genai_invoked = True
+        t0 = time.time()
+        genai_status = _maybe_invoke_genai(tid, score, payload)
+        genai_duration_ms = round((time.time() - t0) * 1000)
+
+    logger.info(json.dumps({
+        "transaction_id": tid,
+        "anomaly_score": score,
+        "genai_invoked": genai_invoked,
+        "genai_duration_ms": genai_duration_ms,
+        "genai_status": genai_status,
+    }))
 
 
-def _maybe_invoke_genai(tid: str, score: float, payload: dict) -> None:
-    """Check rate limit then fire-and-forget to GenAI microservice."""
+def _maybe_invoke_genai(tid: str, score: float, payload: dict) -> str:
+    """Check rate limit then fire-and-forget to GenAI microservice.
+
+    Returns a status string: 'success', 'error', or 'rate_limited'.
+    """
     # Flash rate limit check (all scores >= 0.70 use Flash)
     if not check_and_increment("flash"):
         logger.warning(json.dumps({"event": "rate_limited", "model": "flash", "tid": tid}))
@@ -113,7 +132,7 @@ def _maybe_invoke_genai(tid: str, score: float, payload: dict) -> None:
             ExpressionAttributeNames={"#s": "status"},
             ExpressionAttributeValues={":rl": "rate_limited", ":ps": "rate_limited"},
         )
-        return
+        return "rate_limited"
 
     # Pro rate limit check (only for score > 0.90)
     if score > SAR_THRESHOLD:
@@ -123,11 +142,14 @@ def _maybe_invoke_genai(tid: str, score: float, payload: dict) -> None:
             # Pass a flag so GenAI service skips Pro node
             payload = {**payload, "_skip_pro": True}
 
-    _fire_genai(tid, score, payload)
+    return _fire_genai(tid, score, payload)
 
 
-def _fire_genai(tid: str, score: float, payload: dict) -> None:
-    """HTTP POST to GenAI microservice. Non-blocking (timeout=2s)."""
+def _fire_genai(tid: str, score: float, payload: dict) -> str:
+    """HTTP POST to GenAI microservice. Non-blocking (timeout=2s).
+
+    Returns 'success' or 'error'.
+    """
     try:
         body = json.dumps({"transaction_id": tid, "anomaly_score": score, "payload": payload})
         req  = urllib.request.Request(
@@ -138,23 +160,8 @@ def _fire_genai(tid: str, score: float, payload: dict) -> None:
         )
         with urllib.request.urlopen(req, timeout=GENAI_INVOKE_TIMEOUT) as resp:
             logger.info(json.dumps({"event": "genai_invoked", "tid": tid, "http": resp.status}))
+        return "success"
     except Exception as exc:
         logger.warning(json.dumps({"event": "genai_invoke_failed", "tid": tid, "error": str(exc)}))
         # Non-fatal — record already persisted as PENDING_REVIEW
-</parameter>
-<task_progress>
-- [x] Create SSM parameter `/fintrack/gemini/api-key`
-- [x] Find GenAI service endpoint (memory bank confirmed: https://fintrack-genai.railway.app)
-- [x] Verify SSM parameter creation
-- [x] Verify Lambda environment variable GENAI_SERVICE_URL
-- [x] Step 2: Test Gemini API — key valid (429 rate limit = API responding)
-- [x] Step 3: Check CloudWatch Logs — Lambda failing with "model.pkl not found" (fixed later), last invocation 5 days ago
-- [x] Step 3: No Lambda invocations recently — sent test transaction
-- [x] Step 4: Lambda now processing — found "Float types not supported" error. Fix in handler.py (convert floats to Decimal)
-- [ ] Redeploy Lambda with fix
-- [ ] Re-test end-to-end flow
-- [ ] Step 5: Check DynamoDB for ai_explanation field
-- [ ] Step 6: Check FastAPI response format
-- [ ] Step 7: Inspect frontend component
-</task_progress>
-</write_to_file>
+        return "error"
