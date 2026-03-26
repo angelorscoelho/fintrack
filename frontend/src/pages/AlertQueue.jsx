@@ -4,6 +4,7 @@ import { AlertTriangle, Loader2 } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { safeFetch } from '@/lib/api'
+import { useLanguage } from '@/i18n/LanguageContext'
 import { EnhancedAlertsTable } from '@/components/alerts/EnhancedAlertsTable'
 import { BulkActionBar } from '@/components/alerts/BulkActionBar'
 import { FilterBar } from '@/components/alerts/FilterBar'
@@ -14,6 +15,7 @@ import { usePullToRefresh } from '@/hooks/usePullToRefresh'
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
 export default function AlertQueue({ isDark }) {
+  const { t } = useLanguage()
   const queryClient = useQueryClient()
   const clearSelectionRef = useRef(null)
 
@@ -92,8 +94,8 @@ export default function AlertQueue({ isDark }) {
         <div className="flex items-center gap-3">
           <AlertTriangle className="h-6 w-6 text-amber-500" />
           <div>
-            <h1 className="text-lg font-bold text-slate-800 dark:text-slate-200">Alert Queue</h1>
-            <p className="text-xs text-slate-500">{filteredAlerts.length} alerts</p>
+            <h1 className="text-lg font-bold text-slate-800 dark:text-slate-200">{t('alerts.title')}</h1>
+            <p className="text-xs text-slate-500">{filteredAlerts.length} {t('alerts.count')}</p>
           </div>
         </div>
       </div>
@@ -103,9 +105,9 @@ export default function AlertQueue({ isDark }) {
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription className="flex items-center justify-between">
-            <span>Error loading data. Please try again.</span>
+            <span>{t('feedback.errorLoading')}</span>
             <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-3 shrink-0">
-              Try again
+              {t('actions.tryAgain')}
             </Button>
           </AlertDescription>
         </Alert>
