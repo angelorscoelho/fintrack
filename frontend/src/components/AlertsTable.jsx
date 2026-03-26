@@ -33,77 +33,72 @@ function SortIcon({ column }) {
     : <ChevronUp className="h-3 w-3 text-blue-600" />
 }
 
-const COLUMNS = [
-  {
-    accessorKey: 'transaction_id',
-    header: () => useLanguage().t('columns.id'),
-    meta: { headerKey: 'columns.id' },
-    cell: ({ getValue }) => (
-      <span className="font-mono text-xs text-slate-400">{getValue()?.substring(0, 8)}…</span>
-    ),
-    enableSorting: false,
-  },
-  {
-    accessorKey: 'timestamp',
-    header: () => useLanguage().t('columns.dateTime'),
-    meta: { headerKey: 'columns.dateTime' },
-    cell: ({ getValue }) => getValue()
-      ? <span className="text-xs">{new Date(getValue()).toLocaleString('en-US')}</span>
-      : '–',
-  },
-  {
-    accessorKey: 'merchant_nif',
-    header: () => useLanguage().t('columns.nif'),
-    meta: { headerKey: 'columns.nif' },
-    cell: ({ getValue }) => <span className="font-mono text-xs">{getValue()}</span>,
-  },
-  {
-    accessorKey: 'amount',
-    header: () => useLanguage().t('columns.amount'),
-    meta: { headerKey: 'columns.amount' },
-    cell: ({ getValue }) => (
-      <span className="font-semibold text-slate-800 dark:text-slate-200">€{Number(getValue() || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-    ),
-  },
-  {
-    accessorKey: 'category',
-    header: () => useLanguage().t('columns.category'),
-    meta: { headerKey: 'columns.category' },
-    cell: ({ getValue }) => (
-      <span className="text-xs capitalize text-slate-600 dark:text-slate-400">{getValue()?.replace(/_/g, ' ')}</span>
-    ),
-  },
-  {
-    accessorKey: 'anomaly_score',
-    header: () => useLanguage().t('columns.score'),
-    meta: { headerKey: 'columns.score' },
-    cell: ({ getValue }) => <ScoreBadge score={getValue()} />,
-  },
-  {
-    accessorKey: 'status',
-    header: () => useLanguage().t('columns.status'),
-    meta: { headerKey: 'columns.status' },
-    cell: ({ getValue }) => {
-      const { t } = useLanguage()
-      const cfg = STATUS_CONFIG[getValue()] ?? STATUS_CONFIG.NORMAL
-      const StatusIcon = cfg.Icon
-      return (
-        <Badge variant={cfg.variant} className="text-xs gap-1">
-          <StatusIcon className="h-3 w-3" />{t(cfg.label)}
-        </Badge>
-      )
-    },
-    enableSorting: false,
-  },
-]
+function StatusCell({ getValue }) {
+  const { t } = useLanguage()
+  const cfg = STATUS_CONFIG[getValue()] ?? STATUS_CONFIG.NORMAL
+  const StatusIcon = cfg.Icon
+  return (
+    <Badge variant={cfg.variant} className="text-xs gap-1">
+      <StatusIcon className="h-3 w-3" />{t(cfg.label)}
+    </Badge>
+  )
+}
 
 export function AlertsTable({ data, isLoading, onRowClick }) {
   const { t } = useLanguage()
   const [sorting, setSorting] = useState([{ id: 'anomaly_score', desc: true }])
 
+  const columns = useMemo(() => [
+    {
+      accessorKey: 'transaction_id',
+      header: t('columns.id'),
+      cell: ({ getValue }) => (
+        <span className="font-mono text-xs text-slate-400">{getValue()?.substring(0, 8)}…</span>
+      ),
+      enableSorting: false,
+    },
+    {
+      accessorKey: 'timestamp',
+      header: t('columns.dateTime'),
+      cell: ({ getValue }) => getValue()
+        ? <span className="text-xs">{new Date(getValue()).toLocaleString('en-US')}</span>
+        : '–',
+    },
+    {
+      accessorKey: 'merchant_nif',
+      header: t('columns.nif'),
+      cell: ({ getValue }) => <span className="font-mono text-xs">{getValue()}</span>,
+    },
+    {
+      accessorKey: 'amount',
+      header: t('columns.amount'),
+      cell: ({ getValue }) => (
+        <span className="font-semibold text-slate-800 dark:text-slate-200">€{Number(getValue() || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      ),
+    },
+    {
+      accessorKey: 'category',
+      header: t('columns.category'),
+      cell: ({ getValue }) => (
+        <span className="text-xs capitalize text-slate-600 dark:text-slate-400">{getValue()?.replace(/_/g, ' ')}</span>
+      ),
+    },
+    {
+      accessorKey: 'anomaly_score',
+      header: t('columns.score'),
+      cell: ({ getValue }) => <ScoreBadge score={getValue()} />,
+    },
+    {
+      accessorKey: 'status',
+      header: t('columns.status'),
+      cell: StatusCell,
+      enableSorting: false,
+    },
+  ], [t])
+
   const table = useReactTable({
     data: useMemo(() => data, [data]),
-    columns: COLUMNS,
+    columns,
     state: { sorting },
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
