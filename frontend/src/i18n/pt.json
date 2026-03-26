@@ -23,7 +23,10 @@
   },
   "language": {
     "en": "English (EN)",
+    "de": "Deutsch (DE)",
     "pt": "Português (PT)",
+    "nl": "Nederlands (NL)",
+    "es": "Español (ES)",
     "label": "Idioma"
   },
   "kpi": {
@@ -208,6 +211,8 @@
     "tooltipAnomalies": "Anomalias: {value}",
     "tooltipFraudRate": "Taxa de Fraude: {value}%",
     "scoreDistribution": "Distribuição de Score",
+    "scoreEvolutionTitle": "Análise de Evolução de Score",
+    "scoreEvolutionDescription": "Análise detalhada das tendências de score de risco médio.",
     "scoreAlerts": "{value} alertas",
     "scoreCount": "Contagem"
   },

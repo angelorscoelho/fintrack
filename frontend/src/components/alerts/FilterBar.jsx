@@ -2,31 +2,34 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button'
 import { RotateCcw } from 'lucide-react'
 import { FILTER_OPTIONS } from '@/lib/constants'
-
-const STATUS_OPTIONS = [
-  { value: 'all', label: 'All statuses' },
-  { value: 'PENDING_REVIEW', label: 'Pending Review' },
-  { value: 'CONFIRMED_FRAUD', label: 'Confirmed Fraud' },
-  { value: 'FALSE_POSITIVE', label: 'False Positive' },
-  { value: 'ESCALATED', label: 'Escalated' },
-  { value: 'NORMAL', label: 'Normal' },
-]
-
-const SCORE_OPTIONS = [
-  { value: 'all', label: 'All scores' },
-  ...FILTER_OPTIONS,
-]
-
-const CATEGORY_OPTIONS = [
-  { value: 'all', label: 'All categories' },
-  { value: 'online_purchase', label: 'Online Purchase' },
-  { value: 'in_store', label: 'In Store' },
-  { value: 'atm_withdrawal', label: 'ATM Withdrawal' },
-  { value: 'wire_transfer', label: 'Wire Transfer' },
-  { value: 'contactless', label: 'Contactless' },
-]
+import { useLanguage } from '@/i18n/LanguageContext'
 
 export function FilterBar({ filters, onFilterChange }) {
+  const { t } = useLanguage()
+
+  const STATUS_OPTIONS = [
+    { value: 'all', label: t('filters.allStatuses') },
+    { value: 'PENDING_REVIEW', label: t('status.pendingReview') },
+    { value: 'CONFIRMED_FRAUD', label: t('status.confirmedFraud') },
+    { value: 'FALSE_POSITIVE', label: t('status.falsePositive') },
+    { value: 'ESCALATED', label: t('status.escalated') },
+    { value: 'NORMAL', label: t('status.normal') },
+  ]
+
+  const SCORE_OPTIONS = [
+    { value: 'all', label: t('filters.allScores') },
+    ...FILTER_OPTIONS,
+  ]
+
+  const CATEGORY_OPTIONS = [
+    { value: 'all', label: t('filters.allCategories') },
+    { value: 'online_purchase', label: t('categories.onlinePurchase') },
+    { value: 'in_store', label: t('categories.inStore') },
+    { value: 'atm_withdrawal', label: t('categories.atmWithdrawal') },
+    { value: 'wire_transfer', label: t('categories.wireTransfer') },
+    { value: 'contactless', label: t('categories.contactless') },
+  ]
+
   const handleChange = (key, value) => {
     onFilterChange({ ...filters, [key]: value === 'all' ? '' : value })
   }
@@ -44,7 +47,7 @@ export function FilterBar({ filters, onFilterChange }) {
         onValueChange={(v) => handleChange('status', v)}
       >
         <SelectTrigger className="w-[180px] h-9 text-xs">
-          <SelectValue placeholder="Status" />
+          <SelectValue placeholder={t('filters.status')} />
         </SelectTrigger>
         <SelectContent>
           {STATUS_OPTIONS.map((o) => (
@@ -60,7 +63,7 @@ export function FilterBar({ filters, onFilterChange }) {
         onValueChange={(v) => handleChange('scoreRange', v)}
       >
         <SelectTrigger className="w-[180px] h-9 text-xs">
-          <SelectValue placeholder="Score" />
+          <SelectValue placeholder={t('filters.score')} />
         </SelectTrigger>
         <SelectContent>
           {SCORE_OPTIONS.map((o) => (
@@ -76,7 +79,7 @@ export function FilterBar({ filters, onFilterChange }) {
         onValueChange={(v) => handleChange('category', v)}
       >
         <SelectTrigger className="w-[180px] h-9 text-xs">
-          <SelectValue placeholder="Category" />
+          <SelectValue placeholder={t('filters.category')} />
         </SelectTrigger>
         <SelectContent>
           {CATEGORY_OPTIONS.map((o) => (
@@ -90,7 +93,7 @@ export function FilterBar({ filters, onFilterChange }) {
       {hasFilters && (
         <Button variant="ghost" size="sm" onClick={handleReset} className="h-9 text-xs gap-1.5">
           <RotateCcw className="h-3 w-3" />
-          Clear
+          {t('actions.clear')}
         </Button>
       )}
     </div>
