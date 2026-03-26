@@ -5,6 +5,7 @@ Generates 3-bullet anomaly explanation in Portuguese for scores >= XAI_THRESHOLD
 import json
 import logging
 import os
+import time
 
 import google.api_core.exceptions
 import google.generativeai as genai
@@ -86,10 +87,10 @@ def _build_prompt(payload: dict, score: float) -> str:
     )),
     reraise=True,
 )
-def _call_flash(prompt: str) -> str:
+def _call_flash(prompt: str):
     """Call Gemini Flash with tenacity retry (3 attempts, exponential backoff)."""
     response = _flash_model.generate_content(prompt)
-    return response.text.strip()
+    return response
 
 
 def analyse_basic(state: TransactionState) -> TransactionState:
@@ -101,10 +102,17 @@ def analyse_basic(state: TransactionState) -> TransactionState:
     score          = state["anomaly_score"]
     payload        = state["payload"]
 
+    t0 = time.time()
     try:
         prompt = _build_prompt(payload, score)
 
-        raw_text = _call_flash(prompt)
+        response = _call_flash(prompt)
+        duration_ms = round((time.time() - t0) * 1000)
+        raw_text = response.text.strip()
+
+        usage = getattr(response, "usage_metadata", None)
+        prompt_tokens = getattr(usage, "prompt_token_count", 0) or 0
+        response_tokens = getattr(usage, "candidates_token_count", 0) or 0
 
         # Validate JSON structure
         xai_data = json.loads(raw_text)
@@ -118,15 +126,40 @@ def analyse_basic(state: TransactionState) -> TransactionState:
         state["ai_explanation"] = json.dumps(xai_data, ensure_ascii=False)
         state["processing_status"] = "xai_complete"
 
-        logger.info(f"XAI generated for {transaction_id} (score={score:.2f})")
+        logger.info(json.dumps({
+            "transaction_id": transaction_id,
+            "model": "flash",
+            "prompt_tokens": prompt_tokens,
+            "response_tokens": response_tokens,
+            "duration_ms": duration_ms,
+            "status": "success",
+        }))
 
     except json.JSONDecodeError as exc:
+        duration_ms = round((time.time() - t0) * 1000)
+        logger.info(json.dumps({
+            "transaction_id": transaction_id,
+            "model": "flash",
+            "prompt_tokens": 0,
+            "response_tokens": 0,
+            "duration_ms": duration_ms,
+            "status": "error",
+        }))
         logger.error(f"Gemini returned invalid JSON for {transaction_id}: {exc}")
         state["ai_explanation"] = None
         state["processing_status"] = "error"
         state["error_message"] = f"JSON parse error: {exc}"
 
     except Exception as exc:
+        duration_ms = round((time.time() - t0) * 1000)
+        logger.info(json.dumps({
+            "transaction_id": transaction_id,
+            "model": "flash",
+            "prompt_tokens": 0,
+            "response_tokens": 0,
+            "duration_ms": duration_ms,
+            "status": "error",
+        }))
         logger.error(f"Flash XAI failed for {transaction_id}: {exc}")
         state["ai_explanation"] = None
         state["processing_status"] = "error"
