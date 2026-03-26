@@ -165,6 +165,7 @@ export function LiveAlertFeed() {
                           variant="ghost"
                           size="sm"
                           className="text-xs shrink-0 h-7"
+                          aria-label="Ver detalhes desta transação"
                           onClick={() => navigate('/alerts', { state: { alertId: alert.transaction_id } })}
                         >
                           View
