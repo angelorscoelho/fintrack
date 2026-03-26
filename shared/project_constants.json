@@ -1,10 +1,10 @@
 {
-  "_comment": "Single source of truth for all FinTrack scoring thresholds. Consumed by backend (Python), frontend (Vite build-time inject), and Lambda at import time.",
+  "_comment": "Single source of truth for all FinTrack project constants. Consumed by backend (Python), frontend (Vite build-time inject), and Lambda at import time. Any business-logic value that may change in the future should be defined here instead of hardcoded.",
 
   "score": {
-    "xai":      0.70,
-    "sar":      0.90,
-    "flash_risk_alto": 0.85
+    "xai":              0.70,
+    "sar":              0.90,
+    "flash_risk_alto":  0.85
   },
 
   "risk_levels": [
@@ -22,8 +22,10 @@
       "LOW":         "outline"
     },
     "kpi_variant": {
-      "critical_avg": 0.70,
-      "warning_avg":  0.50
+      "critical_avg_score":   0.70,
+      "warning_avg_score":    0.50,
+      "critical_fraud_rate":  10,
+      "warning_fraud_rate":   5
     },
     "histogram_buckets": [
       { "key": "0-20",   "label": "0–20%",   "min": 0.00, "max": 0.20 },
@@ -45,5 +47,36 @@
   "budget": {
     "warning":  0.80,
     "exceeded": 1.00
+  },
+
+  "gemini": {
+    "models": {
+      "flash": "gemini-1.5-flash-latest",
+      "pro":   "gemini-1.5-pro-latest"
+    },
+    "rate_limits": {
+      "flash_daily": 500,
+      "pro_daily":   100
+    },
+    "generation_config": {
+      "flash": { "temperature": 0.1, "max_output_tokens": 512 },
+      "pro":   { "temperature": 0.2, "max_output_tokens": 2048 }
+    }
+  },
+
+  "data_retention": {
+    "normal_ttl_days":        7,
+    "rate_limiter_ttl_days":  2
+  },
+
+  "api": {
+    "pagination": {
+      "default_limit": 50,
+      "max_limit":     200
+    },
+    "timeouts": {
+      "health_check_seconds":  5,
+      "genai_invoke_seconds":  2
+    }
   }
 }
