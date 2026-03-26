@@ -244,7 +244,8 @@
     "allCategories": "Todas as categorias",
     "status": "Estado",
     "score": "Score",
-    "category": "Categoria"
+    "category": "Categoria",
+    "appliedFromDashboard": "Filtros aplicados a partir do Dashboard"
   },
   "bulk": {
     "processing": "A processar {current} de {total}...",
