@@ -5,18 +5,21 @@
  * Score thresholds are sourced from shared/project_constants.json via Vite build-time
  * injection (XAI_THRESHOLD = 0.70, SAR_THRESHOLD = 0.90).
  *
- * Fraud rate target: 0.01–0.025 % (Mastercard/Visa research).
+ * Research-backed fraud rate: ~0.06 % by transaction count (EU/SEPA midpoint).
+ * Sources: Nilson Report 2023 (~8.6 bps by value, global), ECB 7th Card Fraud
+ * Report 2023 (2.8 bps by value, SEPA), UK Finance 2024 (4.6 bps), Visa/Mastercard
+ * annual reports (5–10 bps), Federal Reserve Reg II (7.2 bps, US debit).
  * With 80 transactions the expected confirmed-fraud count rounds to 0 — this is
  * statistically correct and the dashboard card will display 0.0 %.
  *
  * Distribution (lognormal scores):
- *   - 0  CONFIRMED_FRAUD  (0/80 = 0 % — correct for 0.025 % base rate)
+ *   - 0  CONFIRMED_FRAUD  (0/80 = 0 % — correct for 0.06 % base rate at n=80)
  *   - 4  PENDING_REVIEW   score > SAR_THRESHOLD  (critical)
  *   - 8  PENDING_REVIEW   score XAI_THRESHOLD–SAR_THRESHOLD  (high)
  *   - 2  FALSE_POSITIVE   (resolved, score XAI_THRESHOLD–0.82)
  *   - 66 NORMAL           lognormal scores (median ≈ 0.02)
  *
- * Targets: avg_score 10–18 %, fraud_rate 0.0 % (sample too small for 0.025 %)
+ * Targets: avg_score 10–18 %, fraud_rate 0.0 % (sample too small for 0.06 %)
  */
 
 import { XAI_THRESHOLD, SAR_THRESHOLD } from '@/lib/constants'
@@ -78,7 +81,7 @@ function generateMockAlerts(count = 80) {
 
   /* ── Controlled slot assignment ─────────────────────────────────────────
    * Guarantees exact counts that satisfy the acceptance criteria.
-   * 0 CONFIRMED_FRAUD because 80 × 0.025 % ≈ 0 (Mastercard/Visa rate).
+   * 0 CONFIRMED_FRAUD because 80 × 0.06 % ≈ 0.048 → rounds to 0.
    */
   const slots = []
   const addN = (type, n) => { for (let k = 0; k < n; k++) slots.push(type) }

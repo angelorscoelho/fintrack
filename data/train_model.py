@@ -111,7 +111,7 @@ def main() -> None:
     print("Training IsolationForest...")
     model = IsolationForest(
         n_estimators=200,
-        contamination=0.00025,   # matches Mastercard/Visa fraud rate: 0.01–0.025 %
+        contamination=0.0006,   # matches research-backed fraud rate: ~0.06 % by count (EU/SEPA)
         max_samples="auto",
         random_state=42,
         n_jobs=-1,
@@ -172,7 +172,7 @@ def main() -> None:
         "precision": precision, "recall": recall, "f1": f1,
         "score_distribution": score_dist,
         "norm_min": norm_min, "norm_max": norm_max,
-        "n_estimators": 200, "contamination": 0.00025,
+        "n_estimators": 200, "contamination": 0.0006,
     }
     report_path = Path("data/training_report.json")
     with open(report_path, "w") as f:

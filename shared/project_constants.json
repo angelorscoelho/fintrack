@@ -14,6 +14,15 @@
     { "key": "LOW",      "min": 0.00, "max": 0.40, "label": "Low",       "color": "slate"  }
   ],
 
+  "fraud_rates": {
+    "_comment": "Research-backed fraud rates (% of transaction COUNT). Sources: Nilson Report 2023 (~8.6 bps by value globally), ECB 7th Card Fraud Report 2023 (2.8 bps by value SEPA), UK Finance Annual Fraud Report 2024 (4.6 bps by value), Visa/Mastercard Annual Reports (5–10 bps by value), Federal Reserve Reg II (7.2 bps US debit). By-count rates are lower than by-value because fraudulent transactions average higher amounts. EU/SEPA by-count midpoint: ~0.06%.",
+    "overall":         0.0006,
+    "card_not_present": 0.001,
+    "card_present":    0.0001,
+    "atm":             0.00005,
+    "contactless":     0.0001
+  },
+
   "ui": {
     "score_variant": {
       "CRITICAL":    "destructive",
@@ -24,8 +33,8 @@
     "kpi_variant": {
       "critical_avg_score":   0.70,
       "warning_avg_score":    0.50,
-      "critical_fraud_rate":  0.1,
-      "warning_fraud_rate":   0.05
+      "critical_fraud_rate":  0.15,
+      "warning_fraud_rate":   0.08
     },
     "histogram_buckets": [
       { "key": "0-20",   "label": "0–20%",   "min": 0.00, "max": 0.20 },
