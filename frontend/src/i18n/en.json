@@ -249,7 +249,8 @@
     "allCategories": "All categories",
     "status": "Status",
     "score": "Score",
-    "category": "Category"
+    "category": "Category",
+    "appliedFromDashboard": "Filters applied from Dashboard"
   },
   "bulk": {
     "processing": "Processing {current} of {total}...",

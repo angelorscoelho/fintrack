@@ -11,6 +11,7 @@ import { FilterBar } from '@/components/alerts/FilterBar'
 import { ScoreHistogram } from '@/components/alerts/ScoreHistogram'
 import { MobileAlertCards } from '@/components/alerts/MobileAlertCard'
 import { usePullToRefresh } from '@/hooks/usePullToRefresh'
+import { useFilterParams } from '@/hooks/useFilterParams'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -25,7 +26,7 @@ export default function AlertQueue({ isDark }) {
 
   const { isRefreshing, pullDistance } = usePullToRefresh(handlePullRefresh)
 
-  const [filters, setFilters] = useState({ status: '', scoreRange: '', category: '' })
+  const { filters, setFilters, resetFilters, isFromUrl, dismissBanner } = useFilterParams()
   const [selectedRows, setSelectedRows] = useState([])
 
   const { data: rawAlerts = [], isLoading, isError } = useQuery({
@@ -114,7 +115,13 @@ export default function AlertQueue({ isDark }) {
       )}
 
       {/* Filters */}
-      <FilterBar filters={filters} onFilterChange={setFilters} />
+      <FilterBar
+        filters={filters}
+        onFilterChange={setFilters}
+        onReset={resetFilters}
+        isFromUrl={isFromUrl}
+        onDismissBanner={dismissBanner}
+      />
 
       {/* Score histogram + Bulk actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

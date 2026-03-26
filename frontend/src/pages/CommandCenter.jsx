@@ -109,7 +109,7 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
           loading={statsLoading}
           tooltip={t('kpi.fraudRateTooltip')}
           actionTooltip={t('kpi.fraudRateAction')}
-          route="/alerts"
+          route="/alerts?status=CONFIRMED_FRAUD"
         />
         <KpiNavigationCard
           title={t('kpi.criticalUnreviewed')}
@@ -119,7 +119,7 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
           loading={statsLoading}
           tooltip={t('kpi.criticalUnreviewedTooltip')}
           actionTooltip={t('kpi.criticalUnreviewedAction')}
-          route="/alerts"
+          route="/alerts?scoreRange=0.90-1.00&status=PENDING_REVIEW"
         />
         <KpiNavigationCard
           title={t('kpi.avgScore')}
