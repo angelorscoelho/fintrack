@@ -8,6 +8,7 @@ import logging
 import os
 import urllib.request
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 
 import boto3
 
@@ -25,6 +26,17 @@ GENAI_URL           = os.environ.get("GENAI_SERVICE_URL", "http://localhost:8001
 XAI_THRESHOLD       = 0.70
 SAR_THRESHOLD       = 0.90
 GENAI_INVOKE_TIMEOUT = 2  # seconds — fire-and-forget, non-blocking
+
+
+def _to_dynamodb_value(val):
+    """Recursively convert floats/nested dicts/lists to DynamoDB-compatible Decimal/JSON."""
+    if isinstance(val, float):
+        return Decimal(str(val))
+    if isinstance(val, dict):
+        return {k: _to_dynamodb_value(v) for k, v in val.items()}
+    if isinstance(val, list):
+        return [_to_dynamodb_value(i) for i in val]
+    return val
 
 
 def lambda_handler(event: dict, context) -> dict:
@@ -58,8 +70,11 @@ def _process(payload: dict) -> None:
     if status == "NORMAL":
         ttl = int((datetime.now(timezone.utc) + timedelta(days=7)).timestamp())
 
+    # Convert all numeric values to Decimal for DynamoDB compatibility
+    safe_payload = _to_dynamodb_value(payload)
+
     item = {
-        **payload,
+        **safe_payload,
         "anomaly_score": str(score),  # String avoids DynamoDB Decimal issues
         "status":        status,
         "processed_at":  now,
@@ -77,7 +92,7 @@ def _process(payload: dict) -> None:
 
 def _maybe_invoke_genai(tid: str, score: float, payload: dict) -> None:
     """Check rate limit then fire-and-forget to GenAI microservice."""
-    # Flash rate limit check (all scores ≥ 0.70 use Flash)
+    # Flash rate limit check (all scores >= 0.70 use Flash)
     if not check_and_increment("flash"):
         logger.warning(json.dumps({"event": "rate_limited", "model": "flash", "tid": tid}))
         table.update_item(
@@ -114,3 +129,20 @@ def _fire_genai(tid: str, score: float, payload: dict) -> None:
     except Exception as exc:
         logger.warning(json.dumps({"event": "genai_invoke_failed", "tid": tid, "error": str(exc)}))
         # Non-fatal — record already persisted as PENDING_REVIEW
+</parameter>
+<task_progress>
+- [x] Create SSM parameter `/fintrack/gemini/api-key`
+- [x] Find GenAI service endpoint (memory bank confirmed: https://fintrack-genai.railway.app)
+- [x] Verify SSM parameter creation
+- [x] Verify Lambda environment variable GENAI_SERVICE_URL
+- [x] Step 2: Test Gemini API — key valid (429 rate limit = API responding)
+- [x] Step 3: Check CloudWatch Logs — Lambda failing with "model.pkl not found" (fixed later), last invocation 5 days ago
+- [x] Step 3: No Lambda invocations recently — sent test transaction
+- [x] Step 4: Lambda now processing — found "Float types not supported" error. Fix in handler.py (convert floats to Decimal)
+- [ ] Redeploy Lambda with fix
+- [ ] Re-test end-to-end flow
+- [ ] Step 5: Check DynamoDB for ai_explanation field
+- [ ] Step 6: Check FastAPI response format
+- [ ] Step 7: Inspect frontend component
+</task_progress>
+</write_to_file>
