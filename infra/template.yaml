@@ -280,7 +280,7 @@ Resources:
         Variables:
           DYNAMODB_TABLE: !Ref TransactionsTable
           RATE_LIMITER_TABLE: !Ref GeminiRateLimiterTable
-          GENAI_SERVICE_URL: 'http://localhost:8001'
+          GENAI_SERVICE_URL: 'https://fintrack-genai.railway.app'
       Events:
         SQSEvent:
           Type: SQS

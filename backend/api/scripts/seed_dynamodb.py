@@ -123,9 +123,9 @@ def seed_transactions(count: int = 100):
     # Verify table exists
     try:
         table.table_status
-        print(f"✓ Connected to DynamoDB table: {TABLE_NAME}")
+        print(f"[OK] Connected to DynamoDB table: {TABLE_NAME}")
     except Exception as e:
-        print(f"✗ Error connecting to DynamoDB: {e}")
+        print(f"[ERROR] Error connecting to DynamoDB: {e}")
         print(f"  Make sure AWS credentials are configured and table '{TABLE_NAME}' exists.")
         return False
     
@@ -140,7 +140,7 @@ def seed_transactions(count: int = 100):
             if (i + 1) % 50 == 0:
                 print(f"  Inserted {i + 1}/{count} transactions...")
     
-    print(f"✓ Successfully seeded {count} transactions!")
+    print(f"[OK] Successfully seeded {count} transactions!")
     
     # Print summary
     print("\nTransaction distribution:")

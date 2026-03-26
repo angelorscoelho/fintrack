@@ -1,6 +1,6 @@
 """
-FinTrack AI — Lambda Handler (v2)
-SQS trigger → ML score → persist DynamoDB → fire-and-forget GenAI microservice.
+FinTrack AI - Lambda Handler (v2)
+SQS trigger -> ML score -> persist DynamoDB -> fire-and-forget GenAI microservice.
 Rate limiting enforced via atomic DynamoDB counter before GenAI invocation.
 """
 import json
@@ -9,6 +9,7 @@ import os
 import time
 import urllib.request
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 
 import boto3
 
@@ -38,6 +39,17 @@ except ImportError:
     SAR_THRESHOLD = _th["score"]["sar"]
     NORMAL_TTL_DAYS = _th["data_retention"]["normal_ttl_days"]
     GENAI_INVOKE_TIMEOUT = _th["api"]["timeouts"]["genai_invoke_seconds"]
+
+
+def _to_dynamodb_value(val):
+    """Recursively convert floats/nested dicts/lists to DynamoDB-compatible Decimal/JSON."""
+    if isinstance(val, float):
+        return Decimal(str(val))
+    if isinstance(val, dict):
+        return {k: _to_dynamodb_value(v) for k, v in val.items()}
+    if isinstance(val, list):
+        return [_to_dynamodb_value(i) for i in val]
+    return val
 
 
 def lambda_handler(event: dict, context) -> dict:
@@ -71,8 +83,11 @@ def _process(payload: dict) -> None:
     if status == "NORMAL":
         ttl = int((datetime.now(timezone.utc) + timedelta(days=NORMAL_TTL_DAYS)).timestamp())
 
+    # Convert all numeric values to Decimal for DynamoDB compatibility
+    safe_payload = _to_dynamodb_value(payload)
+
     item = {
-        **payload,
+        **safe_payload,
         "anomaly_score": str(score),  # String avoids DynamoDB Decimal issues
         "status":        status,
         "processed_at":  now,
@@ -108,7 +123,7 @@ def _maybe_invoke_genai(tid: str, score: float, payload: dict) -> str:
 
     Returns a status string: 'success', 'error', or 'rate_limited'.
     """
-    # Flash rate limit check (all scores ≥ 0.70 use Flash)
+    # Flash rate limit check (all scores >= 0.70 use Flash)
     if not check_and_increment("flash"):
         logger.warning(json.dumps({"event": "rate_limited", "model": "flash", "tid": tid}))
         table.update_item(
