@@ -67,7 +67,7 @@ ANOMALY_DISTRIBUTION = {
     "geo_hopping":          0.00015,   # 0.015 %
     "invoice_manipulation": 0.00015,   # 0.015 %
 }
-NORMAL_RATIO = 0.9994
+NORMAL_RATIO = 1.0 - sum(ANOMALY_DISTRIBUTION.values())
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
