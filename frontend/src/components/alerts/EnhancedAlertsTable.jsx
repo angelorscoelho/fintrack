@@ -33,17 +33,18 @@ import { toast } from 'sonner'
 import { AlertDetail } from '@/components/AlertDetail'
 import { ErrorBoundary } from '@/components/feedback/ErrorBoundary'
 import { getScoreVariant, getScoreBadgeBg } from '@/lib/constants'
+import { useLanguage } from '@/i18n/LanguageContext'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
 const STATUS_CONFIG = {
-  PENDING_REVIEW:  { label: 'Pending Review',       variant: 'warning',   Icon: Clock },
-  CONFIRMED_FRAUD: { label: 'Confirmed Fraud',        variant: 'destructive', Icon: XCircle },
-  RESOLVED:        { label: 'Resolved',               variant: 'success',   Icon: CheckCircle2 },
-  FALSE_POSITIVE:  { label: 'False Positive',        variant: 'secondary', Icon: CircleDot },
-  ESCALATED:       { label: 'Escalated',              variant: 'warning',   Icon: ArrowUpCircle },
-  NORMAL:          { label: 'Normal',                variant: 'outline',   Icon: Check },
-  rate_limited:    { label: 'API Limit',              variant: 'outline',   Icon: PauseCircle },
+  PENDING_REVIEW:  { label: 'status.pendingReview',       variant: 'warning',   Icon: Clock },
+  CONFIRMED_FRAUD: { label: 'status.confirmedFraud',        variant: 'destructive', Icon: XCircle },
+  RESOLVED:        { label: 'status.resolved',               variant: 'success',   Icon: CheckCircle2 },
+  FALSE_POSITIVE:  { label: 'status.falsePositive',        variant: 'secondary', Icon: CircleDot },
+  ESCALATED:       { label: 'status.escalated',              variant: 'warning',   Icon: ArrowUpCircle },
+  NORMAL:          { label: 'status.normal',                variant: 'outline',   Icon: Check },
+  rate_limited:    { label: 'status.apiLimit',              variant: 'outline',   Icon: PauseCircle },
 }
 
 function ScoreBadge({ score }) {
@@ -74,6 +75,7 @@ function InlineActionButton({ icon: Icon, title, className, loading, onClick }) 
 }
 
 function ExpandedRowPanel({ alert, onOpenDetail, onResolved }) {
+  const { t } = useLanguage()
   let explanation = null
   if (alert.ai_explanation) {
     try {
@@ -90,7 +92,7 @@ function ExpandedRowPanel({ alert, onOpenDetail, onResolved }) {
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-xs font-semibold text-amber-800 dark:text-amber-400">
             <Cpu className="h-3.5 w-3.5" />
-            AI Analysis
+            {t('alerts.aiAnalysis')}
           </div>
           {explanation.summary_pt && (
             <p className="text-xs text-muted-foreground italic">{explanation.summary_pt}</p>
@@ -110,7 +112,7 @@ function ExpandedRowPanel({ alert, onOpenDetail, onResolved }) {
       {alert.sar_draft && (
         <div className="flex items-center gap-2">
           <FileText className="h-3.5 w-3.5 text-red-600" />
-          <Badge variant="destructive" className="text-xs">SAR Available</Badge>
+          <Badge variant="destructive" className="text-xs">{t('alerts.sarAvailable')}</Badge>
         </div>
       )}
 
@@ -127,10 +129,10 @@ function ExpandedRowPanel({ alert, onOpenDetail, onResolved }) {
 
         {alert.status === 'PENDING_REVIEW' && (
           <div className="flex items-center gap-1.5 ml-auto">
-            <span className="text-xs text-muted-foreground mr-1">Resolve:</span>
-            <ResolveButton alert={alert} type="FALSE_POSITIVE" label="False Positive" onResolved={onResolved} />
-            <ResolveButton alert={alert} type="CONFIRMED_FRAUD" label="Confirmed Fraud" onResolved={onResolved} />
-            <ResolveButton alert={alert} type="ESCALATED" label="Escalated" onResolved={onResolved} />
+            <span className="text-xs text-muted-foreground mr-1">{t('alerts.resolve')}</span>
+            <ResolveButton alert={alert} type="FALSE_POSITIVE" label={t('status.falsePositive')} onResolved={onResolved} />
+            <ResolveButton alert={alert} type="CONFIRMED_FRAUD" label={t('status.confirmedFraud')} onResolved={onResolved} />
+            <ResolveButton alert={alert} type="ESCALATED" label={t('status.escalated')} onResolved={onResolved} />
           </div>
         )}
       </div>
@@ -139,6 +141,7 @@ function ExpandedRowPanel({ alert, onOpenDetail, onResolved }) {
 }
 
 function ResolveButton({ alert, type, label, onResolved }) {
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(false)
 
   const config = {
@@ -159,15 +162,15 @@ function ResolveButton({ alert, type, label, onResolved }) {
         body: JSON.stringify({ resolution_type: type }),
       })
       if (res.status === 409) {
-        toast.info('Already resolved')
+        toast.info(t('resolution.alreadyResolved'))
       } else if (res.ok) {
-        toast.success(`Alert marked as ${label}.`)
+        toast.success(t('resolution.markedAs', { label }))
         onResolved()
       } else {
         toast.error(`Error: HTTP ${res.status}`)
       }
     } catch {
-      toast.error('Network error.')
+      toast.error(t('feedback.networkError'))
     } finally {
       setLoading(false)
     }
@@ -182,6 +185,7 @@ function ResolveButton({ alert, type, label, onResolved }) {
 }
 
 export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelectionChange, clearSelectionRef }) {
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const [sorting, setSorting] = useState([{ id: 'anomaly_score', desc: true }])
   const [rowSelection, setRowSelection] = useState({})
@@ -206,15 +210,15 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
         body: JSON.stringify({ resolution_type: type }),
       })
       if (res.status === 409) {
-        toast.info('Already resolved')
+        toast.info(t('resolution.alreadyResolved'))
       } else if (res.ok) {
-        toast.success(`Alert marked as ${label}.`)
+        toast.success(t('resolution.markedAs', { label }))
         if (onRefetch) onRefetch()
       } else {
         toast.error(`Error: HTTP ${res.status}`)
       }
     } catch {
-      toast.error('Network error.')
+      toast.error(t('feedback.networkError'))
     } finally {
       setResolvingRows((prev) => ({ ...prev, [key]: false }))
     }
@@ -247,13 +251,13 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
       },
       {
         accessorKey: 'anomaly_score',
-        header: 'Score',
+        header: () => t('columns.score'),
         cell: ({ getValue }) => <ScoreBadge score={getValue()} />,
         size: 90,
       },
       {
         accessorKey: 'transaction_id',
-        header: 'ID',
+        header: () => t('columns.id'),
         cell: ({ getValue }) => (
           <span className="font-mono text-xs text-muted-foreground">{getValue()?.substring(0, 8)}…</span>
         ),
@@ -262,7 +266,7 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
       },
       {
         accessorKey: 'merchant_nif',
-        header: 'NIF',
+        header: () => t('columns.nif'),
         cell: ({ getValue }) => {
           const nif = getValue()
           return (
@@ -282,7 +286,7 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
       },
       {
         accessorKey: 'amount',
-        header: () => <span className="w-full text-right block">Amount</span>,
+        header: () => <span className="w-full text-right block">{t('columns.amount')}</span>,
         cell: ({ getValue }) => (
           <span className="font-semibold text-foreground block text-right">
             €{Number(getValue() || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -292,7 +296,7 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
       },
       {
         accessorKey: 'category',
-        header: 'Category',
+        header: () => t('columns.category'),
         cell: ({ getValue }) => (
           <span className="text-xs text-muted-foreground lowercase">
             {getValue()?.replace(/_/g, ' ')}
@@ -303,13 +307,13 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
       },
       {
         accessorKey: 'status',
-        header: 'Status',
+        header: () => t('columns.status'),
         cell: ({ getValue }) => {
           const cfg = STATUS_CONFIG[getValue()] ?? STATUS_CONFIG.NORMAL
           const StatusIcon = cfg.Icon
           return (
             <Badge variant={cfg.variant} className="text-xs gap-1">
-              <StatusIcon className="h-3 w-3" />{cfg.label}
+              <StatusIcon className="h-3 w-3" />{t(cfg.label)}
             </Badge>
           )
         },
@@ -318,7 +322,7 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
       },
       {
         accessorKey: 'timestamp',
-        header: 'Time',
+        header: () => t('columns.time'),
         cell: ({ getValue }) => {
           const ts = getValue()
           if (!ts) return <span className="text-xs text-muted-foreground">–</span>
@@ -336,7 +340,7 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
       },
       {
         id: 'actions',
-        header: 'Actions',
+        header: () => t('columns.actions'),
         cell: ({ row }) => {
           const alert = row.original
           if (alert.status !== 'PENDING_REVIEW') {
@@ -347,24 +351,24 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
             <div className="flex items-center gap-0.5">
               <InlineActionButton
                 icon={CheckCircle}
-                title="False Positive"
+                title={t('actions.falsePositive')}
                 className="text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30"
                 loading={resolvingRows[`${id}_FALSE_POSITIVE`]}
-                onClick={() => resolveInline(alert, 'FALSE_POSITIVE', 'False Positive')}
+                onClick={() => resolveInline(alert, 'FALSE_POSITIVE', t('status.falsePositive'))}
               />
               <InlineActionButton
                 icon={XCircle}
-                title="Confirmed Fraud"
+                title={t('actions.confirmedFraud')}
                 className="text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30"
                 loading={resolvingRows[`${id}_CONFIRMED_FRAUD`]}
-                onClick={() => resolveInline(alert, 'CONFIRMED_FRAUD', 'Confirmed Fraud')}
+                onClick={() => resolveInline(alert, 'CONFIRMED_FRAUD', t('status.confirmedFraud'))}
               />
               <InlineActionButton
                 icon={ArrowUpCircle}
-                title="Escalate"
+                title={t('actions.escalate')}
                 className="text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/30"
                 loading={resolvingRows[`${id}_ESCALATED`]}
-                onClick={() => resolveInline(alert, 'ESCALATED', 'Escalated')}
+                onClick={() => resolveInline(alert, 'ESCALATED', t('status.escalated'))}
               />
             </div>
           )
@@ -415,13 +419,13 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
         const row = pageRows[focusedRowIndex]
         if (row && row.original.status === 'PENDING_REVIEW') {
           e.preventDefault()
-          resolveInline(row.original, 'FALSE_POSITIVE', 'Falso Positivo')
+          resolveInline(row.original, 'FALSE_POSITIVE', t('status.falsePositive'))
         }
       } else if (e.key === 'x' || e.key === 'X') {
         const row = pageRows[focusedRowIndex]
         if (row && row.original.status === 'PENDING_REVIEW') {
           e.preventDefault()
-          resolveInline(row.original, 'CONFIRMED_FRAUD', 'Fraude Confirmada')
+          resolveInline(row.original, 'CONFIRMED_FRAUD', t('status.confirmedFraud'))
         }
       }
     }
@@ -453,7 +457,7 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
       <div className="flex items-center justify-center h-48 bg-card rounded-lg border border-border">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
-          Loading alerts…
+          {t('alerts.loading')}
         </div>
       </div>
     )
@@ -462,7 +466,7 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
   if (!isLoading && data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-48 bg-card rounded-lg border border-border gap-2">
-        <p className="text-sm text-muted-foreground">No alerts for the selected filter.</p>
+        <p className="text-sm text-muted-foreground">{t('alerts.noAlerts')}</p>
       </div>
     )
   }
@@ -534,7 +538,7 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
         {/* Pagination */}
         <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted">
           <p className="text-xs text-muted-foreground">
-            {data.length} alerts — Page {table.getState().pagination.pageIndex + 1} of{' '}
+            {data.length} {t('alerts.count')} — Page {table.getState().pagination.pageIndex + 1} of{' '}
             {table.getPageCount()}
           </p>
           <div className="flex gap-2">
@@ -545,7 +549,7 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
             >
-              ← Previous
+              ← {t('actions.previous')}
             </Button>
             <Button
               size="sm"
@@ -554,7 +558,7 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
             >
-              Next →
+              {t('actions.next')} →
             </Button>
           </div>
         </div>

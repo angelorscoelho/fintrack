@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Loader2, XCircle, CheckCircle, ArrowUpCircle } from 'lucide-react'
 import { toast } from 'sonner'
+import { useLanguage } from '@/i18n/LanguageContext'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
 export function BulkActionBar({ selectedRows, onClearSelection, onComplete }) {
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState({ current: 0, total: 0 })
 
@@ -43,10 +45,10 @@ export function BulkActionBar({ selectedRows, onClearSelection, onComplete }) {
     setProgress({ current: 0, total: 0 })
 
     if (successCount > 0) {
-      toast.success(`${successCount} alert(s) marked as ${label}.`)
+      toast.success(t('bulk.markedAs', { count: successCount, label }))
     }
     if (alreadyResolved > 0) {
-      toast.info(`${alreadyResolved} alert(s) already resolved.`)
+      toast.info(t('bulk.alreadyResolved', { count: alreadyResolved }))
     }
 
     onClearSelection()
@@ -57,8 +59,8 @@ export function BulkActionBar({ selectedRows, onClearSelection, onComplete }) {
     <div className="transform transition-all duration-300 ease-out translate-y-0 bg-slate-800 text-white rounded-lg px-4 py-3 flex flex-wrap items-center gap-3">
       <span className="text-sm font-medium">
         {loading
-          ? `Processing ${progress.current} of ${progress.total}...`
-          : `${count} alert${count > 1 ? 's' : ''} selected`}
+          ? t('bulk.processing', { current: progress.current, total: progress.total })
+          : t('bulk.selected', { count })}
       </span>
 
       <div className="flex items-center gap-2 ml-auto">
@@ -67,10 +69,10 @@ export function BulkActionBar({ selectedRows, onClearSelection, onComplete }) {
           variant="secondary"
           className="h-8 text-xs gap-1.5"
           disabled={loading}
-          onClick={() => handleBulk('FALSE_POSITIVE', 'False Positive')}
+          onClick={() => handleBulk('FALSE_POSITIVE', t('status.falsePositive'))}
         >
           {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle className="h-3 w-3" />}
-          Mark as False Positive
+          {t('actions.markFalsePositive')}
         </Button>
 
         <Button
@@ -78,10 +80,10 @@ export function BulkActionBar({ selectedRows, onClearSelection, onComplete }) {
           variant="secondary"
           className="h-8 text-xs gap-1.5 bg-amber-600 text-white hover:bg-amber-700"
           disabled={loading}
-          onClick={() => handleBulk('ESCALATED', 'Escalated')}
+          onClick={() => handleBulk('ESCALATED', t('status.escalated'))}
         >
           {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <ArrowUpCircle className="h-3 w-3" />}
-          Escalate all
+          {t('actions.escalateAll')}
         </Button>
 
         <Button
@@ -92,7 +94,7 @@ export function BulkActionBar({ selectedRows, onClearSelection, onComplete }) {
           onClick={onClearSelection}
         >
           <XCircle className="h-3 w-3 mr-1" />
-          Clear selection
+          {t('actions.clearSelection')}
         </Button>
       </div>
     </div>

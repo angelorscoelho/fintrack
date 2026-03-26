@@ -1,8 +1,13 @@
 import { createContext, useContext, useState, useCallback, useMemo } from 'react'
 import en from './en.json'
+import de from './de.json'
 import pt from './pt.json'
+import nl from './nl.json'
+import es from './es.json'
 
-const translations = { en, pt }
+const translations = { en, de, pt, nl, es }
+
+export const SUPPORTED_LANGS = Object.keys(translations)
 
 const STORAGE_KEY = 'fintrack-lang'
 const DEFAULT_LANG = 'en'
@@ -10,7 +15,7 @@ const DEFAULT_LANG = 'en'
 function getInitialLang() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored === 'en' || stored === 'pt') return stored
+    if (stored && stored in translations) return stored
   } catch {
     // localStorage unavailable
   }
