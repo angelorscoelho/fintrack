@@ -21,7 +21,10 @@
   },
   "language": {
     "en": "English (EN)",
+    "de": "Deutsch (DE)",
     "pt": "Português (PT)",
+    "nl": "Nederlands (NL)",
+    "es": "Español (ES)",
     "label": "Language"
   },
   "kpi": {

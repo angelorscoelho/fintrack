@@ -14,7 +14,10 @@ const BREADCRUMB_KEYS = {
 
 const LANG_OPTIONS = [
   { code: 'en', flag: '🇬🇧', label: 'English (EN)' },
+  { code: 'de', flag: '🇩🇪', label: 'Deutsch (DE)' },
   { code: 'pt', flag: '🇵🇹', label: 'Português (PT)' },
+  { code: 'nl', flag: '🇳🇱', label: 'Nederlands (NL)' },
+  { code: 'es', flag: '🇪🇸', label: 'Español (ES)' },
 ]
 
 export function Header({ isConnected, isIdle, isDark, onToggleDark }) {
