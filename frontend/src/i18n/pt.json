@@ -3,6 +3,8 @@
     "brand": "FinTrack AI",
     "toggleDarkMode": "Alternar modo escuro",
     "inactive": "Inativo",
+    "apiOffline": "API desligada — a mostrar dados de demonstração",
+    "apiOnline": "Ligado à API — dados em tempo real ativos",
     "breadcrumbs": {
       "/": "Visão Geral",
       "/alerts": "Alertas",

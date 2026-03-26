@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { ShieldAlert, Wifi, WifiOff, Clock, Sun, Moon, Languages, Check } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { useLanguage } from '@/i18n/LanguageContext'
 
 const BREADCRUMB_KEYS = {
@@ -117,13 +118,22 @@ export function Header({ isConnected, isIdle, isDark, onToggleDark }) {
           </Button>
 
           {/* SSE connection */}
-          <div className="flex items-center gap-1 text-xs text-slate-500">
-            {isConnected ? (
-              <Wifi className="h-3.5 w-3.5 text-green-500" />
-            ) : (
-              <WifiOff className="h-3.5 w-3.5 text-red-400" />
-            )}
-          </div>
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-1 text-xs text-slate-500 cursor-default">
+                  {isConnected ? (
+                    <Wifi className="h-3.5 w-3.5 text-green-500" />
+                  ) : (
+                    <WifiOff className="h-3.5 w-3.5 text-red-400" />
+                  )}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>{isConnected ? t('header.apiOnline') : t('header.apiOffline')}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
           {/* Inactivity */}
           {isIdle && (
