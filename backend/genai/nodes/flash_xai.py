@@ -93,6 +93,20 @@ def _call_flash(prompt: str):
     return response
 
 
+def _log_genai_call(transaction_id: str, model: str, status: str,
+                    duration_ms: int, prompt_tokens: int = 0,
+                    response_tokens: int = 0) -> None:
+    """Emit structured JSON log for a GenAI model call."""
+    logger.info(json.dumps({
+        "transaction_id": transaction_id,
+        "model": model,
+        "prompt_tokens": prompt_tokens,
+        "response_tokens": response_tokens,
+        "duration_ms": duration_ms,
+        "status": status,
+    }))
+
+
 def analyse_basic(state: TransactionState) -> TransactionState:
     """
     LangGraph node: Basic XAI Analysis via Gemini 1.5 Flash.
@@ -126,40 +140,20 @@ def analyse_basic(state: TransactionState) -> TransactionState:
         state["ai_explanation"] = json.dumps(xai_data, ensure_ascii=False)
         state["processing_status"] = "xai_complete"
 
-        logger.info(json.dumps({
-            "transaction_id": transaction_id,
-            "model": "flash",
-            "prompt_tokens": prompt_tokens,
-            "response_tokens": response_tokens,
-            "duration_ms": duration_ms,
-            "status": "success",
-        }))
+        _log_genai_call(transaction_id, "flash", "success", duration_ms,
+                        prompt_tokens, response_tokens)
 
     except json.JSONDecodeError as exc:
-        duration_ms = round((time.time() - t0) * 1000)
-        logger.info(json.dumps({
-            "transaction_id": transaction_id,
-            "model": "flash",
-            "prompt_tokens": 0,
-            "response_tokens": 0,
-            "duration_ms": duration_ms,
-            "status": "error",
-        }))
+        _log_genai_call(transaction_id, "flash", "error",
+                        round((time.time() - t0) * 1000))
         logger.error(f"Gemini returned invalid JSON for {transaction_id}: {exc}")
         state["ai_explanation"] = None
         state["processing_status"] = "error"
         state["error_message"] = f"JSON parse error: {exc}"
 
     except Exception as exc:
-        duration_ms = round((time.time() - t0) * 1000)
-        logger.info(json.dumps({
-            "transaction_id": transaction_id,
-            "model": "flash",
-            "prompt_tokens": 0,
-            "response_tokens": 0,
-            "duration_ms": duration_ms,
-            "status": "error",
-        }))
+        _log_genai_call(transaction_id, "flash", "error",
+                        round((time.time() - t0) * 1000))
         logger.error(f"Flash XAI failed for {transaction_id}: {exc}")
         state["ai_explanation"] = None
         state["processing_status"] = "error"

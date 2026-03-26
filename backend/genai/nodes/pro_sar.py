@@ -92,6 +92,20 @@ def _extract_xai_summary(ai_explanation: str | None) -> str:
         return ai_explanation[:200]
 
 
+def _log_genai_call(transaction_id: str, model: str, status: str,
+                    duration_ms: int, prompt_tokens: int = 0,
+                    response_tokens: int = 0) -> None:
+    """Emit structured JSON log for a GenAI model call."""
+    logger.info(json.dumps({
+        "transaction_id": transaction_id,
+        "model": model,
+        "prompt_tokens": prompt_tokens,
+        "response_tokens": response_tokens,
+        "duration_ms": duration_ms,
+        "status": status,
+    }))
+
+
 def audit_deep(state: TransactionState) -> TransactionState:
     """
     LangGraph node: Deep Audit via Gemini 1.5 Pro.
@@ -134,14 +148,8 @@ def audit_deep(state: TransactionState) -> TransactionState:
         state["sar_draft"] = sar_text
         state["processing_status"] = "sar_complete"
 
-        logger.info(json.dumps({
-            "transaction_id": transaction_id,
-            "model": "pro",
-            "prompt_tokens": prompt_tokens,
-            "response_tokens": response_tokens,
-            "duration_ms": duration_ms,
-            "status": "success",
-        }))
+        _log_genai_call(transaction_id, "pro", "success", duration_ms,
+                        prompt_tokens, response_tokens)
 
         logger.warning(json.dumps({  # warning level = critical alert
             "event": "sar_generated",
@@ -151,15 +159,8 @@ def audit_deep(state: TransactionState) -> TransactionState:
         }))
 
     except Exception as exc:
-        duration_ms = round((time.time() - t0) * 1000)
-        logger.info(json.dumps({
-            "transaction_id": transaction_id,
-            "model": "pro",
-            "prompt_tokens": 0,
-            "response_tokens": 0,
-            "duration_ms": duration_ms,
-            "status": "error",
-        }))
+        _log_genai_call(transaction_id, "pro", "error",
+                        round((time.time() - t0) * 1000))
         logger.error(f"Pro SAR failed for {transaction_id}: {exc}")
         # Don't overwrite ai_explanation — Flash XAI still valid
         state["sar_draft"] = None
