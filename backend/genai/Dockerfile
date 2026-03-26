@@ -3,6 +3,7 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # Install GenAI-specific dependencies first for better layer caching
+# Build context is the project root, so we reference files relative to root
 COPY backend/genai/requirements.txt /tmp/genai-requirements.txt
 RUN pip install --no-cache-dir -r /tmp/genai-requirements.txt
 
