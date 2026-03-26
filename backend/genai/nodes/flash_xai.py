@@ -11,7 +11,12 @@ import google.generativeai as genai
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from backend.genai.graph import TransactionState
-from shared.thresholds import FLASH_RISK_ALTO
+from shared.project_constants import (
+    FLASH_RISK_ALTO,
+    GEMINI_FLASH_MODEL,
+    GEMINI_FLASH_MAX_TOKENS,
+    GEMINI_FLASH_TEMPERATURE,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -23,11 +28,11 @@ A tua tarefa é explicar, em linguagem clara para auditores não técnicos, POR 
 Respondes SEMPRE em JSON válido e NUNCA incluis texto fora do JSON."""
 
 _flash_model = genai.GenerativeModel(
-    model_name="gemini-1.5-flash-latest",
+    model_name=GEMINI_FLASH_MODEL,
     system_instruction=_SYSTEM_PROMPT,
     generation_config=genai.types.GenerationConfig(
-        temperature=0.1,          # Low creativity — factual, consistent output
-        max_output_tokens=512,
+        temperature=GEMINI_FLASH_TEMPERATURE,
+        max_output_tokens=GEMINI_FLASH_MAX_TOKENS,
         response_mime_type="application/json",  # Enforce JSON response
     ),
 )

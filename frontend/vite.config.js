@@ -3,9 +3,9 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 import { readFileSync } from 'fs'
 
-// Load shared thresholds at build time — single source of truth
+// Load shared project constants at build time — single source of truth
 const thresholdsRaw = readFileSync(
-  path.resolve(__dirname, '../shared/thresholds.json'),
+  path.resolve(__dirname, '../shared/project_constants.json'),
   'utf-8'
 )
 

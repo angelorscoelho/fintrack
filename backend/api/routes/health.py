@@ -8,12 +8,13 @@ import google.generativeai as genai
 from fastapi import APIRouter
 
 from api.config import settings
+from shared.project_constants import GEMINI_FLASH_MODEL, GEMINI_PRO_MODEL, HEALTH_CHECK_TIMEOUT
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Health"])
 
 _HEALTH_PROMPT = "Responde apenas com OK"
-_TIMEOUT_SECONDS = 5
+_TIMEOUT_SECONDS = HEALTH_CHECK_TIMEOUT
 
 # Configure once at module load (same pattern as genai/nodes/*.py)
 genai.configure(api_key=settings.gemini_api_key)
@@ -55,10 +56,10 @@ async def gemini_health():
     Each model receives a trivial prompt with a 5 s timeout.
     """
     flash_status, flash_latency, flash_err = await _check_model(
-        "gemini-1.5-flash-latest",
+        GEMINI_FLASH_MODEL,
     )
     pro_status, pro_latency, pro_err = await _check_model(
-        "gemini-1.5-pro-latest",
+        GEMINI_PRO_MODEL,
     )
 
     errors = [e for e in (flash_err, pro_err) if e]
@@ -78,8 +79,8 @@ async def get_gemini_status() -> dict:
     Return a summary dict suitable for inclusion in the main /health response.
     Re-uses the same logic as the dedicated endpoint.
     """
-    flash_status, _, flash_err = await _check_model("gemini-1.5-flash-latest")
-    pro_status, _, pro_err = await _check_model("gemini-1.5-pro-latest")
+    flash_status, _, flash_err = await _check_model(GEMINI_FLASH_MODEL)
+    pro_status, _, pro_err = await _check_model(GEMINI_PRO_MODEL)
 
     errors = [e for e in (flash_err, pro_err) if e]
     overall = "ok" if flash_status == "ok" and pro_status == "ok" else "error"

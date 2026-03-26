@@ -32,7 +32,7 @@ import { pt } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { AlertDetail } from '@/components/AlertDetail'
 import { ErrorBoundary } from '@/components/feedback/ErrorBoundary'
-import { getScoreVariant, getScoreBadgeBg } from '@/lib/thresholds'
+import { getScoreVariant, getScoreBadgeBg } from '@/lib/constants'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 

@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from api.db.dynamo import get_alert_by_id, get_alerts_by_status
 from api.models import AlertListResponse, AlertResponse
+from shared.project_constants import API_DEFAULT_LIMIT, API_MAX_LIMIT
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Alerts"])
@@ -14,7 +15,7 @@ router = APIRouter(tags=["Alerts"])
 @router.get("/alerts", response_model=AlertListResponse)
 async def list_alerts(
     status: Optional[str] = Query(None, description="Filter by status: NORMAL|PENDING_REVIEW|RESOLVED|FALSE_POSITIVE"),
-    limit: int = Query(50, ge=1, le=200),
+    limit: int = Query(API_DEFAULT_LIMIT, ge=1, le=API_MAX_LIMIT),
     offset: int = Query(0, ge=0),
 ):
     items, total = await get_alerts_by_status(status=status, limit=limit, offset=offset)

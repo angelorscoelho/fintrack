@@ -10,7 +10,7 @@ from typing import Optional, TypedDict
 import boto3
 from langgraph.graph import END, StateGraph
 
-from shared.thresholds import SAR_THRESHOLD
+from shared.project_constants import SAR_THRESHOLD
 
 logger = logging.getLogger(__name__)
 
