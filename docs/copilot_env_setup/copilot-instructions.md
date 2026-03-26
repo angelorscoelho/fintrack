@@ -182,11 +182,31 @@ POST /ingest                        → webhook entry point (via API Gateway)
 ---
 
 ## Anomaly Score Thresholds
+
+All score thresholds are defined in [`shared/project_constants.json`](../../shared/project_constants.json) — the single source of truth for both backend and frontend. Current values:
+
 ```
 < 0.70  → NORMAL (no AI analysis needed)
 0.70–0.90 → PENDING_REVIEW (Gemini Flash XAI generated)
 > 0.90  → CRITICAL (Gemini Pro SAR draft generated)
 ```
+
+These thresholds are consumed by:
+- **Backend (Python):** `from shared.project_constants import XAI_THRESHOLD, SAR_THRESHOLD`
+- **Frontend (JS):** `import { XAI_THRESHOLD, SAR_THRESHOLD } from '@/lib/constants'` (injected at Vite build time)
+- **Lambda:** Same Python import with JSON-file fallback
+
+> ⚠️ **NEVER** hardcode `0.70` or `0.90` directly. Always import from the shared constants module.
+
+Additional centralized values in `project_constants.json`:
+- `gemini.models` — Gemini Flash/Pro model names
+- `gemini.rate_limits` — Daily API call limits
+- `gemini.generation_config` — Temperature and max tokens per model
+- `data_retention` — TTL for normal transactions and rate limiter records
+- `api.pagination` — Default and max pagination limits
+- `api.timeouts` — Health check and GenAI invoke timeouts
+- `ui.kpi_variant` — KPI card warning/critical thresholds
+- `budget` — Budget warning/exceeded thresholds
 
 ---
 

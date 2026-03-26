@@ -12,23 +12,30 @@ from datetime import datetime, timedelta, timezone
 import boto3
 from botocore.exceptions import ClientError
 
+from shared.project_constants import (
+    GEMINI_FLASH_DAILY_LIMIT as _DEFAULT_FLASH_LIMIT,
+    GEMINI_PRO_DAILY_LIMIT as _DEFAULT_PRO_LIMIT,
+    RATE_LIMITER_TTL_DAYS,
+)
+
 logger = logging.getLogger(__name__)
 
 _dynamodb = boto3.resource("dynamodb")
 _RATE_TABLE = os.environ.get("RATE_LIMITER_TABLE", "gemini_rate_limiter")
 
-# Limits — read from env (set from SSM in Lambda env vars or local .env)
-FLASH_DAILY_LIMIT = int(os.environ.get("GEMINI_FLASH_DAILY_LIMIT", "500"))
-PRO_DAILY_LIMIT   = int(os.environ.get("GEMINI_PRO_DAILY_LIMIT", "100"))
+# Limits — read from env (set from SSM in Lambda env vars or local .env),
+# falling back to centralized project constants
+FLASH_DAILY_LIMIT = int(os.environ.get("GEMINI_FLASH_DAILY_LIMIT", str(_DEFAULT_FLASH_LIMIT)))
+PRO_DAILY_LIMIT   = int(os.environ.get("GEMINI_PRO_DAILY_LIMIT", str(_DEFAULT_PRO_LIMIT)))
 
 
 def _today() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
 
-def _ttl_2days() -> int:
-    """Unix timestamp 2 days from now for auto-expiry."""
-    return int((datetime.now(timezone.utc) + timedelta(days=2)).timestamp())
+def _ttl_expiry() -> int:
+    """Unix timestamp for auto-expiry based on configured retention."""
+    return int((datetime.now(timezone.utc) + timedelta(days=RATE_LIMITER_TTL_DAYS)).timestamp())
 
 
 def check_and_increment(model_type: str) -> bool:
@@ -70,7 +77,7 @@ def check_and_increment(model_type: str) -> bool:
                 ":zero":  0,
                 ":one":   1,
                 ":limit": limit,
-                ":ttl":   _ttl_2days(),
+                ":ttl":   _ttl_expiry(),
             },
         )
         logger.debug(f"Rate limiter: {model_type} incremented (limit={limit})")

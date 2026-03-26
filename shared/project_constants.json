@@ -1,0 +1,82 @@
+{
+  "_comment": "Single source of truth for all FinTrack project constants. Consumed by backend (Python), frontend (Vite build-time inject), and Lambda at import time. Any business-logic value that may change in the future should be defined here instead of hardcoded.",
+
+  "score": {
+    "xai":              0.70,
+    "sar":              0.90,
+    "flash_risk_alto":  0.85
+  },
+
+  "risk_levels": [
+    { "key": "CRITICAL", "min": 0.90, "max": 1.00, "label": "Critical",  "color": "red"    },
+    { "key": "HIGH",     "min": 0.70, "max": 0.90, "label": "High",      "color": "amber"  },
+    { "key": "MEDIUM",   "min": 0.40, "max": 0.70, "label": "Medium",    "color": "yellow" },
+    { "key": "LOW",      "min": 0.00, "max": 0.40, "label": "Low",       "color": "slate"  }
+  ],
+
+  "ui": {
+    "score_variant": {
+      "CRITICAL":    "destructive",
+      "HIGH":        "warning",
+      "MEDIUM":      "outline",
+      "LOW":         "outline"
+    },
+    "kpi_variant": {
+      "critical_avg_score":   0.70,
+      "warning_avg_score":    0.50,
+      "critical_fraud_rate":  10,
+      "warning_fraud_rate":   5
+    },
+    "histogram_buckets": [
+      { "key": "0-20",   "label": "0–20%",   "min": 0.00, "max": 0.20 },
+      { "key": "20-40",  "label": "20–40%",  "min": 0.20, "max": 0.40 },
+      { "key": "40-60",  "label": "40–60%",  "min": 0.40, "max": 0.60 },
+      { "key": "60-70",  "label": "60–70%",  "min": 0.60, "max": 0.70 },
+      { "key": "70-80",  "label": "70–80%",  "min": 0.70, "max": 0.80 },
+      { "key": "80-90",  "label": "80–90%",  "min": 0.80, "max": 0.90 },
+      { "key": "90-100", "label": "90–100%", "min": 0.90, "max": 1.01 }
+    ],
+    "filter_options": [
+      { "value": "0.90-1.00", "label": "≥ 90% — Critical" },
+      { "value": "0.70-0.90", "label": "70–90% — High" },
+      { "value": "0.40-0.70", "label": "40–70% — Medium" },
+      { "value": "0.00-0.40", "label": "< 40% — Low" }
+    ]
+  },
+
+  "budget": {
+    "warning":  0.80,
+    "exceeded": 1.00
+  },
+
+  "gemini": {
+    "models": {
+      "flash": "gemini-1.5-flash-latest",
+      "pro":   "gemini-1.5-pro-latest"
+    },
+    "rate_limits": {
+      "flash_daily": 500,
+      "pro_daily":   100
+    },
+    "generation_config": {
+      "flash": { "temperature": 0.1, "max_output_tokens": 512 },
+      "pro":   { "temperature": 0.2, "max_output_tokens": 2048 }
+    }
+  },
+
+  "data_retention": {
+    "normal_ttl_days":        7,
+    "rate_limiter_ttl_days":  2
+  },
+
+  "api": {
+    "pagination": {
+      "default_limit": 50,
+      "max_limit":     200
+    },
+    "timeouts": {
+      "health_check_seconds":  5,
+      "genai_invoke_seconds":  2
+    }
+  }
+}

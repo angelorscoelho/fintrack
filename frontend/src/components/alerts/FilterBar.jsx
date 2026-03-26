@@ -1,6 +1,7 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { RotateCcw } from 'lucide-react'
+import { FILTER_OPTIONS } from '@/lib/constants'
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'All statuses' },
@@ -13,10 +14,7 @@ const STATUS_OPTIONS = [
 
 const SCORE_OPTIONS = [
   { value: 'all', label: 'All scores' },
-  { value: '0.90-1.00', label: '≥ 90% — Critical' },
-  { value: '0.70-0.90', label: '70–90% — High' },
-  { value: '0.40-0.70', label: '40–70% — Medium' },
-  { value: '0.00-0.40', label: '< 40% — Low' },
+  ...FILTER_OPTIONS,
 ]
 
 const CATEGORY_OPTIONS = [

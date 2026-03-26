@@ -16,6 +16,7 @@ import {
   Clock, CheckCircle2, CircleDot, Check, PauseCircle, XCircle, ArrowUpCircle,
 } from 'lucide-react'
 import { safeFetch } from '@/lib/api'
+import { getMerchantRiskLevel, getScoreVariant, getScoreBadgeBg, XAI_THRESHOLD, API_MAX_LIMIT } from '@/lib/constants'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -30,10 +31,7 @@ const STATUS_CONFIG = {
 }
 
 function getRiskLevel(avg) {
-  if (avg > 0.90) return { label: 'CRITICAL', color: 'bg-red-100 text-red-800 border-red-200' }
-  if (avg > 0.70) return { label: 'HIGH', color: 'bg-orange-100 text-orange-800 border-orange-200' }
-  if (avg >= 0.40) return { label: 'MEDIUM', color: 'bg-amber-100 text-amber-800 border-amber-200' }
-  return { label: 'LOW', color: 'bg-green-100 text-green-800 border-green-200' }
+  return getMerchantRiskLevel(avg)
 }
 
 function getSignalSeverity(level) {
@@ -53,8 +51,8 @@ const COUNTRY_FLAGS = {
 
 function ScoreBadge({ score }) {
   const s = Number(score || 0)
-  const bg = s > 0.90 ? 'bg-red-100 text-red-800' : s >= 0.70 ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'
-  return <Badge className={`font-mono text-xs ${bg}`}>{(s * 100).toFixed(1)}%</Badge>
+  const bg = getScoreBadgeBg(s)
+  return <Badge variant={getScoreVariant(s)} className={`font-mono text-xs ${bg}`}>{(s * 100).toFixed(1)}%</Badge>
 }
 
 export default function MerchantProfile() {
@@ -64,7 +62,7 @@ export default function MerchantProfile() {
   const { data: allAlerts = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['merchant-alerts', nif],
     queryFn: async () => {
-      const res = await safeFetch(`${API_BASE}/api/alerts?limit=200`)
+      const res = await safeFetch(`${API_BASE}/api/alerts?limit=${API_MAX_LIMIT}`)
       const json = await res.json()
       const arr = Array.isArray(json) ? json : json.alerts || json.items || []
       return arr.filter((a) => a.merchant_nif === nif)
@@ -300,7 +298,7 @@ export default function MerchantProfile() {
                   strokeWidth={2}
                   dot={(props) => {
                     const { cx, cy, payload } = props
-                    if (payload.score > 0.70) {
+                    if (payload.score > XAI_THRESHOLD) {
                       return (
                         <circle
                           key={`dot-${cx}-${cy}`}

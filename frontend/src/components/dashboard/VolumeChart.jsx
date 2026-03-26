@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { BarChart3, AlertTriangle } from 'lucide-react'
 import { startOfHour, subHours, format, parseISO } from 'date-fns'
 import { safeFetch } from '@/lib/api'
+import { XAI_THRESHOLD, API_MAX_LIMIT } from '@/lib/constants'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -35,7 +36,7 @@ function groupByHour(items) {
       if (bucket) {
         bucket.total += 1
         const score = Number(item.anomaly_score || 0)
-        if (score >= 0.70) bucket.anomalies += 1
+        if (score >= XAI_THRESHOLD) bucket.anomalies += 1
       }
     } catch { /* skip bad dates */ }
   }
@@ -66,7 +67,7 @@ export function VolumeChart({ isDark = false }) {
   const { data: rawData, isLoading, isError, refetch } = useQuery({
     queryKey: ['alerts-volume'],
     queryFn: async () => {
-      const res = await safeFetch(`${API_BASE}/api/alerts?limit=200`)
+      const res = await safeFetch(`${API_BASE}/api/alerts?limit=${API_MAX_LIMIT}`)
       return res.json()
     },
     refetchInterval: 30000,

@@ -1,6 +1,6 @@
 """
 FinTrack AI — Gemini 1.5 Flash XAI Node
-Generates 3-bullet anomaly explanation in Portuguese for scores 0.70–0.90.
+Generates 3-bullet anomaly explanation in Portuguese for scores >= XAI_THRESHOLD.
 """
 import json
 import logging
@@ -11,6 +11,12 @@ import google.generativeai as genai
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from backend.genai.graph import TransactionState
+from shared.project_constants import (
+    FLASH_RISK_ALTO,
+    GEMINI_FLASH_MODEL,
+    GEMINI_FLASH_MAX_TOKENS,
+    GEMINI_FLASH_TEMPERATURE,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -22,11 +28,11 @@ A tua tarefa é explicar, em linguagem clara para auditores não técnicos, POR 
 Respondes SEMPRE em JSON válido e NUNCA incluis texto fora do JSON."""
 
 _flash_model = genai.GenerativeModel(
-    model_name="gemini-1.5-flash-latest",
+    model_name=GEMINI_FLASH_MODEL,
     system_instruction=_SYSTEM_PROMPT,
     generation_config=genai.types.GenerationConfig(
-        temperature=0.1,          # Low creativity — factual, consistent output
-        max_output_tokens=512,
+        temperature=GEMINI_FLASH_TEMPERATURE,
+        max_output_tokens=GEMINI_FLASH_MAX_TOKENS,
         response_mime_type="application/json",  # Enforce JSON response
     ),
 )
@@ -58,7 +64,7 @@ def _build_prompt(payload: dict, score: float) -> str:
     amount   = float(payload.get("amount", 0))
     prev_avg = float(payload.get("previous_avg_amount", 1)) or 1.0
     ratio    = amount / prev_avg
-    risk     = "ALTO" if score > 0.85 else "MÉDIO"
+    risk     = "ALTO" if score > FLASH_RISK_ALTO else "MÉDIO"
     hour     = int(payload.get("hour_of_day", 0))
     days     = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"]
     day_name = days[int(payload.get("day_of_week", 0)) % 7]

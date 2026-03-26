@@ -7,6 +7,7 @@ import { pt } from 'date-fns/locale'
 import { Loader2, Clock, CheckCircle2, CircleDot, Check, PauseCircle, XCircle, ArrowUpCircle, Cpu, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { ErrorBoundary } from '@/components/feedback/ErrorBoundary'
+import { getScoreVariant } from '@/lib/constants'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -31,7 +32,7 @@ const STATUS_CONFIG = {
 
 function ScoreBadge({ score }) {
   const s = Number(score || 0)
-  const variant = s > 0.90 ? 'destructive' : s >= 0.70 ? 'warning' : 'outline'
+  const variant = getScoreVariant(s)
   return <Badge variant={variant} className="font-mono text-xs">{(s * 100).toFixed(1)}%</Badge>
 }
 

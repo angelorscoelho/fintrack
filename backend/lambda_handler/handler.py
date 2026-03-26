@@ -23,9 +23,21 @@ TABLE_NAME  = os.environ["DYNAMODB_TABLE"]
 table       = dynamodb.Table(TABLE_NAME)
 
 GENAI_URL           = os.environ.get("GENAI_SERVICE_URL", "http://localhost:8001")
-XAI_THRESHOLD       = 0.70
-SAR_THRESHOLD       = 0.90
-GENAI_INVOKE_TIMEOUT = 2  # seconds — fire-and-forget, non-blocking
+
+# Thresholds from shared single source of truth
+# At Lambda deploy time, shared/ is in the layer alongside lambda_handler/
+try:
+    from shared.project_constants import XAI_THRESHOLD, SAR_THRESHOLD, NORMAL_TTL_DAYS, GENAI_INVOKE_TIMEOUT
+except ImportError:
+    # Fallback: read JSON directly (e.g. when shared/ is a sibling directory)
+    import pathlib as _pl
+    _thresholds_path = _pl.Path(__file__).resolve().parent.parent / "shared" / "project_constants.json"
+    with open(_thresholds_path) as _f:
+        _th = json.load(_f)
+    XAI_THRESHOLD = _th["score"]["xai"]
+    SAR_THRESHOLD = _th["score"]["sar"]
+    NORMAL_TTL_DAYS = _th["data_retention"]["normal_ttl_days"]
+    GENAI_INVOKE_TIMEOUT = _th["api"]["timeouts"]["genai_invoke_seconds"]
 
 
 def _to_dynamodb_value(val):
@@ -65,10 +77,10 @@ def _process(payload: dict) -> None:
     score = score_transaction(payload)
     status = "NORMAL" if score < XAI_THRESHOLD else "PENDING_REVIEW"
 
-    # TTL: NORMAL records expire in 7 days; anomalies kept indefinitely
+    # TTL: NORMAL records expire after configured days; anomalies kept indefinitely
     ttl = None
     if status == "NORMAL":
-        ttl = int((datetime.now(timezone.utc) + timedelta(days=7)).timestamp())
+        ttl = int((datetime.now(timezone.utc) + timedelta(days=NORMAL_TTL_DAYS)).timestamp())
 
     # Convert all numeric values to Decimal for DynamoDB compatibility
     safe_payload = _to_dynamodb_value(payload)

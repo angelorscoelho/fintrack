@@ -32,6 +32,7 @@ import { pt } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { AlertDetail } from '@/components/AlertDetail'
 import { ErrorBoundary } from '@/components/feedback/ErrorBoundary'
+import { getScoreVariant, getScoreBadgeBg } from '@/lib/constants'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -47,16 +48,16 @@ const STATUS_CONFIG = {
 
 function ScoreBadge({ score }) {
   const s = Number(score || 0)
-  const variant = s > 0.90 ? 'destructive' : s >= 0.70 ? 'warning' : 'outline'
-  const bg = s > 0.90 ? 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/40 dark:text-red-300 dark:border-red-800' : s >= 0.70 ? 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800' : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600'
+  const variant = getScoreVariant(s)
+  const bg = getScoreBadgeBg(s)
   return <Badge variant={variant} className={`font-mono text-xs ${bg}`}>{(s * 100).toFixed(1)}%</Badge>
 }
 
 function SortIcon({ column }) {
-  if (!column.getIsSorted()) return <ChevronsUpDown className="h-3 w-3 text-slate-400" />
+  if (!column.getIsSorted()) return <ChevronsUpDown className="h-3 w-3 text-muted-foreground" />
   return column.getIsSorted() === 'desc'
-    ? <ChevronDown className="h-3 w-3 text-blue-600" />
-    : <ChevronUp className="h-3 w-3 text-blue-600" />
+    ? <ChevronDown className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+    : <ChevronUp className="h-3 w-3 text-blue-600 dark:text-blue-400" />
 }
 
 function InlineActionButton({ icon: Icon, title, className, loading, onClick }) {
@@ -83,16 +84,16 @@ function ExpandedRowPanel({ alert, onOpenDetail, onResolved }) {
   }
 
   return (
-    <div className="bg-slate-50 dark:bg-slate-800 border-t border-b border-slate-200 dark:border-slate-700 px-6 py-4 space-y-3">
+    <div className="bg-muted border-t border-b border-border px-6 py-4 space-y-3">
       {/* XAI bullets */}
       {explanation && (
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-xs font-semibold text-amber-800 dark:text-amber-300">
+          <div className="flex items-center gap-2 text-xs font-semibold text-amber-800 dark:text-amber-400">
             <Cpu className="h-3.5 w-3.5" />
             AI Analysis
           </div>
           {explanation.summary_pt && (
-            <p className="text-xs text-slate-600 dark:text-slate-400 italic">{explanation.summary_pt}</p>
+            <p className="text-xs text-muted-foreground italic">{explanation.summary_pt}</p>
           )}
           <ul className="space-y-1">
             {(explanation.bullets || []).map((b) => (
@@ -126,7 +127,7 @@ function ExpandedRowPanel({ alert, onOpenDetail, onResolved }) {
 
         {alert.status === 'PENDING_REVIEW' && (
           <div className="flex items-center gap-1.5 ml-auto">
-            <span className="text-xs text-slate-500 mr-1">Resolve:</span>
+            <span className="text-xs text-muted-foreground mr-1">Resolve:</span>
             <ResolveButton alert={alert} type="FALSE_POSITIVE" label="False Positive" onResolved={onResolved} />
             <ResolveButton alert={alert} type="CONFIRMED_FRAUD" label="Confirmed Fraud" onResolved={onResolved} />
             <ResolveButton alert={alert} type="ESCALATED" label="Escalated" onResolved={onResolved} />
@@ -141,9 +142,9 @@ function ResolveButton({ alert, type, label, onResolved }) {
   const [loading, setLoading] = useState(false)
 
   const config = {
-    FALSE_POSITIVE: { variant: 'outline', cls: 'border-blue-400 text-blue-700 hover:bg-blue-50' },
+    FALSE_POSITIVE: { variant: 'outline', cls: 'border-blue-400 text-blue-700 hover:bg-blue-50 dark:border-blue-600 dark:text-blue-400 dark:hover:bg-blue-950' },
     CONFIRMED_FRAUD: { variant: 'destructive', cls: '' },
-    ESCALATED: { variant: 'secondary', cls: 'bg-amber-100 text-amber-800 hover:bg-amber-200' },
+    ESCALATED: { variant: 'secondary', cls: 'bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:hover:bg-amber-900/50' },
   }
   const c = config[type] || { variant: 'outline', cls: '' }
 
@@ -226,7 +227,7 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
         header: ({ table }) => (
           <input
             type="checkbox"
-            className="rounded border-slate-300 cursor-pointer"
+            className="rounded border-slate-300 dark:border-slate-600 cursor-pointer"
             checked={table.getIsAllPageRowsSelected()}
             onChange={table.getToggleAllPageRowsSelectedHandler()}
             onClick={(e) => e.stopPropagation()}
@@ -235,7 +236,7 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
         cell: ({ row }) => (
           <input
             type="checkbox"
-            className="rounded border-slate-300 cursor-pointer"
+            className="rounded border-slate-300 dark:border-slate-600 cursor-pointer"
             checked={row.getIsSelected()}
             onChange={row.getToggleSelectedHandler()}
             onClick={(e) => e.stopPropagation()}
@@ -254,7 +255,7 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
         accessorKey: 'transaction_id',
         header: 'ID',
         cell: ({ getValue }) => (
-          <span className="font-mono text-xs text-slate-500">{getValue()?.substring(0, 8)}…</span>
+          <span className="font-mono text-xs text-muted-foreground">{getValue()?.substring(0, 8)}…</span>
         ),
         enableSorting: false,
         size: 100,
@@ -266,7 +267,7 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
           const nif = getValue()
           return (
             <button
-              className="font-mono text-xs text-blue-600 hover:text-blue-800 hover:underline"
+              className="font-mono text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline"
               onClick={(e) => {
                 e.stopPropagation()
                 navigate(`/merchants/${nif}`)
@@ -283,7 +284,7 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
         accessorKey: 'amount',
         header: () => <span className="w-full text-right block">Amount</span>,
         cell: ({ getValue }) => (
-          <span className="font-semibold text-slate-800 dark:text-slate-200 block text-right">
+          <span className="font-semibold text-foreground block text-right">
             €{Number(getValue() || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
         ),
@@ -293,7 +294,7 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
         accessorKey: 'category',
         header: 'Category',
         cell: ({ getValue }) => (
-          <span className="text-xs text-slate-600 dark:text-slate-400 lowercase">
+          <span className="text-xs text-muted-foreground lowercase">
             {getValue()?.replace(/_/g, ' ')}
           </span>
         ),
@@ -320,15 +321,15 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
         header: 'Time',
         cell: ({ getValue }) => {
           const ts = getValue()
-          if (!ts) return <span className="text-xs text-slate-400">–</span>
+          if (!ts) return <span className="text-xs text-muted-foreground">–</span>
           try {
             return (
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-muted-foreground">
                 {formatDistanceToNow(new Date(ts), { addSuffix: true, locale: pt })}
               </span>
             )
           } catch {
-            return <span className="text-xs text-slate-400">–</span>
+            return <span className="text-xs text-muted-foreground">–</span>
           }
         },
         size: 120,
@@ -339,7 +340,7 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
         cell: ({ row }) => {
           const alert = row.original
           if (alert.status !== 'PENDING_REVIEW') {
-            return <span className="text-xs text-slate-300">—</span>
+            return <span className="text-xs text-slate-300 dark:text-slate-600">—</span>
           }
           const id = alert.transaction_id
           return (
@@ -347,21 +348,21 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
               <InlineActionButton
                 icon={CheckCircle}
                 title="False Positive"
-                className="text-green-600 hover:bg-green-100"
+                className="text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30"
                 loading={resolvingRows[`${id}_FALSE_POSITIVE`]}
                 onClick={() => resolveInline(alert, 'FALSE_POSITIVE', 'False Positive')}
               />
               <InlineActionButton
                 icon={XCircle}
                 title="Confirmed Fraud"
-                className="text-red-600 hover:bg-red-100"
+                className="text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30"
                 loading={resolvingRows[`${id}_CONFIRMED_FRAUD`]}
                 onClick={() => resolveInline(alert, 'CONFIRMED_FRAUD', 'Confirmed Fraud')}
               />
               <InlineActionButton
                 icon={ArrowUpCircle}
                 title="Escalate"
-                className="text-amber-600 hover:bg-amber-100"
+                className="text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/30"
                 loading={resolvingRows[`${id}_ESCALATED`]}
                 onClick={() => resolveInline(alert, 'ESCALATED', 'Escalated')}
               />
@@ -449,8 +450,8 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
 
   if (isLoading && data.length === 0) {
     return (
-      <div className="flex items-center justify-center h-48 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
-        <div className="flex items-center gap-2 text-sm text-slate-400">
+      <div className="flex items-center justify-center h-48 bg-card rounded-lg border border-border">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
           Loading alerts…
         </div>
@@ -460,29 +461,29 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
 
   if (!isLoading && data.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-48 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 gap-2">
-        <p className="text-sm text-slate-500">No alerts for the selected filter.</p>
+      <div className="flex flex-col items-center justify-center h-48 bg-card rounded-lg border border-border gap-2">
+        <p className="text-sm text-muted-foreground">No alerts for the selected filter.</p>
       </div>
     )
   }
 
   return (
     <>
-      <div ref={tableRef} className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+      <div ref={tableRef} className="bg-card rounded-lg border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+            <thead className="bg-muted border-b border-border">
               {table.getHeaderGroups().map((hg) => (
                 <tr key={hg.id}>
                   {hg.headers.map((h) => (
                     <th
                       key={h.id}
-                      className="px-3 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide"
+                      className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
                       style={{ width: h.getSize() }}
                     >
                       {h.isPlaceholder ? null : h.column.getCanSort() ? (
                         <button
-                          className="flex items-center gap-1 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+                          className="flex items-center gap-1 hover:text-foreground transition-colors"
                           onClick={h.column.getToggleSortingHandler()}
                         >
                           {flexRender(h.column.columnDef.header, h.getContext())}
@@ -496,13 +497,13 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
                 </tr>
               ))}
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-border">
               {pageRows.map((row, idx) => (
                 <Fragment key={row.id}>
                   <tr
                     className={`transition-colors cursor-pointer ${
-                      idx === focusedRowIndex ? 'bg-blue-50/70 dark:bg-blue-900/30 ring-1 ring-inset ring-blue-200 dark:ring-blue-800' : 'hover:bg-slate-50/50 dark:hover:bg-slate-800/50'
-                    } ${row.getIsExpanded() ? 'bg-slate-50 dark:bg-slate-800' : ''}`}
+                      idx === focusedRowIndex ? 'bg-blue-50/70 ring-1 ring-inset ring-blue-200 dark:bg-blue-950/40 dark:ring-blue-800' : 'hover:bg-slate-50/50 dark:hover:bg-slate-800/50'
+                    } ${row.getIsExpanded() ? 'bg-slate-50 dark:bg-slate-800/50' : ''}`}
                     onClick={() => row.toggleExpanded()}
                   >
                     {row.getVisibleCells().map((cell) => (
@@ -531,8 +532,8 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
         </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+        <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted">
+          <p className="text-xs text-muted-foreground">
             {data.length} alerts — Page {table.getState().pagination.pageIndex + 1} of{' '}
             {table.getPageCount()}
           </p>

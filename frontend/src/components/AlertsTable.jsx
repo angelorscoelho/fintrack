@@ -7,6 +7,7 @@ import { useMemo, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ChevronUp, ChevronDown, ChevronsUpDown, Clock, CheckCircle2, CircleDot, Check, PauseCircle } from 'lucide-react'
+import { getScoreVariant } from '@/lib/constants'
 
 const STATUS_CONFIG = {
   PENDING_REVIEW: { label: 'Pending Review', variant: 'warning',     Icon: Clock },
@@ -20,7 +21,7 @@ const STATUS_CONFIG = {
 
 function ScoreBadge({ score }) {
   const s = Number(score || 0)
-  const variant = s > 0.90 ? 'destructive' : s >= 0.70 ? 'warning' : 'outline'
+  const variant = getScoreVariant(s)
   return <Badge variant={variant} className="font-mono text-xs">{(s * 100).toFixed(1)}%</Badge>
 }
 
