@@ -34,9 +34,9 @@ const categoryColors = {
 /* ── Section header ────────────────────────────────────────────────────────── */
 function SectionHeader({ title }) {
   return (
-    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pt-3 first:pt-0">
+    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pt-3 first:pt-0">
       {title}
-    </h3>
+    </h4>
   )
 }
 
@@ -106,6 +106,7 @@ function CopyIdButton({ text, t }) {
             size="icon"
             className="h-6 w-6 shrink-0"
             onClick={handleCopy}
+            aria-label={t('transactions.copyId')}
           >
             {copied
               ? <Check className="h-3.5 w-3.5 text-green-500" />
@@ -136,7 +137,7 @@ export function TransactionDetailModal({ transaction, open, onOpenChange }) {
         <DialogHeader>
           <DialogTitle>{t('transactions.details')}</DialogTitle>
           <DialogDescription className="sr-only">
-            {transaction.transaction_id}
+            {t('transactions.details')} — {transaction.transaction_id}
           </DialogDescription>
         </DialogHeader>
 
