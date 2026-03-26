@@ -1,6 +1,7 @@
 {
   "rewrites": [
-    { "source": "/poc/fintrack/(.*)", "destination": "/$1" }
+    { "source": "/poc/fintrack/assets/(.*)", "destination": "/assets/$1" },
+    { "source": "/poc/fintrack/(.*)", "destination": "/index.html" }
   ],
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
