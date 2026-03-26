@@ -181,6 +181,7 @@ async def get_stats() -> dict:
         resolved = sum(1 for i in items if i.get("status") == "RESOLVED")
         fp = sum(1 for i in items if i.get("status") == "FALSE_POSITIVE")
         rl = sum(1 for i in items if i.get("status") == "rate_limited")
+        confirmed_fraud = sum(1 for i in items if i.get("resolution_type") == "CONFIRMED_FRAUD")
         scores = [float(i.get("anomaly_score", 0)) for i in items if i.get("anomaly_score")]
         critical = sum(
             1 for i in items
@@ -189,6 +190,7 @@ async def get_stats() -> dict:
         )
         fp_rate = round(fp / max(resolved + fp, 1), 3)
         avg_score = round(sum(scores) / max(len(scores), 1), 3)
+        fraud_rate = round(confirmed_fraud / max(total, 1), 3)
 
         # Sliding 24-hour window count
         cutoff = datetime.now(timezone.utc).timestamp() - 86400
@@ -211,9 +213,11 @@ async def get_stats() -> dict:
                 "resolved": resolved, "false_positives": fp,
                 "rate_limited": rl,
                 "fp_rate": fp_rate, "avg_score": avg_score,
+                "fraud_rate": fraud_rate,
                 "rate_limits": rate_limits}
     except Exception as exc:
         logger.error(f"Stats query failed: {exc}")
         return {"total": 0, "last_24h": 0, "pending": 0, "critical": 0, "resolved": 0,
                 "false_positives": 0, "rate_limited": 0,
-                "fp_rate": 0.0, "avg_score": 0.0, "rate_limits": {}}
+                "fp_rate": 0.0, "avg_score": 0.0, "fraud_rate": 0.0,
+                "rate_limits": {}}

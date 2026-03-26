@@ -58,3 +58,6 @@ GENAI_INVOKE_TIMEOUT: int = _data["api"]["timeouts"]["genai_invoke_seconds"]
 
 # ── Full config dict (for /api/config endpoint) ──────────────────────────────
 THRESHOLDS_CONFIG: dict = _data
+
+# ── Fraud rates (research-backed, by transaction count) ──────────────────────
+FRAUD_RATE_OVERALL: float = _data["fraud_rates"]["overall"]   # 0.0006 = 0.06 %

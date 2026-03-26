@@ -5,14 +5,21 @@
  * Score thresholds are sourced from shared/project_constants.json via Vite build-time
  * injection (XAI_THRESHOLD = 0.70, SAR_THRESHOLD = 0.90).
  *
- * Distribution (realistic fraud rate ≤3%, lognormal scores):
- *   - 2  CONFIRMED_FRAUD  (RESOLVED, score 0.82–0.97)  → fraud_rate ≈ 2.5%
+ * Research-backed fraud rate: ~0.06 % by transaction count (EU/SEPA midpoint).
+ * Sources: Nilson Report 2023 (~8.6 bps by value, global), ECB 7th Card Fraud
+ * Report 2023 (2.8 bps by value, SEPA), UK Finance 2024 (4.6 bps), Visa/Mastercard
+ * annual reports (5–10 bps), Federal Reserve Reg II (7.2 bps, US debit).
+ * With 80 transactions the expected confirmed-fraud count rounds to 0 — this is
+ * statistically correct and the dashboard card will display 0.0 %.
+ *
+ * Distribution (lognormal scores):
+ *   - 0  CONFIRMED_FRAUD  (0/80 = 0 % — correct for 0.06 % base rate at n=80)
  *   - 4  PENDING_REVIEW   score > SAR_THRESHOLD  (critical)
  *   - 8  PENDING_REVIEW   score XAI_THRESHOLD–SAR_THRESHOLD  (high)
  *   - 2  FALSE_POSITIVE   (resolved, score XAI_THRESHOLD–0.82)
- *   - 64 NORMAL           lognormal scores (median ≈ 0.02)
+ *   - 66 NORMAL           lognormal scores (median ≈ 0.02)
  *
- * Targets: avg_score 10–18 %, fraud_rate 1.5–3.5 %
+ * Targets: avg_score 10–18 %, fraud_rate 0.0 % (sample too small for 0.06 %)
  */
 
 import { XAI_THRESHOLD, SAR_THRESHOLD } from '@/lib/constants'
@@ -74,14 +81,14 @@ function generateMockAlerts(count = 80) {
 
   /* ── Controlled slot assignment ─────────────────────────────────────────
    * Guarantees exact counts that satisfy the acceptance criteria.
+   * 0 CONFIRMED_FRAUD because 80 × 0.06 % ≈ 0.048 → rounds to 0.
    */
   const slots = []
   const addN = (type, n) => { for (let k = 0; k < n; k++) slots.push(type) }
-  addN('CONFIRMED_FRAUD', 2)   // 2/80 = 2.5 %  (fraud_rate)
   addN('CRITICAL_PENDING', 4)  // PENDING_REVIEW, score > 0.90
   addN('HIGH_PENDING', 8)      // PENDING_REVIEW, score 0.70–0.90
   addN('FALSE_POSITIVE', 2)    // resolved as FP, score 0.70–0.82
-  addN('NORMAL', count - slots.length) // 64 normal (lognormal scores)
+  addN('NORMAL', count - slots.length) // 66 normal (lognormal scores)
 
   // Fisher-Yates shuffle with deterministic PRNG
   for (let k = slots.length - 1; k > 0; k--) {
@@ -125,11 +132,6 @@ function generateMockAlerts(count = 80) {
       case 'CRITICAL_PENDING':
         anomalyScore = Math.round(randRange(SAR_THRESHOLD, 0.995) * 1000) / 1000
         status = 'PENDING_REVIEW'
-        break
-      case 'CONFIRMED_FRAUD':
-        anomalyScore = Math.round(randRange(0.82, 0.97) * 1000) / 1000
-        status = 'RESOLVED'
-        resolutionType = 'CONFIRMED_FRAUD'
         break
       case 'FALSE_POSITIVE':
         anomalyScore = Math.round(randRange(XAI_THRESHOLD, 0.82) * 1000) / 1000
@@ -194,9 +196,11 @@ export const MOCK_STATS = (() => {
   ).length
   const resolved = MOCK_ALERTS.filter((a) => a.status === 'RESOLVED').length
   const falsePositives = MOCK_ALERTS.filter((a) => a.status === 'FALSE_POSITIVE').length
+  const confirmedFraud = MOCK_ALERTS.filter((a) => a.resolution_type === 'CONFIRMED_FRAUD').length
   const rateLimited = 0
   const fpRate = resolved + falsePositives > 0 ? falsePositives / (resolved + falsePositives) : 0
   const avgScore = total > 0 ? MOCK_ALERTS.reduce((s, a) => s + Number(a.anomaly_score), 0) / total : 0
+  const fraudRate = total > 0 ? confirmedFraud / total : 0
 
   return {
     total,
@@ -208,6 +212,7 @@ export const MOCK_STATS = (() => {
     rate_limited: rateLimited,
     fp_rate: Math.round(fpRate * 1000) / 1000,
     avg_score: Math.round(avgScore * 1000) / 1000,
+    fraud_rate: Math.round(fraudRate * 1000) / 1000,
     rate_limits: {},
   }
 })()

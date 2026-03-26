@@ -51,11 +51,12 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
   const critical = stats?.critical ?? 0
   const avgScore = stats?.avg_score ?? 0
 
-  const fraudRate = total > 0 ? (pending / total) * 100 : 0
-  const fraudRateDisplay = total > 0 ? fraudRate.toFixed(1) + '%' : '–'
+  const fraudRate = stats?.fraud_rate ?? 0
+  const fraudRatePercent = fraudRate * 100
+  const fraudRateDisplay = total > 0 ? fraudRatePercent.toFixed(1) + '%' : '–'
   const avgScoreDisplay = (avgScore * 100).toFixed(1) + '%'
 
-  const fraudRateVariant = fraudRate > KPI_THRESHOLDS.critical_fraud_rate ? 'critical' : fraudRate > KPI_THRESHOLDS.warning_fraud_rate ? 'warning' : 'default'
+  const fraudRateVariant = fraudRatePercent > KPI_THRESHOLDS.critical_fraud_rate ? 'critical' : fraudRatePercent > KPI_THRESHOLDS.warning_fraud_rate ? 'warning' : 'default'
   const avgScoreVariant = avgScore >= KPI_THRESHOLDS.critical_avg_score ? 'critical' : avgScore >= KPI_THRESHOLDS.warning_avg_score ? 'warning' : 'default'
 
   // Sub-label: "Since HH:MM of dd/MM/yyyy"

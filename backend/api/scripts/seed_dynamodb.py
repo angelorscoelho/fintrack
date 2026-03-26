@@ -53,7 +53,11 @@ def generate_transaction(index: int, hours_ago: float = 0) -> dict:
     # Timestamps
     timestamp = datetime.now(timezone.utc) - timedelta(hours=hours_ago, minutes=random.randint(0, 59))
     
-    # Anomaly score — realistic distribution (≈2 % fraud rate)
+    # Anomaly score — realistic distribution
+    # PENDING_REVIEW (flagged): ~2.5 % of total.
+    # After review, CONFIRMED_FRAUD ≈ 0.06 % of total (EU/SEPA by-count midpoint).
+    # Sources: Nilson Report 2023 (~8.6 bps by value), ECB 7th Card Fraud Report
+    # (2.8 bps by value SEPA), UK Finance 2024 (4.6 bps), Visa/Mastercard (5–10 bps).
     # Most transactions are normal with very low scores (lognormal-like).
     # Score thresholds sourced from shared/project_constants.json.
     score = random.random()
@@ -70,12 +74,12 @@ def generate_transaction(index: int, hours_ago: float = 0) -> dict:
         anomaly_score = round(random.uniform(SAR_THRESHOLD, 1.0), 3)    # Critical
         status = "PENDING_REVIEW"
     
-    # Resolve ~15 % of flagged transactions:
-    #   effective CONFIRMED_FRAUD ≈ 15 % × 35 % ≈ 5 % of flagged
-    #   effective FALSE_POSITIVE  ≈ 15 % × 65 % ≈ 10 % of flagged
+    # Resolve ~10 % of flagged transactions:
+    #   effective CONFIRMED_FRAUD ≈ 10 % × 24 % ≈ 2.4 % of flagged ≈ 0.06 % of total
+    #   effective FALSE_POSITIVE  ≈ 10 % × 76 % ≈ 7.6 % of flagged
     resolution_type = None
-    if status == "PENDING_REVIEW" and random.random() < 0.15:
-        if random.random() < 0.35:
+    if status == "PENDING_REVIEW" and random.random() < 0.10:
+        if random.random() < 0.24:
             status = "RESOLVED"
             resolution_type = "CONFIRMED_FRAUD"
         else:
