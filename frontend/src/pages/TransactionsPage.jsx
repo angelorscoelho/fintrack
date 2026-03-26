@@ -24,6 +24,7 @@ import { TransactionDetailModal } from '@/components/transactions/TransactionDet
 import { TableSkeleton } from '@/components/feedback/LoadingSkeleton'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { ErrorState } from '@/components/feedback/ErrorState'
+import { useLanguage } from '@/i18n/LanguageContext'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 const PAGE_SIZE = 20
@@ -40,7 +41,18 @@ const categoryColors = {
   pharmacy: 'secondary',
 }
 
+const STATUS_I18N_KEY = {
+  PENDING_REVIEW:  'status.pendingReview',
+  CONFIRMED_FRAUD: 'status.confirmedFraud',
+  RESOLVED:        'status.resolved',
+  FALSE_POSITIVE:  'status.falsePositive',
+  ESCALATED:       'status.escalated',
+  NORMAL:          'status.normal',
+  rate_limited:    'status.apiLimit',
+}
+
 export default function TransactionsPage() {
+  const { t } = useLanguage()
   const [searchParams] = useSearchParams()
   const initialCategory = searchParams.get('category') || 'all'
 
@@ -172,7 +184,7 @@ export default function TransactionsPage() {
         <Button variant="ghost" size="sm" asChild>
           <Link to="/">
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Dashboard
+            {t('actions.backToDashboard')}
           </Link>
         </Button>
       </div>
@@ -181,10 +193,10 @@ export default function TransactionsPage() {
       <div className="flex items-center gap-3">
         <Receipt className="h-6 w-6 text-blue-600" />
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Transactions</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t('transactions.title')}</h1>
           <p className="text-xs text-muted-foreground">
-            {filteredCount} transaction{filteredCount !== 1 ? 's' : ''}
-            {hasActiveFilters ? ' (filtered)' : ''}
+            {filteredCount} {filteredCount !== 1 ? t('transactions.plural') : t('transactions.singular')}
+            {hasActiveFilters ? ` ${t('transactions.filtered')}` : ''}
           </p>
         </div>
       </div>
@@ -215,7 +227,7 @@ export default function TransactionsPage() {
       {/* Data table */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Transaction History</CardTitle>
+          <CardTitle className="text-lg">{t('transactions.history')}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
@@ -225,15 +237,15 @@ export default function TransactionsPage() {
             transactions.length === 0 ? (
               <EmptyState
                 icon={PlusCircle}
-                title="No transactions yet."
-                description="Once transactions are processed they will appear here."
+                title={t('transactions.noTransactions')}
+                description={t('transactions.noTransactionsDesc')}
               />
             ) : (
               <EmptyState
                 icon={SearchX}
-                title="No transactions match your filters."
-                description="Try adjusting or clearing the active filters."
-                actionLabel="Reset filters"
+                title={t('transactions.noMatch')}
+                description={t('transactions.noMatchDesc')}
+                actionLabel={t('actions.resetFilters')}
                 onAction={resetFilters}
               />
             )
@@ -245,20 +257,20 @@ export default function TransactionsPage() {
                   <thead>
                     <tr className="border-b bg-muted/50">
                       <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                        Transaction
+                        {t('columns.transaction')}
                       </th>
                       <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                        Merchant
+                        {t('columns.merchant')}
                       </th>
                       <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                        Category
+                        {t('columns.category')}
                       </th>
                       <th
                         className="text-left px-4 py-3 font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors"
                         onClick={() => handleSort('amount')}
                       >
                         <span className="inline-flex items-center">
-                          Amount
+                          {t('columns.amount')}
                           <SortIcon field="amount" />
                         </span>
                       </th>
@@ -267,12 +279,12 @@ export default function TransactionsPage() {
                         onClick={() => handleSort('date')}
                       >
                         <span className="inline-flex items-center">
-                          Date
+                          {t('columns.date')}
                           <SortIcon field="date" />
                         </span>
                       </th>
                       <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                        Status
+                        {t('columns.status')}
                       </th>
                     </tr>
                   </thead>
@@ -311,7 +323,7 @@ export default function TransactionsPage() {
                             }
                             className="text-xs"
                           >
-                            {tx.status}
+                            {t(STATUS_I18N_KEY[tx.status] ?? 'status.normal')}
                           </Badge>
                         </td>
                       </tr>
@@ -324,7 +336,7 @@ export default function TransactionsPage() {
               {totalPages > 1 && (
                 <div className="flex items-center justify-between border-t px-4 py-3">
                   <span className="text-xs text-muted-foreground">
-                    Page {safePage + 1} of {totalPages} · {filteredCount} total
+                    {t('transactions.page', { current: safePage + 1, total: totalPages, count: filteredCount })}
                   </span>
                   <div className="flex gap-1">
                     <Button
@@ -334,7 +346,7 @@ export default function TransactionsPage() {
                       onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
                     >
                       <ChevronLeft className="h-4 w-4" />
-                      Previous
+                      {t('actions.previous')}
                     </Button>
                     <Button
                       variant="outline"
@@ -342,7 +354,7 @@ export default function TransactionsPage() {
                       disabled={safePage >= totalPages - 1}
                       onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
                     >
-                      Next
+                      {t('actions.next')}
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
