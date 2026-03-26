@@ -19,6 +19,7 @@ export function KpiNavigationCard({
   icon: Icon,
   loading = false,
   tooltip,
+  subLabel,
   route,
 }) {
   const variantClass = VARIANT_STYLES[variant] || VARIANT_STYLES.default
@@ -72,6 +73,9 @@ export function KpiNavigationCard({
                 <ChangeIcon className="h-3 w-3" />
                 <span>{change > 0 ? '+' : ''}{change.toFixed(1)}%</span>
               </div>
+            )}
+            {subLabel && (
+              <p className="mt-1 text-[10px] text-muted-foreground truncate">{subLabel}</p>
             )}
           </>
         )}

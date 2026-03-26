@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { KpiNavigationCard } from '@/components/dashboard/KpiNavigationCard'
 import { VolumeChart } from '@/components/dashboard/VolumeChart'
@@ -45,6 +45,7 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
 
   // Derived KPI values
   const total = stats?.total ?? 0
+  const last24h = stats?.last_24h ?? 0
   const pending = stats?.pending ?? 0
   const critical = stats?.critical ?? 0
   const avgScore = stats?.avg_score ?? 0
@@ -55,6 +56,17 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
 
   const fraudRateVariant = fraudRate > 10 ? 'critical' : fraudRate > 5 ? 'warning' : 'default'
   const avgScoreVariant = avgScore >= 0.70 ? 'critical' : avgScore >= 0.50 ? 'warning' : 'default'
+
+  // Sub-label: "Since HH:MM of dd/MM/yyyy"
+  const last24hSubLabel = useMemo(() => {
+    const since = new Date(Date.now() - 86400 * 1000)
+    const hh = String(since.getHours()).padStart(2, '0')
+    const mm = String(since.getMinutes()).padStart(2, '0')
+    const dd = String(since.getDate()).padStart(2, '0')
+    const mo = String(since.getMonth() + 1).padStart(2, '0')
+    const yyyy = since.getFullYear()
+    return `Since ${hh}:${mm} of ${dd}/${mo}/${yyyy}`
+  }, [stats])
 
   return (
     <>
@@ -76,11 +88,12 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
       {/* Row 1: KPI Cards — horizontal scroll on mobile, 4-column grid on desktop */}
       <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 md:grid md:grid-cols-4 md:overflow-visible md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
         <KpiNavigationCard
-          title="Transactions Today"
-          value={total}
+          title="Transactions Last 24H"
+          value={last24h}
           icon={Activity}
           loading={statsLoading}
           tooltip="Total number of transactions processed in the last 24 hours"
+          subLabel={last24hSubLabel}
           route="/transactions"
         />
         <KpiNavigationCard
