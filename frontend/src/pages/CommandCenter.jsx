@@ -10,10 +10,12 @@ import { usePullToRefresh } from '@/hooks/usePullToRefresh'
 import { safeFetch } from '@/lib/api'
 import { ErrorState } from '@/components/feedback/ErrorState'
 import { KPI_THRESHOLDS } from '@/lib/constants'
+import { useLanguage } from '@/i18n/LanguageContext'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
 export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
+  const { t } = useLanguage()
   const queryClient = useQueryClient()
 
   const handlePullRefresh = useCallback(() => {
@@ -67,8 +69,8 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
     const dd = String(since.getDate()).padStart(2, '0')
     const mo = String(since.getMonth() + 1).padStart(2, '0')
     const yyyy = since.getFullYear()
-    return `Since ${hh}:${mm} of ${dd}/${mo}/${yyyy}`
-  }, [stats])
+    return t('kpi.since', { time: `${hh}:${mm}`, date: `${dd}/${mo}/${yyyy}` })
+  }, [stats, t])
 
   return (
     <>
@@ -90,43 +92,43 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
       {/* Row 1: KPI Cards — horizontal scroll on mobile, 4-column grid on desktop */}
       <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 md:grid md:grid-cols-4 md:overflow-visible md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
         <KpiNavigationCard
-          title="Transactions Last 24H"
+          title={t('kpi.transactions24h')}
           value={last24h}
           icon={Activity}
           loading={statsLoading}
-          tooltip="Total number of transactions processed in the last 24 hours"
-          actionTooltip="Clique para ver histórico de transações das últimas 24h"
+          tooltip={t('kpi.transactions24hTooltip')}
+          actionTooltip={t('kpi.transactions24hAction')}
           subLabel={last24hSubLabel}
           route="/transactions"
         />
         <KpiNavigationCard
-          title="Fraud Rate"
+          title={t('kpi.fraudRate')}
           value={fraudRateDisplay}
           icon={AlertTriangle}
           variant={fraudRateVariant}
           loading={statsLoading}
-          tooltip="Percentage of transactions flagged as potentially fraudulent"
-          actionTooltip="Clique para consultar análise do rácio de fraude"
+          tooltip={t('kpi.fraudRateTooltip')}
+          actionTooltip={t('kpi.fraudRateAction')}
           route="/alerts"
         />
         <KpiNavigationCard
-          title="Critical Unreviewed"
+          title={t('kpi.criticalUnreviewed')}
           value={critical}
           icon={ShieldAlert}
           variant={critical > 0 ? 'critical' : 'default'}
           loading={statsLoading}
-          tooltip="Critical alerts (score > 90%) still pending review"
-          actionTooltip="Clique para ver alertas críticos não revistos"
+          tooltip={t('kpi.criticalUnreviewedTooltip')}
+          actionTooltip={t('kpi.criticalUnreviewedAction')}
           route="/alerts"
         />
         <KpiNavigationCard
-          title="Average Score"
+          title={t('kpi.avgScore')}
           value={avgScoreDisplay}
           icon={Gauge}
           variant={avgScoreVariant}
           loading={statsLoading}
-          tooltip="Represents the rolling average of risk scores over the last 24 hours."
-          actionTooltip="Clique para ver distribuição de scores de anomalia"
+          tooltip={t('kpi.avgScoreTooltip')}
+          actionTooltip={t('kpi.avgScoreAction')}
           route="/reports"
         />
       </div>
