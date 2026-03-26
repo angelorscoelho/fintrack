@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { PieChartIcon, AlertTriangle } from 'lucide-react'
 import { safeFetch } from '@/lib/api'
 import { API_MAX_LIMIT } from '@/lib/constants'
+import { useLanguage } from '@/i18n/LanguageContext'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -24,18 +25,18 @@ const CATEGORY_COLORS = {
   pharmacy: '#ec4899',
 }
 
-const CATEGORY_LABELS = {
-  retail: 'Retail',
-  online: 'Online',
-  restaurant: 'Restaurant',
-  gas_station: 'Gas Station',
-  supermarket: 'Supermarket',
-  electronics: 'Electronics',
-  travel: 'Travel',
-  pharmacy: 'Pharmacy',
+const CATEGORY_KEYS = {
+  retail: 'categories.retail',
+  online: 'categories.online',
+  restaurant: 'categories.restaurant',
+  gas_station: 'categories.gasStation',
+  supermarket: 'categories.supermarket',
+  electronics: 'categories.electronics',
+  travel: 'categories.travel',
+  pharmacy: 'categories.pharmacy',
 }
 
-function groupByCategory(items) {
+function groupByCategory(items, t) {
   const acc = {}
 
   for (const item of items) {
@@ -51,13 +52,13 @@ function groupByCategory(items) {
   return Object.values(acc)
     .map((entry) => ({
       ...entry,
-      label: CATEGORY_LABELS[entry.category] || entry.category,
+      label: CATEGORY_KEYS[entry.category] ? t(CATEGORY_KEYS[entry.category]) : entry.category,
       percentage: total > 0 ? (entry.count / total) * 100 : 0,
     }))
     .sort((a, b) => b.count - a.count)
 }
 
-function CustomTooltip({ active, payload }) {
+function CustomTooltip({ active, payload, t }) {
   if (!active || !payload?.length) return null
   const data = payload[0]?.payload
   if (!data) return null
@@ -65,13 +66,13 @@ function CustomTooltip({ active, payload }) {
     <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-3 shadow-lg text-sm">
       <p className="font-semibold text-slate-800 dark:text-slate-200 mb-1">{data.label}</p>
       <p className="text-slate-600 dark:text-slate-400">
-        Percentage: <span className="font-medium">{data.percentage.toFixed(1)}%</span>
+        {t('dashboard.tooltipPercentage', { value: data.percentage.toFixed(1) })}
       </p>
       <p className="text-slate-600 dark:text-slate-400">
-        Total Amount: <span className="font-medium">€{data.totalAmount.toFixed(2)}</span>
+        {t('dashboard.tooltipTotalAmount', { value: data.totalAmount.toFixed(2) })}
       </p>
       <p className="text-slate-600 dark:text-slate-400">
-        Transactions: <span className="font-medium">{data.count}</span>
+        {t('dashboard.tooltipTransactions', { count: data.count })}
       </p>
     </div>
   )
@@ -79,6 +80,7 @@ function CustomTooltip({ active, payload }) {
 
 export function CategoryChart() {
   const navigate = useNavigate()
+  const { t } = useLanguage()
 
   const { data: rawData, isLoading, isError, refetch } = useQuery({
     queryKey: ['alerts-category'],
@@ -91,8 +93,8 @@ export function CategoryChart() {
 
   const chartData = useMemo(() => {
     const items = rawData?.items || []
-    return groupByCategory(items)
-  }, [rawData])
+    return groupByCategory(items, t)
+  }, [rawData, t])
 
   const hasData = chartData.length > 0
 
@@ -107,7 +109,7 @@ export function CategoryChart() {
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
           <PieChartIcon className="h-4 w-4 text-muted-foreground" />
-          Transactions by Category
+          {t('dashboard.transactionsByCategory')}
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4 pt-0">
@@ -116,12 +118,12 @@ export function CategoryChart() {
         ) : isError ? (
           <div className="flex flex-col items-center justify-center h-[280px] gap-2">
             <AlertTriangle className="h-6 w-6 text-destructive" />
-            <p className="text-sm text-muted-foreground">Error loading data. Please try again.</p>
-            <Button variant="outline" size="sm" onClick={() => refetch()}>Try again</Button>
+            <p className="text-sm text-muted-foreground">{t('feedback.errorLoading')}</p>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>{t('actions.tryAgain')}</Button>
           </div>
         ) : !hasData ? (
           <div className="flex items-center justify-center h-[280px] text-sm text-muted-foreground">
-            No category data available
+            {t('dashboard.noCategoryData')}
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={280}>
@@ -146,7 +148,7 @@ export function CategoryChart() {
                   />
                 ))}
               </Pie>
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip t={t} />} />
               <Legend
                 verticalAlign="bottom"
                 height={36}
