@@ -8,6 +8,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { ErrorBoundary } from '@/components/feedback/ErrorBoundary'
+import { useLanguage } from '@/i18n/LanguageContext'
 
 const categoryColors = {
   retail: 'secondary',
@@ -21,6 +22,8 @@ const categoryColors = {
 }
 
 export function TransactionDetailModal({ transaction, open, onOpenChange }) {
+  const { t } = useLanguage()
+
   if (!transaction) return null
 
   const formattedDate = transaction.timestamp
@@ -31,7 +34,7 @@ export function TransactionDetailModal({ transaction, open, onOpenChange }) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Transaction Details</DialogTitle>
+          <DialogTitle>{t('transactions.details')}</DialogTitle>
           <DialogDescription>
             {transaction.transaction_id}
           </DialogDescription>
@@ -40,7 +43,7 @@ export function TransactionDetailModal({ transaction, open, onOpenChange }) {
         <div className="space-y-4">
           {/* Merchant */}
           <div className="flex justify-between items-start">
-            <span className="text-sm text-muted-foreground">Merchant</span>
+            <span className="text-sm text-muted-foreground">{t('columns.merchant')}</span>
             <span className="text-sm font-medium text-right">
               {transaction.merchant_name || transaction.merchant_nif}
             </span>
@@ -48,7 +51,7 @@ export function TransactionDetailModal({ transaction, open, onOpenChange }) {
 
           {/* Category */}
           <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Category</span>
+            <span className="text-sm text-muted-foreground">{t('columns.category')}</span>
             <Badge variant={categoryColors[transaction.category] || 'outline'}>
               {transaction.category}
             </Badge>
@@ -56,7 +59,7 @@ export function TransactionDetailModal({ transaction, open, onOpenChange }) {
 
           {/* Amount */}
           <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Amount</span>
+            <span className="text-sm text-muted-foreground">{t('columns.amount')}</span>
             <span className="text-lg font-semibold">
               €{Number(transaction.amount).toFixed(2)}
             </span>
@@ -64,13 +67,13 @@ export function TransactionDetailModal({ transaction, open, onOpenChange }) {
 
           {/* Date */}
           <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Date</span>
+            <span className="text-sm text-muted-foreground">{t('columns.date')}</span>
             <span className="text-sm">{formattedDate}</span>
           </div>
 
           {/* Status */}
           <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Status</span>
+            <span className="text-sm text-muted-foreground">{t('columns.status')}</span>
             <Badge
               variant={
                 transaction.status === 'NORMAL'
@@ -86,7 +89,7 @@ export function TransactionDetailModal({ transaction, open, onOpenChange }) {
 
           {/* Anomaly Score */}
           <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Anomaly Score</span>
+            <span className="text-sm text-muted-foreground">{t('alerts.anomalyScore')}</span>
             <span className="text-sm font-mono">
               {(Number(transaction.anomaly_score) * 100).toFixed(1)}%
             </span>
@@ -94,14 +97,14 @@ export function TransactionDetailModal({ transaction, open, onOpenChange }) {
 
           {/* Country */}
           <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Country</span>
+            <span className="text-sm text-muted-foreground">{t('columns.country')}</span>
             <span className="text-sm">{transaction.merchant_country}</span>
           </div>
 
           {/* Notes (analyst_notes) */}
           {transaction.analyst_notes && (
             <div className="border-t pt-3">
-              <span className="text-sm text-muted-foreground block mb-1">Notes</span>
+              <span className="text-sm text-muted-foreground block mb-1">{t('transactions.notes')}</span>
               <p className="text-sm bg-muted rounded-md p-3">
                 {transaction.analyst_notes}
               </p>
@@ -112,7 +115,7 @@ export function TransactionDetailModal({ transaction, open, onOpenChange }) {
           {transaction.ai_explanation && (
             <ErrorBoundary>
               <div className="border-t pt-3">
-                <span className="text-sm text-muted-foreground block mb-1">AI Analysis</span>
+                <span className="text-sm text-muted-foreground block mb-1">{t('alerts.aiAnalysis')}</span>
                 <p className="text-sm bg-muted rounded-md p-3">
                   {(() => {
                     const explanation = transaction.ai_explanation

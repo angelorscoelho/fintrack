@@ -3,16 +3,18 @@ import { Button } from '@/components/ui/button'
 import { AlertTriangle, CheckCircle, ArrowUpCircle, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { useLanguage } from '@/i18n/LanguageContext'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
-const ACTIONS = [
-  { type: 'CONFIRMED_FRAUD', label: 'Confirm Fraud', icon: AlertTriangle, variant: 'destructive', msg: 'Fraud confirmed.' },
-  { type: 'FALSE_POSITIVE', label: 'False Positive', icon: CheckCircle, variant: 'outline', cls: 'border-blue-500 text-blue-700 hover:bg-blue-50', msg: 'False positive registered.' },
-  { type: 'ESCALATED', label: 'Escalate', icon: ArrowUpCircle, variant: 'secondary', msg: 'Alert escalated.' },
+const ACTION_DEFS = [
+  { type: 'CONFIRMED_FRAUD', labelKey: 'actions.confirmFraud', icon: AlertTriangle, variant: 'destructive', msgKey: 'resolution.fraudConfirmed' },
+  { type: 'FALSE_POSITIVE', labelKey: 'actions.falsePositive', icon: CheckCircle, variant: 'outline', cls: 'border-blue-500 text-blue-700 hover:bg-blue-50', msgKey: 'resolution.falsePositiveRegistered' },
+  { type: 'ESCALATED', labelKey: 'actions.escalate', icon: ArrowUpCircle, variant: 'secondary', msgKey: 'resolution.alertEscalated' },
 ]
 
 export function ResolutionPanel({ alert, onResolved }) {
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
@@ -26,9 +28,9 @@ export function ResolutionPanel({ alert, onResolved }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resolution_type: action.type }),
       })
-      if (res.status === 409) throw new Error('This alert was already resolved.')
+      if (res.status === 409) throw new Error(t('resolution.alreadyResolved'))
       if (!res.ok) throw new Error(`Server error: HTTP ${res.status}`)
-      toast.success(action.msg, { duration: 4000 })
+      toast.success(t(action.msgKey), { duration: 4000 })
       onResolved()
     } catch (e) {
       setError(e.message)
@@ -40,9 +42,9 @@ export function ResolutionPanel({ alert, onResolved }) {
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Resolution</h3>
+      <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t('resolution.title')}</h3>
       <div className="flex flex-wrap gap-2">
-        {ACTIONS.map((action) => {
+        {ACTION_DEFS.map((action) => {
           const Icon = action.icon
           return (
             <Button
@@ -53,7 +55,7 @@ export function ResolutionPanel({ alert, onResolved }) {
               onClick={() => handle(action)}
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Icon className="h-4 w-4" />}
-              {action.label}
+              {t(action.labelKey)}
             </Button>
           )
         })}

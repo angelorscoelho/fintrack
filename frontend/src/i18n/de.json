@@ -209,6 +209,8 @@
     "tooltipAnomalies": "Anomalien: {value}",
     "tooltipFraudRate": "Betrugsrate: {value}%",
     "scoreDistribution": "Score-Verteilung",
+    "scoreEvolutionTitle": "Score-Entwicklungsanalyse",
+    "scoreEvolutionDescription": "Detaillierte Analysen für durchschnittliche Risikobewertungstrends.",
     "scoreAlerts": "{value} Warnungen",
     "scoreCount": "Anzahl"
   },
