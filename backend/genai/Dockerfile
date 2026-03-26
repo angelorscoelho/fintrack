@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Install GenAI-specific dependencies first for better layer caching
 # Build context is the project root, so we reference files relative to root
-COPY backend/genai/requirements.txt /tmp/genai-requirements.txt
+COPY requirements.txt /tmp/genai-requirements.txt
 RUN pip install --no-cache-dir -r /tmp/genai-requirements.txt
 
 # Copy only the packages required by the GenAI service:
