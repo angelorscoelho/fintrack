@@ -48,3 +48,5 @@ tmp_lambda_response.json
 .serena/server_state.json
 .serena/index/
 $null
+node_modules/
+dist/
