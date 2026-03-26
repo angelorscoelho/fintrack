@@ -94,6 +94,7 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
           icon={Activity}
           loading={statsLoading}
           tooltip="Total number of transactions processed in the last 24 hours"
+          actionTooltip="Clique para ver histórico de transações das últimas 24h"
           subLabel={last24hSubLabel}
           route="/transactions"
         />
@@ -104,6 +105,7 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
           variant={fraudRateVariant}
           loading={statsLoading}
           tooltip="Percentage of transactions flagged as potentially fraudulent"
+          actionTooltip="Clique para consultar análise do rácio de fraude"
           route="/alerts"
         />
         <KpiNavigationCard
@@ -113,6 +115,7 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
           variant={critical > 0 ? 'critical' : 'default'}
           loading={statsLoading}
           tooltip="Critical alerts (score > 90%) still pending review"
+          actionTooltip="Clique para ver alertas críticos não revistos"
           route="/alerts"
         />
         <KpiNavigationCard
@@ -122,6 +125,7 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
           variant={avgScoreVariant}
           loading={statsLoading}
           tooltip="Represents the rolling average of risk scores over the last 24 hours."
+          actionTooltip="Clique para ver distribuição de scores de anomalia"
           route="/reports"
         />
       </div>

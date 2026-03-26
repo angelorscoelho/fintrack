@@ -19,6 +19,7 @@ export function KpiNavigationCard({
   icon: Icon,
   loading = false,
   tooltip,
+  actionTooltip,
   subLabel,
   route,
 }) {
@@ -83,19 +84,32 @@ export function KpiNavigationCard({
     </Card>
   )
 
-  const wrappedCard = tooltip ? (
-    <TooltipProvider delayDuration={300}>
+  const needsProvider = tooltip || actionTooltip
+
+  const linked = route ? (
+    <Link to={route} className="no-underline h-full" aria-label={loading ? `${title}: loading` : `${title}: ${value}`}>
       {cardContent}
-    </TooltipProvider>
+    </Link>
   ) : cardContent
 
-  if (route) {
+  const withActionTooltip = actionTooltip ? (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {linked}
+      </TooltipTrigger>
+      <TooltipContent side="bottom" className="max-w-xs">
+        <p>{actionTooltip}</p>
+      </TooltipContent>
+    </Tooltip>
+  ) : linked
+
+  if (needsProvider) {
     return (
-      <Link to={route} className="no-underline h-full" aria-label={loading ? `${title}: loading` : `${title}: ${value}`}>
-        {wrappedCard}
-      </Link>
+      <TooltipProvider delayDuration={400}>
+        {withActionTooltip}
+      </TooltipProvider>
     )
   }
 
-  return wrappedCard
+  return withActionTooltip
 }

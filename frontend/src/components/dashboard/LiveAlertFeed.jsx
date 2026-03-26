@@ -98,7 +98,7 @@ export function LiveAlertFeed() {
   useAlertStream(handleNewAlert, false, setSseConnected)
 
   return (
-    <TooltipProvider delayDuration={300}>
+    <TooltipProvider delayDuration={400}>
       <Card className="flex flex-col">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold flex items-center justify-between">
@@ -159,14 +159,22 @@ export function LiveAlertFeed() {
                         <span>{timeAgo(alert.timestamp)}</span>
                       </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-xs shrink-0 h-7"
-                      onClick={() => navigate('/alerts', { state: { alertId: alert.transaction_id } })}
-                    >
-                      View
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs shrink-0 h-7"
+                          aria-label="Ver detalhes desta transação"
+                          onClick={() => navigate('/alerts', { state: { alertId: alert.transaction_id } })}
+                        >
+                          View
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        <p>Ver detalhes desta transação</p>
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                 )
               })
