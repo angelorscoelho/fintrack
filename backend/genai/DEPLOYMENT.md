@@ -137,7 +137,7 @@ docker run -p 8001:8001 \
 3. **End-to-end pipeline:**
    - Send test transaction to SQS (score ≥ 0.70)
    - Monitor CloudWatch for successful GenAI call
-   - Verify DynamoDB contains `ai_explanation` JSON object
+   - Verify DynamoDB contains `ai_explanation` as a JSON **string**
    - Confirm frontend displays AI explanation
 
 ## Troubleshooting
