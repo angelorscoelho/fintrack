@@ -12,6 +12,7 @@ import { useInactivityTimer } from '@/hooks/useInactivityTimer'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { useDarkMode } from '@/hooks/useDarkMode'
 import { useSidebar } from '@/contexts/SidebarContext'
+import { cn } from '@/lib/utils'
 import { Loader2 } from 'lucide-react'
 
 // Lazy-loaded pages
@@ -148,9 +149,10 @@ export default function App() {
 
         {/* AI Sidebar placeholder (US-027) */}
         <aside
-          className={`ai-sidebar bg-white dark:bg-slate-900 overflow-hidden${
-            isSidebarOpen ? ' border-l border-slate-200 dark:border-slate-700' : ''
-          }`}
+          className={cn(
+            'ai-sidebar bg-white dark:bg-slate-900 overflow-hidden',
+            isSidebarOpen && 'border-l border-slate-200 dark:border-slate-700'
+          )}
           style={{
             width: isSidebarOpen ? 'var(--sidebar-width)' : '0px',
             transition: 'width 300ms ease',
