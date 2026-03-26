@@ -181,7 +181,11 @@ async def get_stats() -> dict:
         fp = sum(1 for i in items if i.get("status") == "FALSE_POSITIVE")
         rl = sum(1 for i in items if i.get("status") == "rate_limited")
         scores = [float(i.get("anomaly_score", 0)) for i in items if i.get("anomaly_score")]
-        critical = sum(1 for s in scores if s > SAR_THRESHOLD)
+        critical = sum(
+            1 for i in items
+            if float(i.get("anomaly_score", 0)) > SAR_THRESHOLD
+            and i.get("status") == "PENDING_REVIEW"
+        )
         fp_rate = round(fp / max(resolved + fp, 1), 3)
         avg_score = round(sum(scores) / max(len(scores), 1), 3)
 
