@@ -238,6 +238,30 @@ Resources:
                   - 'ssm:GetParameter'
                 Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/fintrack/*'
 
+  # ── CLOUDWATCH LOG GROUP ──────────────────────────────────────────────────
+  TransactionProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/fintrack-transaction-processor
+      RetentionInDays: 30
+      Tags:
+        - Key: Project
+          Value: fintrack-ai
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ── CLOUDWATCH METRIC FILTER: GenAI Errors ─────────────────────────────
+  GenAIErrorMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: !Ref TransactionProcessorLogGroup
+      FilterPattern: '{ $.genai_status = "error" }'
+      MetricTransformations:
+        - MetricNamespace: FinTrack/GenAI
+          MetricName: GenAIErrors
+          MetricValue: '1'
+          DefaultValue: 0
+
   # ── LAMBDA FUNCTION ───────────────────────────────────────────────────────
   TransactionProcessorFunction:
     Type: AWS::Serverless::Function
