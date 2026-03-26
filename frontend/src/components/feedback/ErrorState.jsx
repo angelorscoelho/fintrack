@@ -8,7 +8,7 @@ import { useLanguage } from '@/i18n/LanguageContext'
  *
  * Renders a destructive Alert banner with a retry button.
  *
- * @param {string}   message  Error message shown to the user
+ * @param {string}   [message]  Error message shown to the user (defaults to translated 'feedback.errorLoading')
  * @param {function} onRetry  Click handler for the retry button
  */
 export function ErrorState({
