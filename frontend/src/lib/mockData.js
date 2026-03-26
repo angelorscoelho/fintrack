@@ -2,19 +2,24 @@
  * Mock data for FinTrack AI dashboard — used as fallback when the API is unreachable.
  * Data mirrors the structure produced by backend/api/scripts/seed_dynamodb.py.
  *
+ * Score thresholds are sourced from shared/project_constants.json via Vite build-time
+ * injection (XAI_THRESHOLD = 0.70, SAR_THRESHOLD = 0.90).
+ *
  * Fraud rate target: 0.01–0.025 % (Mastercard/Visa research).
  * With 80 transactions the expected confirmed-fraud count rounds to 0 — this is
  * statistically correct and the dashboard card will display 0.0 %.
  *
  * Distribution (lognormal scores):
  *   - 0  CONFIRMED_FRAUD  (0/80 = 0 % — correct for 0.025 % base rate)
- *   - 4  PENDING_REVIEW   score > 0.90  (critical)
- *   - 8  PENDING_REVIEW   score 0.70–0.90  (high)
- *   - 2  FALSE_POSITIVE   (resolved, score 0.70–0.82)
+ *   - 4  PENDING_REVIEW   score > SAR_THRESHOLD  (critical)
+ *   - 8  PENDING_REVIEW   score XAI_THRESHOLD–SAR_THRESHOLD  (high)
+ *   - 2  FALSE_POSITIVE   (resolved, score XAI_THRESHOLD–0.82)
  *   - 66 NORMAL           lognormal scores (median ≈ 0.02)
  *
  * Targets: avg_score 10–18 %, fraud_rate 0.0 % (sample too small for 0.025 %)
  */
+
+import { XAI_THRESHOLD, SAR_THRESHOLD } from '@/lib/constants'
 
 const CATEGORIES = ['retail', 'online', 'restaurant', 'gas_station', 'supermarket', 'electronics', 'travel', 'pharmacy']
 const COUNTRIES = ['PT', 'ES', 'FR', 'DE', 'IT', 'GB', 'US', 'BR']
@@ -118,27 +123,27 @@ function generateMockAlerts(count = 80) {
         status = 'NORMAL'
         break
       case 'HIGH_PENDING':
-        anomalyScore = Math.round(randRange(0.70, 0.90) * 1000) / 1000
+        anomalyScore = Math.round(randRange(XAI_THRESHOLD, SAR_THRESHOLD) * 1000) / 1000
         status = 'PENDING_REVIEW'
         break
       case 'CRITICAL_PENDING':
-        anomalyScore = Math.round(randRange(0.90, 0.995) * 1000) / 1000
+        anomalyScore = Math.round(randRange(SAR_THRESHOLD, 0.995) * 1000) / 1000
         status = 'PENDING_REVIEW'
         break
       case 'FALSE_POSITIVE':
-        anomalyScore = Math.round(randRange(0.70, 0.82) * 1000) / 1000
+        anomalyScore = Math.round(randRange(XAI_THRESHOLD, 0.82) * 1000) / 1000
         status = 'FALSE_POSITIVE'
         resolutionType = 'FALSE_POSITIVE'
         break
     }
 
-    const sarDraft = anomalyScore >= 0.7
+    const sarDraft = anomalyScore >= XAI_THRESHOLD
       ? `# Relatório de Atividade Suspeita\n\n**Transação:** TXN-${String(i).padStart(6, '0')}\n**Merchant NIF:** ${merchantNif}\n**Score:** ${(anomalyScore * 100).toFixed(1)}%\n**Montante:** €${amount.toFixed(2)}\n\n## Análise\nTransação com score de anomalia elevado detectada pelo modelo de ML. Requer análise manual.`
       : null
 
-    const aiExplanation = anomalyScore >= 0.7
+    const aiExplanation = anomalyScore >= XAI_THRESHOLD
       ? {
-          risk_level: anomalyScore > 0.9 ? 'CRÍTICO' : 'ALTO',
+          risk_level: anomalyScore > SAR_THRESHOLD ? 'CRÍTICO' : 'ALTO',
           summary_pt: `Transação de €${amount.toFixed(2)} com score ${(anomalyScore * 100).toFixed(1)}% — padrão anómalo detectado.`,
           bullets: [
             { id: '1', icon: '⚡', text: 'Montante acima da média do merchant' },
@@ -178,9 +183,14 @@ function generateMockAlerts(count = 80) {
 export const MOCK_ALERTS = generateMockAlerts(80)
 
 export const MOCK_STATS = (() => {
+  const now = Date.now()
+  const cutoff = now - 86400 * 1000
   const total = MOCK_ALERTS.length
+  const last24h = MOCK_ALERTS.filter((a) => new Date(a.timestamp).getTime() >= cutoff).length
   const pending = MOCK_ALERTS.filter((a) => a.status === 'PENDING_REVIEW').length
-  const critical = MOCK_ALERTS.filter((a) => Number(a.anomaly_score) > 0.9).length
+  const critical = MOCK_ALERTS.filter(
+    (a) => Number(a.anomaly_score) > SAR_THRESHOLD && a.status === 'PENDING_REVIEW'
+  ).length
   const resolved = MOCK_ALERTS.filter((a) => a.status === 'RESOLVED').length
   const falsePositives = MOCK_ALERTS.filter((a) => a.status === 'FALSE_POSITIVE').length
   const confirmedFraud = MOCK_ALERTS.filter((a) => a.resolution_type === 'CONFIRMED_FRAUD').length
@@ -191,6 +201,7 @@ export const MOCK_STATS = (() => {
 
   return {
     total,
+    last_24h: last24h,
     pending,
     critical,
     resolved,

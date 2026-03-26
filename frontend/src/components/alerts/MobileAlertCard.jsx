@@ -7,7 +7,7 @@ import { pt } from 'date-fns/locale'
 import { Loader2, Clock, CheckCircle2, CircleDot, Check, PauseCircle, XCircle, ArrowUpCircle, Cpu, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { ErrorBoundary } from '@/components/feedback/ErrorBoundary'
-import { getScoreVariant } from '@/lib/thresholds'
+import { getScoreVariant } from '@/lib/constants'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 

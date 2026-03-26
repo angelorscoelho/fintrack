@@ -1,11 +1,11 @@
 /**
- * Shared thresholds — single source of truth for the frontend.
+ * Shared project constants — single source of truth for the frontend.
  *
- * Values are injected at build time by Vite's `define` from shared/thresholds.json.
+ * Values are injected at build time by Vite's `define` from shared/project_constants.json.
  * This module re-exports them as named constants for tree-shaking & IDE support.
  *
  * Usage:
- *   import { THRESHOLDS, classifyRisk, getScoreVariant } from '@/lib/thresholds'
+ *   import { THRESHOLDS, classifyRisk, getScoreVariant } from '@/lib/constants'
  */
 
 /* global __THRESHOLDS__ */
@@ -61,9 +61,12 @@ export const FILTER_OPTIONS = THRESHOLDS.ui.filter_options
 export const KPI_THRESHOLDS = THRESHOLDS.ui.kpi_variant
 export const BUDGET_THRESHOLDS = THRESHOLDS.budget
 
+// ── API config re-exports ────────────────────────────────────────────────────
+export const API_MAX_LIMIT = THRESHOLDS.api.pagination.max_limit
+
 // ── Color maps (CSS classes keyed by risk level) ─────────────────────────────
 // These map risk level keys to Tailwind classes. The *thresholds* that determine
-// which level a score falls into come from shared/thresholds.json; the *colors*
+// which level a score falls into come from shared/project_constants.json; the *colors*
 // are a UI concern that lives here.
 
 const SCORE_BADGE_BG = {

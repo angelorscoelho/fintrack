@@ -10,6 +10,8 @@ from decimal import Decimal
 
 import boto3
 
+from shared.project_constants import XAI_THRESHOLD, SAR_THRESHOLD, NORMAL_TTL_DAYS
+
 # Configuration
 TABLE_NAME = os.environ.get("DYNAMODB_TABLE", "transactions")
 AWS_REGION = os.environ.get("AWS_REGION", "eu-west-1")
@@ -55,6 +57,7 @@ def generate_transaction(index: int, hours_ago: float = 0) -> dict:
     # PENDING_REVIEW (flagged): ~2.5 % of total.
     # After review, CONFIRMED_FRAUD ≈ 0.025 % of total (Mastercard/Visa: 0.01–0.025 %).
     # Most transactions are normal with very low scores (lognormal-like).
+    # Score thresholds sourced from shared/project_constants.json.
     score = random.random()
     if score < 0.80:
         anomaly_score = round(random.uniform(0.0, 0.15), 3)    # Normal — low risk
@@ -63,10 +66,10 @@ def generate_transaction(index: int, hours_ago: float = 0) -> dict:
         anomaly_score = round(random.uniform(0.15, 0.50), 3)   # Normal — slightly elevated
         status = "NORMAL"
     elif score < 0.975:
-        anomaly_score = round(random.uniform(0.70, 0.90), 3)   # Flagged — high
+        anomaly_score = round(random.uniform(XAI_THRESHOLD, SAR_THRESHOLD), 3)   # Flagged — high
         status = "PENDING_REVIEW"
     else:
-        anomaly_score = round(random.uniform(0.90, 1.0), 3)    # Critical
+        anomaly_score = round(random.uniform(SAR_THRESHOLD, 1.0), 3)    # Critical
         status = "PENDING_REVIEW"
     
     # Resolve ~10 % of flagged transactions:
@@ -101,7 +104,7 @@ def generate_transaction(index: int, hours_ago: float = 0) -> dict:
     
     # Add TTL for NORMAL transactions
     if status == "NORMAL":
-        ttl = int((timestamp + timedelta(days=7)).timestamp())
+        ttl = int((timestamp + timedelta(days=NORMAL_TTL_DAYS)).timestamp())
         item["ttl"] = ttl
     
     return item

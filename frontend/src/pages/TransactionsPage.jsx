@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { safeFetch } from '@/lib/api'
+import { API_MAX_LIMIT } from '@/lib/constants'
 import { useDebounce } from '@/hooks/useDebounce'
 import { TransactionFilters } from '@/components/transactions/TransactionFilters'
 import { TransactionDetailModal } from '@/components/transactions/TransactionDetailModal'
@@ -67,7 +68,7 @@ export default function TransactionsPage() {
   const { data: transactions = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['transactions'],
     queryFn: async () => {
-      const res = await safeFetch(`${API_BASE}/api/alerts?limit=200`)
+      const res = await safeFetch(`${API_BASE}/api/alerts?limit=${API_MAX_LIMIT}`)
       const json = await res.json()
       return Array.isArray(json) ? json : json.alerts || json.items || []
     },

@@ -7,7 +7,7 @@ import { useMemo, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ChevronUp, ChevronDown, ChevronsUpDown, Clock, CheckCircle2, CircleDot, Check, PauseCircle } from 'lucide-react'
-import { getScoreVariant } from '@/lib/thresholds'
+import { getScoreVariant } from '@/lib/constants'
 
 const STATUS_CONFIG = {
   PENDING_REVIEW: { label: 'Pending Review', variant: 'warning',     Icon: Clock },

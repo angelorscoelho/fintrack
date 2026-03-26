@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { PieChartIcon, AlertTriangle } from 'lucide-react'
 import { safeFetch } from '@/lib/api'
+import { API_MAX_LIMIT } from '@/lib/constants'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -82,7 +83,7 @@ export function CategoryChart() {
   const { data: rawData, isLoading, isError, refetch } = useQuery({
     queryKey: ['alerts-category'],
     queryFn: async () => {
-      const res = await safeFetch(`${API_BASE}/api/alerts?limit=200`)
+      const res = await safeFetch(`${API_BASE}/api/alerts?limit=${API_MAX_LIMIT}`)
       return res.json()
     },
     refetchInterval: 30000,

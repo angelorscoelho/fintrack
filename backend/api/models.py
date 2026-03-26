@@ -5,7 +5,7 @@ from enum import Enum
 from typing import Any, List, Optional
 from pydantic import BaseModel, computed_field, field_validator
 
-from shared.thresholds import classify_risk
+from shared.project_constants import classify_risk
 
 
 class AlertStatus(str, Enum):
@@ -103,6 +103,7 @@ class AlertListResponse(BaseModel):
 
 class StatsResponse(BaseModel):
     total: int
+    last_24h: int = 0
     pending: int
     critical: int
     resolved: int
