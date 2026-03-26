@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { useLanguage } from '@/i18n/LanguageContext'
 import { safeFetch } from '@/lib/api'
 import { API_MAX_LIMIT } from '@/lib/constants'
 import { useBudgets } from '@/hooks/useBudgets'
@@ -34,13 +35,14 @@ const CATEGORY_LABELS = {
 }
 
 const STATE_BADGES = {
-  normal: { label: 'Normal', variant: 'secondary' },
-  warning: { label: 'Warning', variant: 'warning', className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800' },
-  exceeded: { label: 'Exceeded', variant: 'destructive' },
+  normal: { key: 'budget.normal', variant: 'secondary' },
+  warning: { key: 'budget.warning', variant: 'warning', className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800' },
+  exceeded: { key: 'budget.exceeded', variant: 'destructive' },
 }
 
 export default function BudgetPage() {
   const { budgets, updateBudget, categories } = useBudgets()
+  const { t } = useLanguage()
 
   // Editing state: which category is being edited
   const [editingCategory, setEditingCategory] = useState(null)
@@ -135,7 +137,7 @@ export default function BudgetPage() {
         <Button variant="ghost" size="sm" asChild>
           <Link to="/">
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Dashboard
+            {t('actions.backToDashboard')}
           </Link>
         </Button>
       </div>
@@ -144,9 +146,9 @@ export default function BudgetPage() {
       <div className="flex items-center gap-3">
         <Wallet className="h-6 w-6 text-blue-600" />
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Budget Overview</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t('budget.title')}</h1>
           <p className="text-xs text-muted-foreground">
-            Track spending against monthly category limits
+            {t('budget.description')}
           </p>
         </div>
       </div>
@@ -160,19 +162,19 @@ export default function BudgetPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card>
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Total Budget</p>
+            <p className="text-xs text-muted-foreground">{t('budget.totalBudget')}</p>
             <p className="text-lg font-bold text-foreground">€{summary.totalBudget.toLocaleString()}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Total Spent</p>
+            <p className="text-xs text-muted-foreground">{t('budget.totalSpent')}</p>
             <p className="text-lg font-bold text-foreground">€{summary.totalSpent.toLocaleString()}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Remaining</p>
+            <p className="text-xs text-muted-foreground">{t('budget.remaining')}</p>
             <p className={`text-lg font-bold ${summary.totalRemaining < 0 ? 'text-red-600 dark:text-red-400' : 'text-foreground'}`}>
               €{summary.totalRemaining.toLocaleString()}
             </p>
@@ -180,20 +182,20 @@ export default function BudgetPage() {
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Alerts</p>
+            <p className="text-xs text-muted-foreground">{t('budget.alerts')}</p>
             <div className="flex items-center gap-2">
               {summary.warningCount > 0 && (
                 <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 text-xs">
-                  {summary.warningCount} {summary.warningCount === 1 ? 'warning' : 'warnings'}
+                  {summary.warningCount === 1 ? `1 ${t('budget.warning').toLowerCase()}` : `${summary.warningCount} ${t('budget.warning').toLowerCase()}s`}
                 </Badge>
               )}
               {summary.exceededCount > 0 && (
                 <Badge variant="destructive" className="text-xs">
-                  {summary.exceededCount} exceeded
+                  {summary.exceededCount} {t('budget.exceeded')}
                 </Badge>
               )}
               {summary.warningCount === 0 && summary.exceededCount === 0 && (
-                <p className="text-lg font-bold text-green-600 dark:text-green-400">All clear</p>
+                <p className="text-lg font-bold text-green-600 dark:text-green-400">{t('budget.allClear')}</p>
               )}
             </div>
           </CardContent>
@@ -203,7 +205,7 @@ export default function BudgetPage() {
       {/* Budget table */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Category Budgets</CardTitle>
+          <CardTitle className="text-lg">{t('budget.categoryBudgets')}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
@@ -213,13 +215,13 @@ export default function BudgetPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-muted/50">
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Category</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Budget Limit</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Spent</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Remaining</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground min-w-[220px]">Progress</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
-                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">Actions</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">{t('columns.category')}</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">{t('columns.budgetLimit')}</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">{t('columns.spent')}</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">{t('columns.remaining')}</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground min-w-[220px]">{t('columns.progress')}</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">{t('columns.status')}</th>
+                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">{t('columns.actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -272,7 +274,7 @@ export default function BudgetPage() {
                             variant={badge.variant}
                             className={badge.className || 'text-xs'}
                           >
-                            {badge.label}
+                            {t(badge.key)}
                           </Badge>
                         </td>
                         <td className="px-4 py-3 text-right">
@@ -283,7 +285,7 @@ export default function BudgetPage() {
                                 size="sm"
                                 onClick={confirmEdit}
                                 className="h-7 w-7 p-0 text-green-600 hover:text-green-700"
-                                aria-label="Confirm edit"
+                                aria-label={t('budget.confirmEdit')}
                               >
                                 <Check className="h-4 w-4" />
                               </Button>
@@ -292,7 +294,7 @@ export default function BudgetPage() {
                                 size="sm"
                                 onClick={cancelEdit}
                                 className="h-7 w-7 p-0 text-red-500 hover:text-red-600"
-                                aria-label="Cancel edit"
+                                aria-label={t('budget.cancelEdit')}
                               >
                                 <X className="h-4 w-4" />
                               </Button>
@@ -303,7 +305,7 @@ export default function BudgetPage() {
                               size="sm"
                               onClick={() => startEdit(cat)}
                               className="h-7 w-7 p-0"
-                              aria-label={`Edit ${CATEGORY_LABELS[cat] || cat} budget`}
+                              aria-label={t('budget.editBudget', { category: CATEGORY_LABELS[cat] || cat })}
                             >
                               <Pencil className="h-3.5 w-3.5" />
                             </Button>
