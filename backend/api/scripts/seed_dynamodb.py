@@ -51,7 +51,9 @@ def generate_transaction(index: int, hours_ago: float = 0) -> dict:
     # Timestamps
     timestamp = datetime.now(timezone.utc) - timedelta(hours=hours_ago, minutes=random.randint(0, 59))
     
-    # Anomaly score — realistic distribution (≈2 % fraud rate)
+    # Anomaly score — realistic distribution
+    # PENDING_REVIEW (flagged): ~2.5 % of total.
+    # After review, CONFIRMED_FRAUD ≈ 0.025 % of total (Mastercard/Visa: 0.01–0.025 %).
     # Most transactions are normal with very low scores (lognormal-like).
     score = random.random()
     if score < 0.80:
@@ -67,12 +69,12 @@ def generate_transaction(index: int, hours_ago: float = 0) -> dict:
         anomaly_score = round(random.uniform(0.90, 1.0), 3)    # Critical
         status = "PENDING_REVIEW"
     
-    # Resolve ~15 % of flagged transactions:
-    #   effective CONFIRMED_FRAUD ≈ 15 % × 35 % ≈ 5 % of flagged
-    #   effective FALSE_POSITIVE  ≈ 15 % × 65 % ≈ 10 % of flagged
+    # Resolve ~10 % of flagged transactions:
+    #   effective CONFIRMED_FRAUD ≈ 10 % × 10 % ≈ 1 % of flagged ≈ 0.025 % of total
+    #   effective FALSE_POSITIVE  ≈ 10 % × 90 % ≈ 9 % of flagged
     resolution_type = None
-    if status == "PENDING_REVIEW" and random.random() < 0.15:
-        if random.random() < 0.35:
+    if status == "PENDING_REVIEW" and random.random() < 0.10:
+        if random.random() < 0.10:
             status = "RESOLVED"
             resolution_type = "CONFIRMED_FRAUD"
         else:

@@ -54,7 +54,7 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
   const fraudRateDisplay = total > 0 ? fraudRatePercent.toFixed(1) + '%' : '–'
   const avgScoreDisplay = (avgScore * 100).toFixed(1) + '%'
 
-  const fraudRateVariant = fraudRatePercent > 10 ? 'critical' : fraudRatePercent > 5 ? 'warning' : 'default'
+  const fraudRateVariant = fraudRatePercent > 0.1 ? 'critical' : fraudRatePercent > 0.05 ? 'warning' : 'default'
   const avgScoreVariant = avgScore >= 0.70 ? 'critical' : avgScore >= 0.50 ? 'warning' : 'default'
 
   return (

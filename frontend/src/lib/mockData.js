@@ -2,14 +2,18 @@
  * Mock data for FinTrack AI dashboard — used as fallback when the API is unreachable.
  * Data mirrors the structure produced by backend/api/scripts/seed_dynamodb.py.
  *
- * Distribution (realistic fraud rate ≤3%, lognormal scores):
- *   - 2  CONFIRMED_FRAUD  (RESOLVED, score 0.82–0.97)  → fraud_rate ≈ 2.5%
+ * Fraud rate target: 0.01–0.025 % (Mastercard/Visa research).
+ * With 80 transactions the expected confirmed-fraud count rounds to 0 — this is
+ * statistically correct and the dashboard card will display 0.0 %.
+ *
+ * Distribution (lognormal scores):
+ *   - 0  CONFIRMED_FRAUD  (0/80 = 0 % — correct for 0.025 % base rate)
  *   - 4  PENDING_REVIEW   score > 0.90  (critical)
  *   - 8  PENDING_REVIEW   score 0.70–0.90  (high)
  *   - 2  FALSE_POSITIVE   (resolved, score 0.70–0.82)
- *   - 64 NORMAL           lognormal scores (median ≈ 0.02)
+ *   - 66 NORMAL           lognormal scores (median ≈ 0.02)
  *
- * Targets: avg_score 10–18 %, fraud_rate 1.5–3.5 %
+ * Targets: avg_score 10–18 %, fraud_rate 0.0 % (sample too small for 0.025 %)
  */
 
 const CATEGORIES = ['retail', 'online', 'restaurant', 'gas_station', 'supermarket', 'electronics', 'travel', 'pharmacy']
@@ -69,14 +73,14 @@ function generateMockAlerts(count = 80) {
 
   /* ── Controlled slot assignment ─────────────────────────────────────────
    * Guarantees exact counts that satisfy the acceptance criteria.
+   * 0 CONFIRMED_FRAUD because 80 × 0.025 % ≈ 0 (Mastercard/Visa rate).
    */
   const slots = []
   const addN = (type, n) => { for (let k = 0; k < n; k++) slots.push(type) }
-  addN('CONFIRMED_FRAUD', 2)   // 2/80 = 2.5 %  (fraud_rate)
   addN('CRITICAL_PENDING', 4)  // PENDING_REVIEW, score > 0.90
   addN('HIGH_PENDING', 8)      // PENDING_REVIEW, score 0.70–0.90
   addN('FALSE_POSITIVE', 2)    // resolved as FP, score 0.70–0.82
-  addN('NORMAL', count - slots.length) // 64 normal (lognormal scores)
+  addN('NORMAL', count - slots.length) // 66 normal (lognormal scores)
 
   // Fisher-Yates shuffle with deterministic PRNG
   for (let k = slots.length - 1; k > 0; k--) {
@@ -120,11 +124,6 @@ function generateMockAlerts(count = 80) {
       case 'CRITICAL_PENDING':
         anomalyScore = Math.round(randRange(0.90, 0.995) * 1000) / 1000
         status = 'PENDING_REVIEW'
-        break
-      case 'CONFIRMED_FRAUD':
-        anomalyScore = Math.round(randRange(0.82, 0.97) * 1000) / 1000
-        status = 'RESOLVED'
-        resolutionType = 'CONFIRMED_FRAUD'
         break
       case 'FALSE_POSITIVE':
         anomalyScore = Math.round(randRange(0.70, 0.82) * 1000) / 1000

@@ -55,15 +55,16 @@ COUNTRY_WEIGHTS = {
 COUNTRIES = list(COUNTRY_WEIGHTS.keys())
 COUNTRY_PROBS = list(COUNTRY_WEIGHTS.values())
 
-# Anomaly type distribution — realistic fraud rate ≈ 2 % (Visa/MC: 0.1–0.5 %)
-# We use 2 % for PoC so the ML model has enough positive samples to train.
+# Anomaly type distribution — realistic fraud rate ≈ 0.025 % (Mastercard/Visa: 0.01–0.025 %)
+# IsolationForest is unsupervised; it learns "normal" and flags deviations.
+# With --n 10000+ you get a handful of true anomalies; smaller datasets may have zero.
 ANOMALY_DISTRIBUTION = {
-    "velocity_fraud":       0.005,
-    "amount_spike":         0.005,
-    "geo_hopping":          0.005,
-    "invoice_manipulation": 0.005,
+    "velocity_fraud":       0.0000625,   # 0.00625 %
+    "amount_spike":         0.0000625,   # 0.00625 %
+    "geo_hopping":          0.0000625,   # 0.00625 %
+    "invoice_manipulation": 0.0000625,   # 0.00625 %
 }
-NORMAL_RATIO = 0.98
+NORMAL_RATIO = 0.99975
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

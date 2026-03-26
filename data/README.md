@@ -4,7 +4,7 @@
 
 This directory contains synthetic transaction data used for ML training, validation,
 and dashboard development. All generators produce **realistic fraud distributions**
-matching industry benchmarks (Visa/Mastercard digital fraud rate: 0.1–0.5 %).
+matching industry benchmarks (Mastercard/Visa fraud rate: 0.01–0.025 %).
 
 ## Files
 
@@ -18,38 +18,38 @@ matching industry benchmarks (Visa/Mastercard digital fraud rate: 0.1–0.5 %).
 
 ## Data Distribution
 
-### Anomaly Rate: ≈ 2 % (PoC) — Real-world: 0.1–0.5 %
+### Anomaly Rate: ≈ 0.025 % — Real-world: 0.01–0.025 %
 
-The PoC uses a slightly elevated rate (2 %) so the ML model has sufficient positive
-samples for training. The frontend mock data (`frontend/src/lib/mockData.js`)
-mirrors this distribution.
+The fraud rate matches Mastercard/Visa research (0.01–0.025 % of transaction volume).
+IsolationForest is unsupervised and learns "normal" behaviour; it does not require
+labelled fraud samples to detect anomalies effectively.
 
 ### Frontend Mock Dataset (80 transactions)
 
 | Category | Count | % of Total | Score Range |
 |----------|------:|----------:|-------------|
-| NORMAL | 64 | 80.0 % | 0.001–0.35 (lognormal, median ≈ 0.01) |
+| NORMAL | 66 | 82.5 % | 0.001–0.35 (lognormal, median ≈ 0.01) |
 | PENDING_REVIEW (high) | 8 | 10.0 % | 0.70–0.90 |
 | PENDING_REVIEW (critical) | 4 | 5.0 % | 0.90–0.995 |
-| CONFIRMED_FRAUD (resolved) | 2 | 2.5 % | 0.82–0.97 |
 | FALSE_POSITIVE (resolved) | 2 | 2.5 % | 0.70–0.82 |
+| CONFIRMED_FRAUD (resolved) | 0 | 0.0 % | — (80 × 0.025 % ≈ 0) |
 
 **Key Metrics:**
 
 - **Average Score:** 10–18 % (target)
-- **Fraud Rate:** 1.5–3.5 % (CONFIRMED_FRAUD / total)
+- **Fraud Rate:** 0.0 % (correct for a sample of 80 at 0.025 % base rate)
 - **Score Distribution:** Lognormal for normal transactions (not uniform)
 
 ### Training Dataset (`generator.py`, default 1 000 transactions)
 
 | Anomaly Type | Rate |
 |--------------|-----:|
-| `velocity_fraud` | 0.5 % |
-| `amount_spike` | 0.5 % |
-| `geo_hopping` | 0.5 % |
-| `invoice_manipulation` | 0.5 % |
-| **Total anomaly** | **2.0 %** |
-| Normal | 98.0 % |
+| `velocity_fraud` | 0.00625 % |
+| `amount_spike` | 0.00625 % |
+| `geo_hopping` | 0.00625 % |
+| `invoice_manipulation` | 0.00625 % |
+| **Total anomaly** | **0.025 %** |
+| Normal | 99.975 % |
 
 ## Score Distribution
 
@@ -71,8 +71,8 @@ scores and only a small tail reaches the flagging thresholds (≥ 0.70).
 # Generate training data (default: 1000 transactions)
 python generator.py
 
-# Generate 5000 transactions
-python generator.py --n 5000
+# Generate 50000 transactions (enough for ~12 true anomalies at 0.025 %)
+python generator.py --n 50000
 
 # Outputs:
 #   data/synthetic_transactions.csv   (with labels — for training)
@@ -82,6 +82,6 @@ python generator.py --n 5000
 
 ## References
 
-- Visa Inc. — Global fraud rate: ~0.1 % of transaction volume
-- Mastercard — Reported fraud rate: ~0.1–0.5 % depending on region
-- FinTrack PoC uses 2 % for sufficient ML training signal
+- Mastercard — Reported fraud rate: ~0.01–0.025 % depending on region
+- Visa Inc. — Global fraud rate: ~0.01–0.025 % of transaction volume
+- IsolationForest contamination parameter aligned to 0.00025 (0.025 %)
