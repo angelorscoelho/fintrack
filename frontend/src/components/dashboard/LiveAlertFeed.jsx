@@ -11,6 +11,7 @@ import { pt } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { Radio, Info } from 'lucide-react'
 import { safeFetch } from '@/lib/api'
+import { formatSourceDestination } from '@/lib/formatTransaction'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
@@ -147,8 +148,8 @@ export function LiveAlertFeed() {
                   >
                     <ScoreBadge score={alert.anomaly_score} />
                     <div className="flex-1 min-w-0">
-                      <p className="font-mono text-xs text-slate-700 dark:text-slate-300 truncate">
-                        {alert.merchant_nif || alert.transaction_id?.substring(0, 12)}
+                      <p className="text-xs text-slate-700 dark:text-slate-300 truncate" title={formatSourceDestination(alert)}>
+                        {formatSourceDestination(alert) || alert.transaction_id?.substring(0, 12)}
                       </p>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
                         <span className="font-semibold text-slate-800 dark:text-slate-200">

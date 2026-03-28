@@ -48,9 +48,21 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
   const pending = stats?.pending ?? 0
   const critical = stats?.critical ?? 0
   const avgScore = stats?.avg_score ?? 0
+  const confirmedFraud = stats?.confirmed_fraud
 
-  const fraudRate = total > 0 ? (pending / total) * 100 : 0
-  const fraudRateDisplay = total > 0 ? fraudRate.toFixed(1) + '%' : '–'
+  const fraudRate =
+    total > 0
+      ? (confirmedFraud !== undefined ? (confirmedFraud / total) * 100 : (pending / total) * 100)
+      : 0
+  const fraudRateDisplay =
+    total > 0
+      ? (() => {
+          const r = fraudRate
+          if (r === 0) return '0.00%'
+          if (r < 1) return r.toFixed(2) + '%'
+          return r.toFixed(1) + '%'
+        })()
+      : '–'
   const avgScoreDisplay = (avgScore * 100).toFixed(1) + '%'
 
   const fraudRateVariant = fraudRate > 10 ? 'critical' : fraudRate > 5 ? 'warning' : 'default'
@@ -89,7 +101,7 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
           icon={AlertTriangle}
           variant={fraudRateVariant}
           loading={statsLoading}
-          tooltip="Percentage of transactions flagged as potentially fraudulent"
+          tooltip="Share of transactions confirmed as fraud (typical card-network range ~0.01–0.03%)"
           route="/alerts"
         />
         <KpiNavigationCard

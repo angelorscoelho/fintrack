@@ -16,12 +16,18 @@ import csv
 import json
 import math
 import random
+import sys
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import numpy as np
 from faker import Faker
+
+_DATA_DIR = Path(__file__).resolve().parent
+if str(_DATA_DIR) not in sys.path:
+    sys.path.insert(0, str(_DATA_DIR))
+from banking_fields import attach_banking_fields  # noqa: E402
 
 # ── Reproducibility ──────────────────────────────────────────────────────────
 random.seed(42)
@@ -182,7 +188,7 @@ ANOMALY_BUILDERS = {
 }
 
 
-def generate_dataset(n: int = 1000) -> list[dict]:
+def generate_dataset(n: int = 1000, shuffle_records: bool = True) -> list[dict]:
     """Generate n transactions with correct anomaly distribution."""
     records = []
 
@@ -200,6 +206,7 @@ def generate_dataset(n: int = 1000) -> list[dict]:
             record["merchant_nif"] = _random_nif()
             record["merchant_name"] = fake.company()
             record["ip_address"] = _random_ip()
+            attach_banking_fields(record)
             records.append(record)
 
     # Build normal records
@@ -210,10 +217,11 @@ def generate_dataset(n: int = 1000) -> list[dict]:
         record["merchant_nif"] = _random_nif()
         record["merchant_name"] = fake.company()
         record["ip_address"] = _random_ip()
+        attach_banking_fields(record)
         records.append(record)
 
-    # Shuffle to mix anomalies and normals
-    random.shuffle(records)
+    if shuffle_records:
+        random.shuffle(records)
     return records
 
 
@@ -225,6 +233,8 @@ def save_outputs(records: list[dict], output_dir: Path) -> None:
     fieldnames = [
         "transaction_id", "timestamp", "merchant_nif", "merchant_name",
         "amount", "category", "ip_address", "merchant_country",
+        "source_account", "destination_account",
+        "source_country", "destination_country", "payment_platform",
         "previous_avg_amount", "hour_of_day", "day_of_week",
         "transactions_last_10min", "is_anomaly", "anomaly_type",
     ]
@@ -266,9 +276,14 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Generate synthetic FinTrack transactions")
     parser.add_argument("--n", type=int, default=1000, help="Number of transactions")
     parser.add_argument("--output", type=str, default="data", help="Output directory")
+    parser.add_argument(
+        "--no-shuffle",
+        action="store_true",
+        help="Keep generation order (anomaly blocks then normals)",
+    )
     args = parser.parse_args()
 
-    records = generate_dataset(args.n)
+    records = generate_dataset(args.n, shuffle_records=not args.no_shuffle)
     save_outputs(records, Path(args.output))
 
 

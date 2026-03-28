@@ -7,6 +7,7 @@ import { useMemo, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ChevronUp, ChevronDown, ChevronsUpDown, Clock, CheckCircle2, CircleDot, Check, PauseCircle } from 'lucide-react'
+import { formatSourceDestination } from '@/lib/formatTransaction'
 
 const STATUS_CONFIG = {
   PENDING_REVIEW: { label: 'Pending Review', variant: 'warning',     Icon: Clock },
@@ -48,9 +49,14 @@ const COLUMNS = [
       : '–',
   },
   {
-    accessorKey: 'merchant_nif',
-    header: 'NIF',
-    cell: ({ getValue }) => <span className="font-mono text-xs">{getValue()}</span>,
+    id: 'route',
+    accessorFn: (row) => formatSourceDestination(row),
+    header: 'Source → Dest',
+    cell: ({ row }) => (
+      <span className="text-xs max-w-[140px] truncate block" title={formatSourceDestination(row.original)}>
+        {formatSourceDestination(row.original)}
+      </span>
+    ),
   },
   {
     accessorKey: 'amount',

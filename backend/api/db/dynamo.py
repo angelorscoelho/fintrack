@@ -136,8 +136,8 @@ async def get_latest_alerts(limit: int = 20) -> list[dict]:
         response = table.scan(
             Limit=limit * 2,  # Over-fetch to sort client-side
             ProjectionExpression=(
-                "transaction_id, #ts, merchant_nif, amount, category, "
-                "anomaly_score, #s, ai_explanation, processing_status, processed_at"
+                "transaction_id, #ts, merchant_nif, source_account, destination_account, "
+                "amount, category, anomaly_score, #s, ai_explanation, processing_status, processed_at"
             ),
             ExpressionAttributeNames={"#ts": "timestamp", "#s": "status"},
         )
@@ -174,6 +174,11 @@ async def get_stats() -> dict:
         resolved = sum(1 for i in items if i.get("status") == "RESOLVED")
         fp = sum(1 for i in items if i.get("status") == "FALSE_POSITIVE")
         rl = sum(1 for i in items if i.get("status") == "rate_limited")
+        confirmed_fraud = sum(
+            1
+            for i in items
+            if i.get("resolution_type") == "CONFIRMED_FRAUD" and i.get("status") == "RESOLVED"
+        )
         scores = [float(i.get("anomaly_score", 0)) for i in items if i.get("anomaly_score")]
         critical = sum(1 for s in scores if s > 0.90)
         fp_rate = round(fp / max(resolved + fp, 1), 3)
@@ -182,13 +187,29 @@ async def get_stats() -> dict:
         # Rate limits from rate_limiter (not available in API container)
         rate_limits = {}
 
-        return {"total": total, "pending": pending, "critical": critical,
-                "resolved": resolved, "false_positives": fp,
-                "rate_limited": rl,
-                "fp_rate": fp_rate, "avg_score": avg_score,
-                "rate_limits": rate_limits}
+        return {
+            "total": total,
+            "pending": pending,
+            "critical": critical,
+            "resolved": resolved,
+            "false_positives": fp,
+            "rate_limited": rl,
+            "confirmed_fraud": confirmed_fraud,
+            "fp_rate": fp_rate,
+            "avg_score": avg_score,
+            "rate_limits": rate_limits,
+        }
     except Exception as exc:
         logger.error(f"Stats query failed: {exc}")
-        return {"total": 0, "pending": 0, "critical": 0, "resolved": 0,
-                "false_positives": 0, "rate_limited": 0,
-                "fp_rate": 0.0, "avg_score": 0.0, "rate_limits": {}}
+        return {
+            "total": 0,
+            "pending": 0,
+            "critical": 0,
+            "resolved": 0,
+            "false_positives": 0,
+            "rate_limited": 0,
+            "confirmed_fraud": 0,
+            "fp_rate": 0.0,
+            "avg_score": 0.0,
+            "rate_limits": {},
+        }

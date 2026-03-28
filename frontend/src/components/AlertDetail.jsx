@@ -7,6 +7,7 @@ import { AlertTriangle, Clock, Globe, Cpu, FileText, ChevronDown, ChevronUp } fr
 import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { Button } from '@/components/ui/button'
+import { formatSourceDestination } from '@/lib/formatTransaction'
 
 function ScoreRing({ score }) {
   const s = Number(score || 0)
@@ -152,9 +153,20 @@ export function AlertDetail({ alert, open, onClose, onResolved }) {
           {/* Data fields */}
           <div className="rounded-lg border border-slate-200 bg-white p-3">
             <DataRow icon={Clock} label="Date/Time" value={alert.timestamp} />
-            <DataRow icon={Globe} label="Merchant NIF" value={alert.merchant_nif} />
-            <DataRow icon={Globe} label="Merchant" value={alert.merchant_name} />
-            <DataRow icon={Globe} label="Country" value={alert.merchant_country} />
+            <DataRow icon={Globe} label="Source → Destination" value={formatSourceDestination(alert)} />
+            {alert.payment_platform && (
+              <DataRow icon={FileText} label="Payment" value={String(alert.payment_platform).replace(/_/g, ' ')} />
+            )}
+            {(alert.source_country || alert.destination_country) && (
+              <DataRow
+                icon={Globe}
+                label="Countries"
+                value={`${alert.source_country ?? '—'} → ${alert.destination_country ?? '—'}`}
+              />
+            )}
+            <DataRow icon={Globe} label="Merchant NIF (legacy)" value={alert.merchant_nif} />
+            {alert.merchant_name && <DataRow icon={Globe} label="Merchant" value={alert.merchant_name} />}
+            <DataRow icon={Globe} label="Merchant country" value={alert.merchant_country} />
             <DataRow icon={FileText} label="Amount" value={alert.amount != null ? `€${Number(alert.amount).toFixed(2)}` : null} />
             <DataRow icon={FileText} label="Category" value={alert.category} />
             <DataRow icon={Clock} label="IP Address" value={alert.ip_address} />

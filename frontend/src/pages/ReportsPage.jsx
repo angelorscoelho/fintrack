@@ -26,6 +26,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { safeFetch } from '@/lib/api'
+import { formatSourceDestination } from '@/lib/formatTransaction'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -65,8 +66,14 @@ const columns = [
     },
   },
   {
-    accessorKey: 'merchant_nif',
-    header: 'Merchant NIF',
+    id: 'route',
+    accessorFn: (row) => formatSourceDestination(row),
+    header: 'Source → Destination',
+    cell: ({ row }) => (
+      <span className="max-w-[200px] truncate block" title={formatSourceDestination(row.original)}>
+        {formatSourceDestination(row.original)}
+      </span>
+    ),
   },
   {
     accessorKey: 'anomaly_score',
@@ -221,7 +228,7 @@ export default function ReportsPage() {
           pdf.setFontSize(9)
           pdf.setFont(undefined, 'normal')
           pdf.text(
-            `Transaction: ${alert.transaction_id} | Merchant: ${alert.merchant_nif} | Score: ${scorePct}% | Date: ${today}`,
+            `Transaction: ${alert.transaction_id} | Route: ${formatSourceDestination(alert)} | Score: ${scorePct}% | Date: ${today}`,
             pageWidth / 2,
             22,
             { align: 'center' }

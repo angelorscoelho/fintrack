@@ -31,6 +31,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { pt } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { AlertDetail } from '@/components/AlertDetail'
+import { formatSourceDestination } from '@/lib/formatTransaction'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -259,24 +260,28 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
         size: 100,
       },
       {
-        accessorKey: 'merchant_nif',
-        header: 'NIF',
-        cell: ({ getValue }) => {
-          const nif = getValue()
+        id: 'route',
+        accessorFn: (row) => formatSourceDestination(row),
+        header: 'Source → Dest',
+        cell: ({ row }) => {
+          const nif = row.original.merchant_nif
+          const label = formatSourceDestination(row.original)
           return (
             <button
-              className="font-mono text-xs text-blue-600 hover:text-blue-800 hover:underline"
+              type="button"
+              className="text-xs text-blue-600 hover:text-blue-800 hover:underline text-left max-w-[160px] truncate block"
+              title={label}
               onClick={(e) => {
                 e.stopPropagation()
-                navigate(`/merchants/${nif}`)
+                if (nif) navigate(`/merchants/${nif}`)
               }}
             >
-              {nif}
+              {label}
             </button>
           )
         },
         enableSorting: false,
-        size: 130,
+        size: 160,
       },
       {
         accessorKey: 'amount',

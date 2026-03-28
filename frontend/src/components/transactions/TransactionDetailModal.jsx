@@ -7,6 +7,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
+import { formatSourceDestination } from '@/lib/formatTransaction'
 
 const categoryColors = {
   retail: 'secondary',
@@ -37,13 +38,38 @@ export function TransactionDetailModal({ transaction, open, onOpenChange }) {
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Merchant */}
-          <div className="flex justify-between items-start">
-            <span className="text-sm text-muted-foreground">Merchant</span>
-            <span className="text-sm font-medium text-right">
-              {transaction.merchant_name || transaction.merchant_nif}
+          {/* Source → Destination */}
+          <div className="flex justify-between items-start gap-4">
+            <span className="text-sm text-muted-foreground shrink-0">Source → Destination</span>
+            <span className="text-sm font-medium text-right break-words max-w-[70%]">
+              {formatSourceDestination(transaction)}
             </span>
           </div>
+
+          {transaction.payment_platform && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Payment</span>
+              <span className="text-sm capitalize">{transaction.payment_platform.replace(/_/g, ' ')}</span>
+            </div>
+          )}
+
+          {(transaction.source_country || transaction.destination_country) && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Route</span>
+              <span className="text-sm font-mono">
+                {(transaction.source_country || '—') + ' → ' + (transaction.destination_country || '—')}
+              </span>
+            </div>
+          )}
+
+          {(transaction.merchant_name || transaction.merchant_nif) && (
+            <div className="flex justify-between items-start gap-4">
+              <span className="text-sm text-muted-foreground shrink-0">Merchant (legacy)</span>
+              <span className="text-sm text-right break-words max-w-[70%]">
+                {transaction.merchant_name || transaction.merchant_nif}
+              </span>
+            </div>
+          )}
 
           {/* Category */}
           <div className="flex justify-between items-center">
@@ -91,11 +117,13 @@ export function TransactionDetailModal({ transaction, open, onOpenChange }) {
             </span>
           </div>
 
-          {/* Country */}
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Country</span>
-            <span className="text-sm">{transaction.merchant_country}</span>
-          </div>
+          {/* Country (ML feature — legacy) */}
+          {transaction.merchant_country && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Merchant country</span>
+              <span className="text-sm">{transaction.merchant_country}</span>
+            </div>
+          )}
 
           {/* Notes (analyst_notes) */}
           {transaction.analyst_notes && (

@@ -2,7 +2,7 @@
 from decimal import Decimal
 from enum import Enum
 from typing import Any, List, Optional
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class AlertStatus(str, Enum):
@@ -34,8 +34,17 @@ class XAIExplanation(BaseModel):
 class AlertResponse(BaseModel):
     transaction_id: str
     timestamp: str
-    merchant_nif: str
+    merchant_nif: Optional[str] = Field(
+        default=None,
+        deprecated=True,
+        description="Deprecated: prefer source_account and destination_account for display.",
+    )
     merchant_name: Optional[str] = None
+    source_account: Optional[str] = None
+    destination_account: Optional[str] = None
+    source_country: Optional[str] = None
+    destination_country: Optional[str] = None
+    payment_platform: Optional[str] = None
     amount: float
     category: str
     ip_address: Optional[str] = None
@@ -83,6 +92,7 @@ class StatsResponse(BaseModel):
     resolved: int
     false_positives: int
     rate_limited: int
+    confirmed_fraud: int
     fp_rate: float
     avg_score: float
     rate_limits: dict

@@ -6,6 +6,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { pt } from 'date-fns/locale'
 import { Loader2, Clock, CheckCircle2, CircleDot, Check, PauseCircle, XCircle, ArrowUpCircle, Cpu, FileText } from 'lucide-react'
 import { toast } from 'sonner'
+import { formatSourceDestination } from '@/lib/formatTransaction'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -116,16 +117,17 @@ export function MobileAlertCard({ alert, onRefetch }) {
           </Badge>
         </div>
 
-        {/* Middle: NIF + Amount */}
-        <div className="flex items-center justify-between">
+        {/* Middle: route + Amount */}
+        <div className="flex items-center justify-between gap-2">
           <button
-            className="font-mono text-base text-blue-600 dark:text-blue-400"
+            type="button"
+            className="text-sm text-left text-blue-600 dark:text-blue-400 line-clamp-2 flex-1 min-w-0"
             onClick={(e) => {
               e.stopPropagation()
-              navigate(`/merchants/${alert.merchant_nif}`)
+              if (alert.merchant_nif) navigate(`/merchants/${alert.merchant_nif}`)
             }}
           >
-            {alert.merchant_nif}
+            {formatSourceDestination(alert)}
           </button>
           <span className="text-lg font-bold text-slate-800 dark:text-slate-200">
             €{Number(alert.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

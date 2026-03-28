@@ -23,6 +23,7 @@ import { TransactionDetailModal } from '@/components/transactions/TransactionDet
 import { TableSkeleton } from '@/components/feedback/LoadingSkeleton'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { ErrorState } from '@/components/feedback/ErrorState'
+import { formatSourceDestination } from '@/lib/formatTransaction'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 const PAGE_SIZE = 20
@@ -89,14 +90,15 @@ export default function TransactionsPage() {
   const processedData = useMemo(() => {
     let result = transactions
 
-    // Search filter (description uses merchant_nif / merchant_name + category as proxy)
+    // Search: accounts, legacy merchant fields, category, id
     if (debouncedSearch) {
       const q = debouncedSearch.toLowerCase()
       result = result.filter((tx) => {
-        const merchant = (tx.merchant_name || tx.merchant_nif || '').toLowerCase()
+        const route = formatSourceDestination(tx).toLowerCase()
+        const legacy = (tx.merchant_name || tx.merchant_nif || '').toLowerCase()
         const desc = (tx.category || '').toLowerCase()
         const txId = (tx.transaction_id || '').toLowerCase()
-        return merchant.includes(q) || desc.includes(q) || txId.includes(q)
+        return route.includes(q) || legacy.includes(q) || desc.includes(q) || txId.includes(q)
       })
     }
 
@@ -285,8 +287,8 @@ export default function TransactionsPage() {
                         <td className="px-4 py-3 font-mono text-xs">
                           {tx.transaction_id}
                         </td>
-                        <td className="px-4 py-3">
-                          {tx.merchant_name || tx.merchant_nif}
+                        <td className="px-4 py-3 max-w-[220px] truncate text-sm" title={formatSourceDestination(tx)}>
+                          {formatSourceDestination(tx)}
                         </td>
                         <td className="px-4 py-3">
                           <Badge variant={categoryColors[tx.category] || 'outline'} className="text-xs">

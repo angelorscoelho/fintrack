@@ -38,7 +38,7 @@ export function TransactionFilters({
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <input
           type="text"
-          placeholder="Search by merchant, category, or transaction ID…"
+          placeholder="Search accounts, category, or transaction ID…"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-9 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
