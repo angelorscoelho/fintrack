@@ -1,0 +1,74 @@
+name: Auto-manage Project Board
+# .github/workflows/project-automation.yml
+# Moves cards automatically between board columns based on PR/issue events
+
+on:
+  issues:
+    types: [assigned, unassigned, closed]
+  pull_request:
+    types: [opened, ready_for_review, closed, review_requested]
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  move_card:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Move issue to In Progress when assigned to Copilot
+        if: github.event_name == 'issues' && github.event.action == 'assigned' && github.event.assignee.login == 'copilot[bot]'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            console.log(`Issue #${context.issue.number} assigned to Copilot — moving to In Progress`);
+            // Add label to indicate Copilot is working
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['assignee:copilot']
+            });
+
+      - name: Move to In Review when PR is opened
+        if: github.event_name == 'pull_request' && github.event.action == 'opened'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const body = pr.body || '';
+            // Extract issue number from PR body (Fixes #XXX)
+            const issueMatch = body.match(/(?:fixes|closes|resolves)\s+#(\d+)/i);
+            if (issueMatch) {
+              const issueNumber = parseInt(issueMatch[1]);
+              console.log(`PR #${pr.number} linked to issue #${issueNumber} — moved to In Review`);
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                labels: ['status:in-review']
+              });
+            }
+
+      - name: Move to Done when PR is merged
+        if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const body = pr.body || '';
+            const issueMatch = body.match(/(?:fixes|closes|resolves)\s+#(\d+)/i);
+            if (issueMatch) {
+              const issueNumber = parseInt(issueMatch[1]);
+              // Close the linked issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                state: 'closed',
+                state_reason: 'completed'
+              });
+              console.log(`Issue #${issueNumber} closed as completed — PR #${pr.number} merged`);
+            }

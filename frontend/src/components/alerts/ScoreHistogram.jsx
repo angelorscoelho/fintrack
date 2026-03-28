@@ -1,16 +1,19 @@
 import { useMemo } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { HISTOGRAM_BUCKETS } from '@/lib/constants'
 
-const BUCKETS = [
-  { key: '0-20', label: '0–20%', min: 0, max: 0.20, color: '#94a3b8' },
-  { key: '20-40', label: '20–40%', min: 0.20, max: 0.40, color: '#94a3b8' },
-  { key: '40-60', label: '40–60%', min: 0.40, max: 0.60, color: '#f59e0b' },
-  { key: '60-70', label: '60–70%', min: 0.60, max: 0.70, color: '#f59e0b' },
-  { key: '70-80', label: '70–80%', min: 0.70, max: 0.80, color: '#f97316' },
-  { key: '80-90', label: '80–90%', min: 0.80, max: 0.90, color: '#f97316' },
-  { key: '90-100', label: '90–100%', min: 0.90, max: 1.01, color: '#ef4444' },
-]
+const BUCKET_COLORS = {
+  '0-20': '#94a3b8', '20-40': '#94a3b8',
+  '40-60': '#f59e0b', '60-70': '#f59e0b',
+  '70-80': '#f97316', '80-90': '#f97316',
+  '90-100': '#ef4444',
+}
+
+const BUCKETS = HISTOGRAM_BUCKETS.map(b => ({
+  ...b,
+  color: BUCKET_COLORS[b.key] || '#94a3b8',
+}))
 
 export function ScoreHistogram({ alerts = [], onBucketClick, isDark = false }) {
   const data = useMemo(() => {

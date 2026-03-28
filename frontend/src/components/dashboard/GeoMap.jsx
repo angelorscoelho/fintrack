@@ -1,11 +1,13 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useLanguage } from '@/i18n/LanguageContext'
 import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Globe, AlertTriangle } from 'lucide-react'
 import { safeFetch } from '@/lib/api'
+import { getGeoMapColor, API_MAX_LIMIT } from '@/lib/constants'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -31,9 +33,7 @@ const MARKER_RADIUS_MAX = 30
 
 /** Colour ramp based on average anomaly score for the cluster. */
 function scoreColor(avgScore) {
-  if (avgScore > 0.90) return '#ef4444' // red-500  — critical
-  if (avgScore >= 0.70) return '#f59e0b' // amber-500 — warning
-  return '#64748b' // slate-500 — normal
+  return getGeoMapColor(avgScore)
 }
 
 /**
@@ -70,10 +70,11 @@ function groupByCountry(items) {
 }
 
 export function GeoMap() {
+  const { t } = useLanguage()
   const { data: rawData, isLoading, isError, refetch } = useQuery({
     queryKey: ['geo-alerts'],
     queryFn: async () => {
-      const res = await safeFetch(`${API_BASE}/api/alerts?limit=200`)
+      const res = await safeFetch(`${API_BASE}/api/alerts?limit=${API_MAX_LIMIT}`)
       return res.json()
     },
     refetchInterval: 30000,
@@ -91,23 +92,23 @@ export function GeoMap() {
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
           <Globe className="h-4 w-4 text-muted-foreground" />
-          Alert Map
+          {t('dashboard.alertMap')}
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4 pt-0">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center h-[280px] rounded-lg bg-muted/30">
-            <p className="text-sm text-muted-foreground">Loading map...</p>
+            <p className="text-sm text-muted-foreground">{t('dashboard.loadingMap')}</p>
           </div>
         ) : isError ? (
           <div className="flex flex-col items-center justify-center h-[280px] gap-2">
             <AlertTriangle className="h-6 w-6 text-destructive" />
-            <p className="text-sm text-muted-foreground">Error loading data. Please try again.</p>
-            <Button variant="outline" size="sm" onClick={() => refetch()}>Try again</Button>
+            <p className="text-sm text-muted-foreground">{t('feedback.errorLoading')}</p>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>{t('actions.tryAgain')}</Button>
           </div>
         ) : !hasData ? (
           <div className="flex items-center justify-center h-[280px] text-sm text-muted-foreground">
-            No geographic data available
+            {t('dashboard.noGeoData')}
           </div>
         ) : (
           <div className="h-[280px] rounded-lg overflow-hidden">
@@ -138,8 +139,8 @@ export function GeoMap() {
                   <Tooltip direction="top" opacity={0.95}>
                     <div className="text-xs leading-relaxed">
                       <p className="font-semibold">{c.name} ({c.code})</p>
-                      <p>Alerts: <span className="font-medium">{c.count}</span></p>
-                      <p>Average Score: <span className="font-medium">{(c.avgScore * 100).toFixed(1)}%</span></p>
+                      <p>{t('dashboard.alertCount', { count: c.count })}</p>
+                      <p>{t('dashboard.averageScore', { score: (c.avgScore * 100).toFixed(1) })}</p>
                     </div>
                   </Tooltip>
                 </CircleMarker>

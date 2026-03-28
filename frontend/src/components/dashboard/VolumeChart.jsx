@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useLanguage } from '@/i18n/LanguageContext'
 import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
@@ -10,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { BarChart3, AlertTriangle } from 'lucide-react'
 import { startOfHour, subHours, format, parseISO } from 'date-fns'
 import { safeFetch } from '@/lib/api'
+import { XAI_THRESHOLD, API_MAX_LIMIT } from '@/lib/constants'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -35,7 +37,7 @@ function groupByHour(items) {
       if (bucket) {
         bucket.total += 1
         const score = Number(item.anomaly_score || 0)
-        if (score >= 0.70) bucket.anomalies += 1
+        if (score >= XAI_THRESHOLD) bucket.anomalies += 1
       }
     } catch { /* skip bad dates */ }
   }
@@ -63,10 +65,11 @@ function CustomTooltip({ active, payload, label }) {
 }
 
 export function VolumeChart({ isDark = false }) {
+  const { t } = useLanguage()
   const { data: rawData, isLoading, isError, refetch } = useQuery({
     queryKey: ['alerts-volume'],
     queryFn: async () => {
-      const res = await safeFetch(`${API_BASE}/api/alerts?limit=200`)
+      const res = await safeFetch(`${API_BASE}/api/alerts?limit=${API_MAX_LIMIT}`)
       return res.json()
     },
     refetchInterval: 30000,
@@ -87,7 +90,7 @@ export function VolumeChart({ isDark = false }) {
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
           <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          Hourly Volume
+          {t('dashboard.hourlyVolume')}
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4 pt-0">
@@ -96,12 +99,12 @@ export function VolumeChart({ isDark = false }) {
         ) : isError ? (
           <div className="flex flex-col items-center justify-center h-[280px] gap-2">
             <AlertTriangle className="h-6 w-6 text-destructive" />
-            <p className="text-sm text-muted-foreground">Error loading data. Please try again.</p>
-            <Button variant="outline" size="sm" onClick={() => refetch()}>Try again</Button>
+            <p className="text-sm text-muted-foreground">{t('feedback.errorLoading')}</p>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>{t('actions.tryAgain')}</Button>
           </div>
         ) : !hasData ? (
           <div className="flex items-center justify-center h-[280px] text-sm text-muted-foreground">
-            Not enough data for chart
+            {t('dashboard.notEnoughData')}
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={280}>
@@ -118,7 +121,7 @@ export function VolumeChart({ isDark = false }) {
                 tick={{ fontSize: 11, fill: textColor }}
                 tickLine={false}
                 axisLine={false}
-                label={{ value: 'Transactions', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: textColor } }}
+                label={{ value: t('dashboard.chartTransactions'), angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: textColor } }}
               />
               <YAxis
                 yAxisId="right"
@@ -127,7 +130,7 @@ export function VolumeChart({ isDark = false }) {
                 tick={{ fontSize: 11, fill: textColor }}
                 tickLine={false}
                 axisLine={false}
-                label={{ value: 'Fraud %', angle: 90, position: 'insideRight', style: { fontSize: 11, fill: textColor } }}
+                label={{ value: t('dashboard.chartFraudRate'), angle: 90, position: 'insideRight', style: { fontSize: 11, fill: textColor } }}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend
@@ -138,7 +141,7 @@ export function VolumeChart({ isDark = false }) {
               <Bar
                 yAxisId="left"
                 dataKey="total"
-                name="Total"
+                name={t('dashboard.chartTotal')}
                 fill={isDark ? '#475569' : '#cbd5e1'}
                 radius={[3, 3, 0, 0]}
                 maxBarSize={24}
@@ -147,7 +150,7 @@ export function VolumeChart({ isDark = false }) {
                 yAxisId="right"
                 type="monotone"
                 dataKey="fraudRate"
-                name="Fraud Rate %"
+                name={t('dashboard.chartFraudRateLabel')}
                 stroke="#ef4444"
                 strokeWidth={2}
                 dot={false}

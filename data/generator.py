@@ -16,12 +16,18 @@ import csv
 import json
 import math
 import random
+import sys
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import numpy as np
 from faker import Faker
+
+_DATA_DIR = Path(__file__).resolve().parent
+if str(_DATA_DIR) not in sys.path:
+    sys.path.insert(0, str(_DATA_DIR))
+from banking_fields import attach_banking_fields  # noqa: E402
 
 # ── Reproducibility ──────────────────────────────────────────────────────────
 random.seed(42)
@@ -55,14 +61,19 @@ COUNTRY_WEIGHTS = {
 COUNTRIES = list(COUNTRY_WEIGHTS.keys())
 COUNTRY_PROBS = list(COUNTRY_WEIGHTS.values())
 
-# Anomaly type distribution (must sum to 0.30)
+# Anomaly type distribution — realistic fraud rate ≈ 0.06 % by transaction count.
+# Cross-referenced from: Nilson Report 2023 (~8.6 bps by value, global), ECB 7th Card
+# Fraud Report (2.8 bps by value, SEPA), UK Finance 2024 (4.6 bps), Visa/Mastercard
+# annual reports (5–10 bps), Federal Reserve Reg II (7.2 bps, US debit).  EU/SEPA
+# by-count midpoint ≈ 0.06 %.  IsolationForest is unsupervised; it learns "normal"
+# and flags deviations.  With --n 10000 you get ~6 anomalies; smaller sets may have 0.
 ANOMALY_DISTRIBUTION = {
-    "velocity_fraud":       0.08,
-    "amount_spike":         0.08,
-    "geo_hopping":          0.07,
-    "invoice_manipulation": 0.07,
+    "velocity_fraud":       0.00015,   # 0.015 %
+    "amount_spike":         0.00015,   # 0.015 %
+    "geo_hopping":          0.00015,   # 0.015 %
+    "invoice_manipulation": 0.00015,   # 0.015 %
 }
-NORMAL_RATIO = 0.70
+NORMAL_RATIO = 1.0 - sum(ANOMALY_DISTRIBUTION.values())
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -182,7 +193,7 @@ ANOMALY_BUILDERS = {
 }
 
 
-def generate_dataset(n: int = 1000) -> list[dict]:
+def generate_dataset(n: int = 1000, shuffle_records: bool = True) -> list[dict]:
     """Generate n transactions with correct anomaly distribution."""
     records = []
 
@@ -200,6 +211,7 @@ def generate_dataset(n: int = 1000) -> list[dict]:
             record["merchant_nif"] = _random_nif()
             record["merchant_name"] = fake.company()
             record["ip_address"] = _random_ip()
+            attach_banking_fields(record)
             records.append(record)
 
     # Build normal records
@@ -210,10 +222,11 @@ def generate_dataset(n: int = 1000) -> list[dict]:
         record["merchant_nif"] = _random_nif()
         record["merchant_name"] = fake.company()
         record["ip_address"] = _random_ip()
+        attach_banking_fields(record)
         records.append(record)
 
-    # Shuffle to mix anomalies and normals
-    random.shuffle(records)
+    if shuffle_records:
+        random.shuffle(records)
     return records
 
 
@@ -225,6 +238,8 @@ def save_outputs(records: list[dict], output_dir: Path) -> None:
     fieldnames = [
         "transaction_id", "timestamp", "merchant_nif", "merchant_name",
         "amount", "category", "ip_address", "merchant_country",
+        "source_account", "destination_account",
+        "source_country", "destination_country", "payment_platform",
         "previous_avg_amount", "hour_of_day", "day_of_week",
         "transactions_last_10min", "is_anomaly", "anomaly_type",
     ]
@@ -266,9 +281,14 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Generate synthetic FinTrack transactions")
     parser.add_argument("--n", type=int, default=1000, help="Number of transactions")
     parser.add_argument("--output", type=str, default="data", help="Output directory")
+    parser.add_argument(
+        "--no-shuffle",
+        action="store_true",
+        help="Keep generation order (anomaly blocks then normals)",
+    )
     args = parser.parse_args()
 
-    records = generate_dataset(args.n)
+    records = generate_dataset(args.n, shuffle_records=not args.no_shuffle)
     save_outputs(records, Path(args.output))
 
 

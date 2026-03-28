@@ -16,24 +16,23 @@ import {
   Clock, CheckCircle2, CircleDot, Check, PauseCircle, XCircle, ArrowUpCircle,
 } from 'lucide-react'
 import { safeFetch } from '@/lib/api'
+import { getMerchantRiskLevel, getScoreVariant, getScoreBadgeBg, XAI_THRESHOLD, API_MAX_LIMIT } from '@/lib/constants'
+import { useLanguage } from '@/i18n/LanguageContext'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
 const STATUS_CONFIG = {
-  PENDING_REVIEW:  { label: 'Pending Review',       variant: 'warning',   Icon: Clock },
-  CONFIRMED_FRAUD: { label: 'Confirmed Fraud',        variant: 'destructive', Icon: XCircle },
-  RESOLVED:        { label: 'Resolved',              variant: 'success',   Icon: CheckCircle2 },
-  FALSE_POSITIVE:  { label: 'False Positive',        variant: 'secondary', Icon: CircleDot },
-  ESCALATED:       { label: 'Escalated',              variant: 'warning',   Icon: ArrowUpCircle },
-  NORMAL:          { label: 'Normal',                variant: 'outline',   Icon: Check },
-  rate_limited:    { label: 'API Limit',              variant: 'outline',   Icon: PauseCircle },
+  PENDING_REVIEW:  { key: 'status.pendingReview',  variant: 'warning',     Icon: Clock },
+  CONFIRMED_FRAUD: { key: 'status.confirmedFraud',  variant: 'destructive', Icon: XCircle },
+  RESOLVED:        { key: 'status.resolved',        variant: 'success',     Icon: CheckCircle2 },
+  FALSE_POSITIVE:  { key: 'status.falsePositive',   variant: 'secondary',   Icon: CircleDot },
+  ESCALATED:       { key: 'status.escalated',       variant: 'warning',     Icon: ArrowUpCircle },
+  NORMAL:          { key: 'status.normal',           variant: 'outline',     Icon: Check },
+  rate_limited:    { key: 'status.apiLimit',         variant: 'outline',     Icon: PauseCircle },
 }
 
 function getRiskLevel(avg) {
-  if (avg > 0.90) return { label: 'CRITICAL', color: 'bg-red-100 text-red-800 border-red-200' }
-  if (avg > 0.70) return { label: 'HIGH', color: 'bg-orange-100 text-orange-800 border-orange-200' }
-  if (avg >= 0.40) return { label: 'MEDIUM', color: 'bg-amber-100 text-amber-800 border-amber-200' }
-  return { label: 'LOW', color: 'bg-green-100 text-green-800 border-green-200' }
+  return getMerchantRiskLevel(avg)
 }
 
 function getSignalSeverity(level) {
@@ -53,18 +52,19 @@ const COUNTRY_FLAGS = {
 
 function ScoreBadge({ score }) {
   const s = Number(score || 0)
-  const bg = s > 0.90 ? 'bg-red-100 text-red-800' : s >= 0.70 ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'
-  return <Badge className={`font-mono text-xs ${bg}`}>{(s * 100).toFixed(1)}%</Badge>
+  const bg = getScoreBadgeBg(s)
+  return <Badge variant={getScoreVariant(s)} className={`font-mono text-xs ${bg}`}>{(s * 100).toFixed(1)}%</Badge>
 }
 
 export default function MerchantProfile() {
   const { nif } = useParams()
   const navigate = useNavigate()
+  const { t } = useLanguage()
 
   const { data: allAlerts = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['merchant-alerts', nif],
     queryFn: async () => {
-      const res = await safeFetch(`${API_BASE}/api/alerts?limit=200`)
+      const res = await safeFetch(`${API_BASE}/api/alerts?limit=${API_MAX_LIMIT}`)
       const json = await res.json()
       const arr = Array.isArray(json) ? json : json.alerts || json.items || []
       return arr.filter((a) => a.merchant_nif === nif)
@@ -126,31 +126,31 @@ export default function MerchantProfile() {
 
     return [
       {
-        name: 'Velocity',
+        name: t('merchants.velocity'),
         icon: Zap,
-        value: `${maxTx10min} tx / 10min`,
+        value: t('merchants.velocityValue', { count: maxTx10min }),
         severity: maxTx10min > 15 ? 'CRITICAL' : maxTx10min >= 8 ? 'HIGH' : 'LOW',
       },
       {
-        name: 'Amount Deviation',
+        name: t('merchants.amountDeviation'),
         icon: TrendingUp,
-        value: `${maxRatio.toFixed(1)}x avg`,
+        value: t('merchants.amountDeviationValue', { value: maxRatio.toFixed(1) }),
         severity: maxRatio > 5 ? 'CRITICAL' : maxRatio >= 2 ? 'HIGH' : 'LOW',
       },
       {
-        name: 'Unusual Countries',
+        name: t('merchants.unusualCountries'),
         icon: Globe,
-        value: `${distinctCountries} countrie${distinctCountries !== 1 ? 's' : ''}`,
+        value: t('merchants.countryCount', { count: distinctCountries }),
         severity: distinctCountries > 3 ? 'CRITICAL' : distinctCountries >= 2 ? 'HIGH' : 'LOW',
       },
       {
-        name: 'Night Hours',
+        name: t('merchants.nightHours'),
         icon: Moon,
-        value: `${nightTx} transactions 0h-5h`,
+        value: t('merchants.nightHoursValue', { count: nightTx }),
         severity: nightTx > 3 ? 'CRITICAL' : nightTx >= 1 ? 'HIGH' : 'LOW',
       },
     ]
-  }, [allAlerts, countries])
+  }, [allAlerts, countries, t])
 
   // Last 20 transactions
   const recentTx = useMemo(() => {
@@ -184,14 +184,14 @@ export default function MerchantProfile() {
           onClick={() => navigate(-1)}
         >
           <ArrowLeft className="h-4 w-4" />
-          Back
+          {t('actions.back')}
         </Button>
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription className="flex items-center justify-between">
-            <span>Error loading data. Please try again.</span>
+            <span>{t('feedback.errorLoading')}</span>
             <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-3 shrink-0">
-              Try again
+              {t('actions.tryAgain')}
             </Button>
           </AlertDescription>
         </Alert>
@@ -209,13 +209,13 @@ export default function MerchantProfile() {
           onClick={() => navigate(-1)}
         >
           <ArrowLeft className="h-4 w-4" />
-          Back
+          {t('actions.back')}
         </Button>
         <div className="flex flex-col items-center justify-center py-16 text-slate-400 gap-3">
           <AlertTriangle className="h-10 w-10" />
-          <p className="text-sm">No transactions for this merchant.</p>
+          <p className="text-sm">{t('merchants.noTransactions')}</p>
           <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
-            Back
+            {t('actions.back')}
           </Button>
         </div>
       </div>
@@ -233,16 +233,16 @@ export default function MerchantProfile() {
           onClick={() => navigate(-1)}
         >
           <ArrowLeft className="h-4 w-4" />
-          Back
+          {t('actions.back')}
         </Button>
 
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold font-mono text-slate-800">{nif}</h1>
+            <h1 className="text-2xl font-bold font-mono text-slate-800 dark:text-slate-200">{nif}</h1>
             <div className="flex items-center gap-3">
               <Badge className={`${riskLevel.color} text-xs`}>{riskLevel.label}</Badge>
               <span className="text-xs text-slate-500">
-                Average Score: {(stats.avgScore * 100).toFixed(1)}%
+                {t('dashboard.averageScore', { score: (stats.avgScore * 100).toFixed(1) })}
               </span>
             </div>
           </div>
@@ -259,10 +259,10 @@ export default function MerchantProfile() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <StatCard label="Total transactions" value={stats.total} />
-          <StatCard label="Pending alerts" value={stats.pending} highlight={stats.pending > 0} />
-          <StatCard label="Resolved" value={stats.resolved} />
-          <StatCard label="False positives" value={stats.falsePositives} />
+          <StatCard label={t('merchants.totalTransactions')} value={stats.total} />
+          <StatCard label={t('merchants.pendingAlerts')} value={stats.pending} highlight={stats.pending > 0} />
+          <StatCard label={t('merchants.resolved')} value={stats.resolved} />
+          <StatCard label={t('merchants.falsePositives')} value={stats.falsePositives} />
         </div>
       </div>
 
@@ -270,7 +270,7 @@ export default function MerchantProfile() {
       {timelineData.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Activity Over Time</CardTitle>
+            <CardTitle className="text-sm font-semibold">{t('merchants.activityOverTime')}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={200}>
@@ -280,18 +280,18 @@ export default function MerchantProfile() {
                 <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `€${v}`} />
                 <Tooltip
                   formatter={(value, name) => {
-                    if (name === 'amount') return [`€${Number(value).toFixed(2)}`, 'Amount']
-                    if (name === 'score') return [`${(Number(value) * 100).toFixed(1)}%`, 'Score']
+                    if (name === 'amount') return [`€${Number(value).toFixed(2)}`, t('merchants.chartAmount')]
+                    if (name === 'score') return [`${(Number(value) * 100).toFixed(1)}%`, t('merchants.chartScore')]
                     return [value, name]
                   }}
-                  labelFormatter={(label) => `Date: ${label}`}
+                  labelFormatter={(label) => t('merchants.chartDate', { label })}
                   contentStyle={{ fontSize: 12 }}
                 />
                 <ReferenceLine
                   y={avgAmount}
                   stroke="#ef4444"
                   strokeDasharray="5 5"
-                  label={{ value: `Avg €${avgAmount.toFixed(0)}`, fontSize: 10, fill: '#ef4444' }}
+                  label={{ value: t('merchants.chartAvgAmount', { value: avgAmount.toFixed(0) }), fontSize: 10, fill: '#ef4444' }}
                 />
                 <Line
                   type="monotone"
@@ -300,7 +300,7 @@ export default function MerchantProfile() {
                   strokeWidth={2}
                   dot={(props) => {
                     const { cx, cy, payload } = props
-                    if (payload.score > 0.70) {
+                    if (payload.score > XAI_THRESHOLD) {
                       return (
                         <circle
                           key={`dot-${cx}-${cy}`}
@@ -324,7 +324,7 @@ export default function MerchantProfile() {
 
       {/* SECTION 3 — RiskSignals */}
       <div>
-        <h2 className="text-sm font-semibold text-slate-700 mb-3">Risk Signals</h2>
+        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">{t('merchants.riskSignals')}</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {riskSignals.map((signal) => {
             const sev = getSignalSeverity(signal.severity)
@@ -334,10 +334,12 @@ export default function MerchantProfile() {
                 <CardContent className="p-4 space-y-2">
                   <div className="flex items-center gap-2">
                     <SignalIcon className={`h-4 w-4 ${sev.color}`} />
-                    <span className="text-xs font-semibold text-slate-700">{signal.name}</span>
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{signal.name}</span>
                   </div>
-                  <p className="text-sm font-medium text-slate-800">{signal.value}</p>
-                  <Badge variant={sev.variant} className="text-xs">{signal.severity}</Badge>
+                  <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{signal.value}</p>
+                  <Badge variant={sev.variant} className="text-xs">
+                    {signal.severity === 'CRITICAL' ? t('merchants.critical') : signal.severity === 'HIGH' ? t('merchants.high') : t('merchants.low')}
+                  </Badge>
                 </CardContent>
               </Card>
             )
@@ -347,38 +349,38 @@ export default function MerchantProfile() {
 
       {/* SECTION 4 — Transaction History */}
       <div>
-        <h2 className="text-sm font-semibold text-slate-700 mb-3">Recent Transactions</h2>
-        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">{t('merchants.recentTransactions')}</h2>
+        <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200">
+              <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                 <tr>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600">Date/Time</th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-slate-600">Amount</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600">Score</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600">Status</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600">Category</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 dark:text-slate-400">{t('columns.dateTime')}</th>
+                  <th className="px-3 py-2 text-right text-xs font-semibold text-slate-600 dark:text-slate-400">{t('columns.amount')}</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 dark:text-slate-400">{t('columns.score')}</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 dark:text-slate-400">{t('columns.status')}</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 dark:text-slate-400">{t('columns.category')}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {recentTx.map((tx) => {
                   const cfg = STATUS_CONFIG[tx.status] ?? STATUS_CONFIG.NORMAL
                   const StatusIcon = cfg.Icon
                   return (
-                    <tr key={tx.transaction_id} className="hover:bg-slate-50/50">
-                      <td className="px-3 py-2 text-xs text-slate-600">
+                    <tr key={tx.transaction_id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                      <td className="px-3 py-2 text-xs text-slate-600 dark:text-slate-400">
                         {tx.timestamp ? format(new Date(tx.timestamp), 'dd/MM/yyyy HH:mm', { locale: pt }) : '–'}
                       </td>
-                      <td className="px-3 py-2 text-right font-semibold text-slate-800">
+                      <td className="px-3 py-2 text-right font-semibold text-slate-800 dark:text-slate-200">
                         €{Number(tx.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                       <td className="px-3 py-2"><ScoreBadge score={tx.anomaly_score} /></td>
                       <td className="px-3 py-2">
                         <Badge variant={cfg.variant} className="text-xs gap-1">
-                          <StatusIcon className="h-3 w-3" />{cfg.label}
+                          <StatusIcon className="h-3 w-3" />{t(cfg.key)}
                         </Badge>
                       </td>
-                      <td className="px-3 py-2 text-xs text-slate-600 lowercase">
+                      <td className="px-3 py-2 text-xs text-slate-600 dark:text-slate-400 lowercase">
                         {tx.category?.replace(/_/g, ' ')}
                       </td>
                     </tr>
@@ -387,7 +389,7 @@ export default function MerchantProfile() {
                 {recentTx.length === 0 && (
                   <tr>
                     <td colSpan={5} className="px-3 py-8 text-center text-sm text-slate-400">
-                      No transactions for this merchant.
+                      {t('merchants.noTransactions')}
                     </td>
                   </tr>
                 )}
@@ -402,9 +404,9 @@ export default function MerchantProfile() {
 
 function StatCard({ label, value, highlight = false }) {
   return (
-    <div className={`rounded-lg border p-3 ${highlight ? 'border-amber-200 bg-amber-50' : 'border-slate-200 bg-white'}`}>
-      <p className="text-xs text-slate-500">{label}</p>
-      <p className={`text-lg font-bold ${highlight ? 'text-amber-800' : 'text-slate-800'}`}>{value}</p>
+    <div className={`rounded-lg border p-3 ${highlight ? 'border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/30' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900'}`}>
+      <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
+      <p className={`text-lg font-bold ${highlight ? 'text-amber-800 dark:text-amber-300' : 'text-slate-800 dark:text-slate-200'}`}>{value}</p>
     </div>
   )
 }

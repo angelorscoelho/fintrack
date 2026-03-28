@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { useLanguage } from '@/i18n/LanguageContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -11,15 +12,17 @@ import { pt } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { Radio, Info } from 'lucide-react'
 import { safeFetch } from '@/lib/api'
+import { formatSourceDestination } from '@/lib/formatTransaction'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
+import { XAI_THRESHOLD, SAR_THRESHOLD } from '@/lib/constants'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 const MAX_ALERTS = 20
 
 function ScoreBadge({ score }) {
   const s = Number(score || 0)
-  const isCritical = s > 0.90
-  const isWarning = s >= 0.70
+  const isCritical = s > SAR_THRESHOLD
+  const isWarning = s >= XAI_THRESHOLD
   const variant = isCritical ? 'destructive' : isWarning ? 'warning' : 'outline'
   return (
     <Badge
@@ -42,6 +45,7 @@ function timeAgo(timestamp) {
 }
 
 export function LiveAlertFeed() {
+  const { t } = useLanguage()
   const [alerts, setAlerts] = useState([])
   const [sseConnected, setSseConnected] = useState(false)
   const listRef = useRef(null)
@@ -83,7 +87,7 @@ export function LiveAlertFeed() {
 
     // Critical alert toast
     const score = Number(alert.anomaly_score || 0)
-    if (score > 0.90) {
+    if (score > SAR_THRESHOLD) {
       const amount = Number(alert.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })
       toast.error(`Critical Alert: €${amount}`, { duration: 8000 })
     }
@@ -97,19 +101,19 @@ export function LiveAlertFeed() {
   useAlertStream(handleNewAlert, false, setSseConnected)
 
   return (
-    <TooltipProvider delayDuration={300}>
+    <TooltipProvider delayDuration={400}>
       <Card className="flex flex-col">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold flex items-center justify-between">
             <span className="flex items-center gap-2">
               <Radio className="h-4 w-4 text-muted-foreground" />
-              High Risk Transactions
+              {t('dashboard.highRiskTransactions')}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help shrink-0" />
                 </TooltipTrigger>
                 <TooltipContent side="top" className="max-w-xs">
-                  <p>Real-time alerts for transactions with high anomaly scores requiring analyst review</p>
+                  <p>{t('dashboard.highRiskTooltip')}</p>
                 </TooltipContent>
               </Tooltip>
             </span>
@@ -132,12 +136,12 @@ export function LiveAlertFeed() {
               ))
             ) : alerts.length === 0 ? (
               <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-                No recent alerts
+                {t('dashboard.noRecentAlerts')}
               </div>
             ) : (
               alerts.map((alert) => {
                 const score = Number(alert.anomaly_score || 0)
-                const isCritical = score > 0.90
+                const isCritical = score > SAR_THRESHOLD
                 return (
                   <div
                     key={alert.transaction_id}
@@ -147,8 +151,8 @@ export function LiveAlertFeed() {
                   >
                     <ScoreBadge score={alert.anomaly_score} />
                     <div className="flex-1 min-w-0">
-                      <p className="font-mono text-xs text-slate-700 dark:text-slate-300 truncate">
-                        {alert.merchant_nif || alert.transaction_id?.substring(0, 12)}
+                      <p className="text-xs text-slate-700 dark:text-slate-300 truncate" title={formatSourceDestination(alert)}>
+                        {formatSourceDestination(alert) || alert.transaction_id?.substring(0, 12)}
                       </p>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
                         <span className="font-semibold text-slate-800 dark:text-slate-200">
@@ -158,14 +162,22 @@ export function LiveAlertFeed() {
                         <span>{timeAgo(alert.timestamp)}</span>
                       </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-xs shrink-0 h-7"
-                      onClick={() => navigate('/alerts', { state: { alertId: alert.transaction_id } })}
-                    >
-                      View
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs shrink-0 h-7"
+                          aria-label={t('dashboard.viewDetails')}
+                          onClick={() => navigate('/alerts', { state: { alertId: alert.transaction_id } })}
+                        >
+                          {t('actions.view')}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        <p>{t('dashboard.viewDetails')}</p>
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                 )
               })

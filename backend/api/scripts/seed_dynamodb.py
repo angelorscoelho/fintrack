@@ -4,18 +4,25 @@ Usage: python -m backend.api.scripts.seed_dynamodb
 """
 import os
 import random
+import sys
 import uuid
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
+from pathlib import Path
 
 import boto3
+
+_ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(_ROOT / "data"))
+from banking_fields import attach_banking_fields  # noqa: E402
+from shared.project_constants import XAI_THRESHOLD, SAR_THRESHOLD, NORMAL_TTL_DAYS
 
 # Configuration
 TABLE_NAME = os.environ.get("DYNAMODB_TABLE", "transactions")
 AWS_REGION = os.environ.get("AWS_REGION", "eu-west-1")
 
 # Sample data for realistic transactions
-MERCHANT_COUNTRIES = ["PT", "ES", "FR", "DE", "IT", "UK", "US", "BR"]
+MERCHANT_COUNTRIES = ["PT", "ES", "FR", "DE", "IT", "GB", "US", "BR"]
 CATEGORIES = ["retail", "online", "restaurant", "gas_station", "supermarket", "electronics", "travel", "pharmacy"]
 IP_PREFIXES = ["185.15.", "91.22.", "78.34.", "186.20.", "201.45.", "54.23."]
 NIF_PREFIXES = ["PT", "ES", "FR", "DE", "IT"]
@@ -51,24 +58,38 @@ def generate_transaction(index: int, hours_ago: float = 0) -> dict:
     # Timestamps
     timestamp = datetime.now(timezone.utc) - timedelta(hours=hours_ago, minutes=random.randint(0, 59))
     
-    # Anomaly score - most transactions are normal, some are suspicious
+    # Anomaly score — realistic distribution
+    # PENDING_REVIEW (flagged): ~2.5 % of total.
+    # After review, CONFIRMED_FRAUD ≈ 0.06 % of total (EU/SEPA by-count midpoint).
+    # Sources: Nilson Report 2023 (~8.6 bps by value), ECB 7th Card Fraud Report
+    # (2.8 bps by value SEPA), UK Finance 2024 (4.6 bps), Visa/Mastercard (5–10 bps).
+    # Most transactions are normal with very low scores (lognormal-like).
+    # Score thresholds sourced from shared/project_constants.json.
     score = random.random()
-    if score < 0.7:
-        anomaly_score = round(random.uniform(0.0, 0.5), 3)  # Normal
+    if score < 0.80:
+        anomaly_score = round(random.uniform(0.0, 0.15), 3)    # Normal — low risk
         status = "NORMAL"
-    elif score < 0.9:
-        anomaly_score = round(random.uniform(0.5, 0.7), 3)  # Suspicious
-        status = "PENDING_REVIEW"
-    elif score < 0.97:
-        anomaly_score = round(random.uniform(0.7, 0.9), 3)  # Flagged
+    elif score < 0.90:
+        anomaly_score = round(random.uniform(0.15, 0.50), 3)   # Normal — slightly elevated
+        status = "NORMAL"
+    elif score < 0.975:
+        anomaly_score = round(random.uniform(XAI_THRESHOLD, SAR_THRESHOLD), 3)   # Flagged — high
         status = "PENDING_REVIEW"
     else:
-        anomaly_score = round(random.uniform(0.9, 1.0), 3)  # Critical
+        anomaly_score = round(random.uniform(SAR_THRESHOLD, 1.0), 3)    # Critical
         status = "PENDING_REVIEW"
     
-    # Resolved some percentage of flagged transactions
-    if status == "PENDING_REVIEW" and random.random() < 0.3:
-        status = random.choice(["RESOLVED", "FALSE_POSITIVE"])
+    # Resolve ~10 % of flagged transactions:
+    #   effective CONFIRMED_FRAUD ≈ 10 % × 24 % ≈ 2.4 % of flagged ≈ 0.06 % of total
+    #   effective FALSE_POSITIVE  ≈ 10 % × 76 % ≈ 7.6 % of flagged
+    resolution_type = None
+    if status == "PENDING_REVIEW" and random.random() < 0.10:
+        if random.random() < 0.24:
+            status = "RESOLVED"
+            resolution_type = "CONFIRMED_FRAUD"
+        else:
+            status = "FALSE_POSITIVE"
+            resolution_type = "FALSE_POSITIVE"
     
     # Create item matching Lambda handler output
     item = {
@@ -87,10 +108,11 @@ def generate_transaction(index: int, hours_ago: float = 0) -> dict:
         "status": status,
         "processed_at": (timestamp + timedelta(seconds=random.randint(1, 30))).isoformat(),
     }
-    
+    attach_banking_fields(item)
+
     # Add TTL for NORMAL transactions
     if status == "NORMAL":
-        ttl = int((timestamp + timedelta(days=7)).timestamp())
+        ttl = int((timestamp + timedelta(days=NORMAL_TTL_DAYS)).timestamp())
         item["ttl"] = ttl
     
     return item
@@ -107,9 +129,9 @@ def seed_transactions(count: int = 100):
     # Verify table exists
     try:
         table.table_status
-        print(f"✓ Connected to DynamoDB table: {TABLE_NAME}")
+        print(f"[OK] Connected to DynamoDB table: {TABLE_NAME}")
     except Exception as e:
-        print(f"✗ Error connecting to DynamoDB: {e}")
+        print(f"[ERROR] Error connecting to DynamoDB: {e}")
         print(f"  Make sure AWS credentials are configured and table '{TABLE_NAME}' exists.")
         return False
     
@@ -124,7 +146,7 @@ def seed_transactions(count: int = 100):
             if (i + 1) % 50 == 0:
                 print(f"  Inserted {i + 1}/{count} transactions...")
     
-    print(f"✓ Successfully seeded {count} transactions!")
+    print(f"[OK] Successfully seeded {count} transactions!")
     
     # Print summary
     print("\nTransaction distribution:")

@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, lazy, Suspense } from 'react'
-import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useSwipeable } from 'react-swipeable'
 import { Toaster } from 'sonner'
 import { Header } from '@/components/layout/Header'
@@ -11,20 +11,24 @@ import { useAlertStream } from '@/hooks/useAlertStream'
 import { useInactivityTimer } from '@/hooks/useInactivityTimer'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { useDarkMode } from '@/hooks/useDarkMode'
+import { useSidebar } from '@/contexts/SidebarContext'
+import { cn } from '@/lib/utils'
 import { Loader2 } from 'lucide-react'
 
-// Lazy-loaded pages (Task 5)
+// Lazy-loaded pages
 const CommandCenter = lazy(() => import('@/pages/CommandCenter'))
 const AlertQueue = lazy(() => import('@/pages/AlertQueue'))
 const MerchantIndex = lazy(() => import('@/pages/MerchantIndex'))
 const MerchantProfile = lazy(() => import('@/pages/MerchantProfile'))
 const ReportsPage = lazy(() => import('@/pages/ReportsPage'))
+const TransactionsPage = lazy(() => import('@/pages/TransactionsPage'))
+const BudgetPage = lazy(() => import('@/pages/BudgetPage'))
 
 function PageFallback() {
   return (
     <div className="flex items-center justify-center py-24">
       <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden="true" />
-      <span className="sr-only">Carregando página</span>
+      <span className="sr-only">Loading page</span>
     </div>
   )
 }
@@ -37,6 +41,9 @@ export default function App() {
 
   // Dark mode
   const { isDark, toggle: toggleDark } = useDarkMode()
+
+  // AI Sidebar
+  const { isOpen: isSidebarOpen } = useSidebar()
 
   // Inactivity timer — pauses SSE after 30 min idle
   const { isIdle, resetTimer } = useInactivityTimer(
@@ -106,27 +113,52 @@ export default function App() {
       {/* Demo mode banner — shown when backend API is unreachable */}
       <DemoBanner />
 
-      {/* Page content */}
-      <main {...swipeHandlers} className="p-4 md:p-6 max-w-screen-xl mx-auto space-y-4">
-        <Suspense fallback={<PageFallback />}>
-          <Routes>
-            <Route
-              index
-              element={
-                <CommandCenter
-                  isIdle={isIdle}
-                  setMutateAlerts={setMutateAlerts}
-                  isDark={isDark}
-                />
-              }
-            />
-            <Route path="alerts" element={<AlertQueue isDark={isDark} />} />
-            <Route path="merchants" element={<MerchantIndex />} />
-            <Route path="merchants/:nif" element={<MerchantProfile />} />
-            <Route path="reports" element={<ReportsPage />} />
-          </Routes>
-        </Suspense>
-      </main>
+      {/* CSS Grid layout: main-content + ai-sidebar */}
+      <div
+        className="grid"
+        style={{
+          gridTemplateColumns: isSidebarOpen
+            ? `1fr var(--sidebar-width)`
+            : '1fr 0px',
+        }}
+      >
+        {/* Main content area */}
+        <main {...swipeHandlers} className="min-w-0 p-4 md:p-6 max-w-screen-xl mx-auto space-y-4">
+          <Suspense fallback={<PageFallback />}>
+            <Routes>
+              <Route
+                index
+                element={
+                  <CommandCenter
+                    isIdle={isIdle}
+                    setMutateAlerts={setMutateAlerts}
+                    isDark={isDark}
+                  />
+                }
+              />
+              <Route path="alerts" element={<AlertQueue isDark={isDark} />} />
+              <Route path="transactions" element={<TransactionsPage />} />
+              <Route path="merchants" element={<MerchantIndex />} />
+              <Route path="merchants/:nif" element={<MerchantProfile />} />
+              <Route path="reports" element={<ReportsPage />} />
+              <Route path="budget" element={<BudgetPage />} />
+              <Route path="dashboard" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
+        </main>
+
+        {/* AI Sidebar placeholder (US-027) */}
+        <aside
+          className={cn(
+            'ai-sidebar bg-white dark:bg-slate-900 overflow-hidden',
+            isSidebarOpen && 'border-l border-slate-200 dark:border-slate-700'
+          )}
+          style={{
+            width: isSidebarOpen ? 'var(--sidebar-width)' : '0px',
+            transition: 'width 300ms ease',
+          }}
+        />
+      </div>
 
       {/* Mobile page dots indicator */}
       {isSwipeable && (

@@ -31,31 +31,35 @@ import { formatDistanceToNow } from 'date-fns'
 import { pt } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { AlertDetail } from '@/components/AlertDetail'
+import { formatSourceDestination } from '@/lib/formatTransaction'
+import { ErrorBoundary } from '@/components/feedback/ErrorBoundary'
+import { getScoreVariant, getScoreBadgeBg } from '@/lib/constants'
+import { useLanguage } from '@/i18n/LanguageContext'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
 const STATUS_CONFIG = {
-  PENDING_REVIEW:  { label: 'Pending Review',       variant: 'warning',   Icon: Clock },
-  CONFIRMED_FRAUD: { label: 'Confirmed Fraud',        variant: 'destructive', Icon: XCircle },
-  RESOLVED:        { label: 'Resolved',               variant: 'success',   Icon: CheckCircle2 },
-  FALSE_POSITIVE:  { label: 'False Positive',        variant: 'secondary', Icon: CircleDot },
-  ESCALATED:       { label: 'Escalated',              variant: 'warning',   Icon: ArrowUpCircle },
-  NORMAL:          { label: 'Normal',                variant: 'outline',   Icon: Check },
-  rate_limited:    { label: 'API Limit',              variant: 'outline',   Icon: PauseCircle },
+  PENDING_REVIEW:  { label: 'status.pendingReview',       variant: 'warning',   Icon: Clock },
+  CONFIRMED_FRAUD: { label: 'status.confirmedFraud',        variant: 'destructive', Icon: XCircle },
+  RESOLVED:        { label: 'status.resolved',               variant: 'success',   Icon: CheckCircle2 },
+  FALSE_POSITIVE:  { label: 'status.falsePositive',        variant: 'secondary', Icon: CircleDot },
+  ESCALATED:       { label: 'status.escalated',              variant: 'warning',   Icon: ArrowUpCircle },
+  NORMAL:          { label: 'status.normal',                variant: 'outline',   Icon: Check },
+  rate_limited:    { label: 'status.apiLimit',              variant: 'outline',   Icon: PauseCircle },
 }
 
 function ScoreBadge({ score }) {
   const s = Number(score || 0)
-  const variant = s > 0.90 ? 'destructive' : s >= 0.70 ? 'warning' : 'outline'
-  const bg = s > 0.90 ? 'bg-red-100 text-red-800 border-red-200' : s >= 0.70 ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-slate-100 text-slate-700 border-slate-200'
+  const variant = getScoreVariant(s)
+  const bg = getScoreBadgeBg(s)
   return <Badge variant={variant} className={`font-mono text-xs ${bg}`}>{(s * 100).toFixed(1)}%</Badge>
 }
 
 function SortIcon({ column }) {
-  if (!column.getIsSorted()) return <ChevronsUpDown className="h-3 w-3 text-slate-400" />
+  if (!column.getIsSorted()) return <ChevronsUpDown className="h-3 w-3 text-muted-foreground" />
   return column.getIsSorted() === 'desc'
-    ? <ChevronDown className="h-3 w-3 text-blue-600" />
-    : <ChevronUp className="h-3 w-3 text-blue-600" />
+    ? <ChevronDown className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+    : <ChevronUp className="h-3 w-3 text-blue-600 dark:text-blue-400" />
 }
 
 function InlineActionButton({ icon: Icon, title, className, loading, onClick }) {
@@ -72,6 +76,7 @@ function InlineActionButton({ icon: Icon, title, className, loading, onClick }) 
 }
 
 function ExpandedRowPanel({ alert, onOpenDetail, onResolved }) {
+  const { t } = useLanguage()
   let explanation = null
   if (alert.ai_explanation) {
     try {
@@ -82,20 +87,20 @@ function ExpandedRowPanel({ alert, onOpenDetail, onResolved }) {
   }
 
   return (
-    <div className="bg-slate-50 border-t border-b border-slate-200 px-6 py-4 space-y-3">
+    <div className="bg-muted border-t border-b border-border px-6 py-4 space-y-3">
       {/* XAI bullets */}
       {explanation && (
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-xs font-semibold text-amber-800">
+          <div className="flex items-center gap-2 text-xs font-semibold text-amber-800 dark:text-amber-400">
             <Cpu className="h-3.5 w-3.5" />
-            AI Analysis
+            {t('alerts.aiAnalysis')}
           </div>
           {explanation.summary_pt && (
-            <p className="text-xs text-slate-600 italic">{explanation.summary_pt}</p>
+            <p className="text-xs text-muted-foreground italic">{explanation.summary_pt}</p>
           )}
           <ul className="space-y-1">
             {(explanation.bullets || []).map((b) => (
-              <li key={b.id} className="flex gap-2 text-xs text-slate-700">
+              <li key={b.id} className="flex gap-2 text-xs text-slate-700 dark:text-slate-300">
                 <span>{b.icon}</span>
                 <span>{b.text}</span>
               </li>
@@ -108,7 +113,7 @@ function ExpandedRowPanel({ alert, onOpenDetail, onResolved }) {
       {alert.sar_draft && (
         <div className="flex items-center gap-2">
           <FileText className="h-3.5 w-3.5 text-red-600" />
-          <Badge variant="destructive" className="text-xs">SAR Available</Badge>
+          <Badge variant="destructive" className="text-xs">{t('alerts.sarAvailable')}</Badge>
         </div>
       )}
 
@@ -125,10 +130,10 @@ function ExpandedRowPanel({ alert, onOpenDetail, onResolved }) {
 
         {alert.status === 'PENDING_REVIEW' && (
           <div className="flex items-center gap-1.5 ml-auto">
-            <span className="text-xs text-slate-500 mr-1">Resolve:</span>
-            <ResolveButton alert={alert} type="FALSE_POSITIVE" label="False Positive" onResolved={onResolved} />
-            <ResolveButton alert={alert} type="CONFIRMED_FRAUD" label="Confirmed Fraud" onResolved={onResolved} />
-            <ResolveButton alert={alert} type="ESCALATED" label="Escalated" onResolved={onResolved} />
+            <span className="text-xs text-muted-foreground mr-1">{t('alerts.resolve')}</span>
+            <ResolveButton alert={alert} type="FALSE_POSITIVE" label={t('status.falsePositive')} onResolved={onResolved} />
+            <ResolveButton alert={alert} type="CONFIRMED_FRAUD" label={t('status.confirmedFraud')} onResolved={onResolved} />
+            <ResolveButton alert={alert} type="ESCALATED" label={t('status.escalated')} onResolved={onResolved} />
           </div>
         )}
       </div>
@@ -137,12 +142,13 @@ function ExpandedRowPanel({ alert, onOpenDetail, onResolved }) {
 }
 
 function ResolveButton({ alert, type, label, onResolved }) {
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(false)
 
   const config = {
-    FALSE_POSITIVE: { variant: 'outline', cls: 'border-blue-400 text-blue-700 hover:bg-blue-50' },
+    FALSE_POSITIVE: { variant: 'outline', cls: 'border-blue-400 text-blue-700 hover:bg-blue-50 dark:border-blue-600 dark:text-blue-400 dark:hover:bg-blue-950' },
     CONFIRMED_FRAUD: { variant: 'destructive', cls: '' },
-    ESCALATED: { variant: 'secondary', cls: 'bg-amber-100 text-amber-800 hover:bg-amber-200' },
+    ESCALATED: { variant: 'secondary', cls: 'bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:hover:bg-amber-900/50' },
   }
   const c = config[type] || { variant: 'outline', cls: '' }
 
@@ -157,15 +163,15 @@ function ResolveButton({ alert, type, label, onResolved }) {
         body: JSON.stringify({ resolution_type: type }),
       })
       if (res.status === 409) {
-        toast.info('Already resolved')
+        toast.info(t('resolution.alreadyResolved'))
       } else if (res.ok) {
-        toast.success(`Alert marked as ${label}.`)
+        toast.success(t('resolution.markedAs', { label }))
         onResolved()
       } else {
         toast.error(`Error: HTTP ${res.status}`)
       }
     } catch {
-      toast.error('Network error.')
+      toast.error(t('feedback.networkError'))
     } finally {
       setLoading(false)
     }
@@ -180,6 +186,7 @@ function ResolveButton({ alert, type, label, onResolved }) {
 }
 
 export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelectionChange, clearSelectionRef }) {
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const [sorting, setSorting] = useState([{ id: 'anomaly_score', desc: true }])
   const [rowSelection, setRowSelection] = useState({})
@@ -204,15 +211,15 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
         body: JSON.stringify({ resolution_type: type }),
       })
       if (res.status === 409) {
-        toast.info('Already resolved')
+        toast.info(t('resolution.alreadyResolved'))
       } else if (res.ok) {
-        toast.success(`Alert marked as ${label}.`)
+        toast.success(t('resolution.markedAs', { label }))
         if (onRefetch) onRefetch()
       } else {
         toast.error(`Error: HTTP ${res.status}`)
       }
     } catch {
-      toast.error('Network error.')
+      toast.error(t('feedback.networkError'))
     } finally {
       setResolvingRows((prev) => ({ ...prev, [key]: false }))
     }
@@ -225,7 +232,7 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
         header: ({ table }) => (
           <input
             type="checkbox"
-            className="rounded border-slate-300 cursor-pointer"
+            className="rounded border-slate-300 dark:border-slate-600 cursor-pointer"
             checked={table.getIsAllPageRowsSelected()}
             onChange={table.getToggleAllPageRowsSelectedHandler()}
             onClick={(e) => e.stopPropagation()}
@@ -234,7 +241,7 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
         cell: ({ row }) => (
           <input
             type="checkbox"
-            className="rounded border-slate-300 cursor-pointer"
+            className="rounded border-slate-300 dark:border-slate-600 cursor-pointer"
             checked={row.getIsSelected()}
             onChange={row.getToggleSelectedHandler()}
             onClick={(e) => e.stopPropagation()}
@@ -245,44 +252,48 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
       },
       {
         accessorKey: 'anomaly_score',
-        header: 'Score',
+        header: () => t('columns.score'),
         cell: ({ getValue }) => <ScoreBadge score={getValue()} />,
         size: 90,
       },
       {
         accessorKey: 'transaction_id',
-        header: 'ID',
+        header: () => t('columns.id'),
         cell: ({ getValue }) => (
-          <span className="font-mono text-xs text-slate-500">{getValue()?.substring(0, 8)}…</span>
+          <span className="font-mono text-xs text-muted-foreground">{getValue()?.substring(0, 8)}…</span>
         ),
         enableSorting: false,
         size: 100,
       },
       {
-        accessorKey: 'merchant_nif',
-        header: 'NIF',
-        cell: ({ getValue }) => {
-          const nif = getValue()
+        id: 'route',
+        accessorFn: (row) => formatSourceDestination(row),
+        header: () => t('columns.sourceDestination'),
+        cell: ({ row }) => {
+          const nif = row.original.merchant_nif
+          const label = formatSourceDestination(row.original)
           return (
             <button
-              className="font-mono text-xs text-blue-600 hover:text-blue-800 hover:underline"
+              type="button"
+              className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline text-left max-w-[160px] truncate block"
+              title={label}
               onClick={(e) => {
                 e.stopPropagation()
-                navigate(`/merchants/${nif}`)
+                if (nif) navigate(`/merchants/${nif}`)
               }}
             >
-              {nif}
+              {label}
             </button>
           )
         },
         enableSorting: false,
-        size: 130,
+        size: 160,
       },
       {
         accessorKey: 'amount',
-        header: () => <span className="w-full text-right block">Amount</span>,
+        header: () => <span className="w-full text-right block">{t('columns.amount')}</span>,
         cell: ({ getValue }) => (
-          <span className="font-semibold text-slate-800 block text-right">
+          <span className="font-semibold text-foreground block text-right">
             €{Number(getValue() || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
         ),
@@ -290,9 +301,9 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
       },
       {
         accessorKey: 'category',
-        header: 'Category',
+        header: () => t('columns.category'),
         cell: ({ getValue }) => (
-          <span className="text-xs text-slate-600 lowercase">
+          <span className="text-xs text-muted-foreground lowercase">
             {getValue()?.replace(/_/g, ' ')}
           </span>
         ),
@@ -301,13 +312,13 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
       },
       {
         accessorKey: 'status',
-        header: 'Status',
+        header: () => t('columns.status'),
         cell: ({ getValue }) => {
           const cfg = STATUS_CONFIG[getValue()] ?? STATUS_CONFIG.NORMAL
           const StatusIcon = cfg.Icon
           return (
             <Badge variant={cfg.variant} className="text-xs gap-1">
-              <StatusIcon className="h-3 w-3" />{cfg.label}
+              <StatusIcon className="h-3 w-3" />{t(cfg.label)}
             </Badge>
           )
         },
@@ -316,53 +327,53 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
       },
       {
         accessorKey: 'timestamp',
-        header: 'Time',
+        header: () => t('columns.time'),
         cell: ({ getValue }) => {
           const ts = getValue()
-          if (!ts) return <span className="text-xs text-slate-400">–</span>
+          if (!ts) return <span className="text-xs text-muted-foreground">–</span>
           try {
             return (
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-muted-foreground">
                 {formatDistanceToNow(new Date(ts), { addSuffix: true, locale: pt })}
               </span>
             )
           } catch {
-            return <span className="text-xs text-slate-400">–</span>
+            return <span className="text-xs text-muted-foreground">–</span>
           }
         },
         size: 120,
       },
       {
         id: 'actions',
-        header: 'Actions',
+        header: () => t('columns.actions'),
         cell: ({ row }) => {
           const alert = row.original
           if (alert.status !== 'PENDING_REVIEW') {
-            return <span className="text-xs text-slate-300">—</span>
+            return <span className="text-xs text-slate-300 dark:text-slate-600">—</span>
           }
           const id = alert.transaction_id
           return (
             <div className="flex items-center gap-0.5">
               <InlineActionButton
                 icon={CheckCircle}
-                title="False Positive"
-                className="text-green-600 hover:bg-green-100"
+                title={t('actions.falsePositive')}
+                className="text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30"
                 loading={resolvingRows[`${id}_FALSE_POSITIVE`]}
-                onClick={() => resolveInline(alert, 'FALSE_POSITIVE', 'False Positive')}
+                onClick={() => resolveInline(alert, 'FALSE_POSITIVE', t('status.falsePositive'))}
               />
               <InlineActionButton
                 icon={XCircle}
-                title="Confirmed Fraud"
-                className="text-red-600 hover:bg-red-100"
+                title={t('actions.confirmedFraud')}
+                className="text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30"
                 loading={resolvingRows[`${id}_CONFIRMED_FRAUD`]}
-                onClick={() => resolveInline(alert, 'CONFIRMED_FRAUD', 'Confirmed Fraud')}
+                onClick={() => resolveInline(alert, 'CONFIRMED_FRAUD', t('status.confirmedFraud'))}
               />
               <InlineActionButton
                 icon={ArrowUpCircle}
-                title="Escalate"
-                className="text-amber-600 hover:bg-amber-100"
+                title={t('actions.escalate')}
+                className="text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/30"
                 loading={resolvingRows[`${id}_ESCALATED`]}
-                onClick={() => resolveInline(alert, 'ESCALATED', 'Escalated')}
+                onClick={() => resolveInline(alert, 'ESCALATED', t('status.escalated'))}
               />
             </div>
           )
@@ -413,13 +424,13 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
         const row = pageRows[focusedRowIndex]
         if (row && row.original.status === 'PENDING_REVIEW') {
           e.preventDefault()
-          resolveInline(row.original, 'FALSE_POSITIVE', 'Falso Positivo')
+          resolveInline(row.original, 'FALSE_POSITIVE', t('status.falsePositive'))
         }
       } else if (e.key === 'x' || e.key === 'X') {
         const row = pageRows[focusedRowIndex]
         if (row && row.original.status === 'PENDING_REVIEW') {
           e.preventDefault()
-          resolveInline(row.original, 'CONFIRMED_FRAUD', 'Fraude Confirmada')
+          resolveInline(row.original, 'CONFIRMED_FRAUD', t('status.confirmedFraud'))
         }
       }
     }
@@ -448,10 +459,10 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
 
   if (isLoading && data.length === 0) {
     return (
-      <div className="flex items-center justify-center h-48 bg-white rounded-lg border border-slate-200">
-        <div className="flex items-center gap-2 text-sm text-slate-400">
+      <div className="flex items-center justify-center h-48 bg-card rounded-lg border border-border">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
-          Loading alerts…
+          {t('alerts.loading')}
         </div>
       </div>
     )
@@ -459,29 +470,29 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
 
   if (!isLoading && data.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-48 bg-white rounded-lg border border-slate-200 gap-2">
-        <p className="text-sm text-slate-500">No alerts for the selected filter.</p>
+      <div className="flex flex-col items-center justify-center h-48 bg-card rounded-lg border border-border gap-2">
+        <p className="text-sm text-muted-foreground">{t('alerts.noAlerts')}</p>
       </div>
     )
   }
 
   return (
     <>
-      <div ref={tableRef} className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+      <div ref={tableRef} className="bg-card rounded-lg border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-muted border-b border-border">
               {table.getHeaderGroups().map((hg) => (
                 <tr key={hg.id}>
                   {hg.headers.map((h) => (
                     <th
                       key={h.id}
-                      className="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide"
+                      className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
                       style={{ width: h.getSize() }}
                     >
                       {h.isPlaceholder ? null : h.column.getCanSort() ? (
                         <button
-                          className="flex items-center gap-1 hover:text-slate-900 transition-colors"
+                          className="flex items-center gap-1 hover:text-foreground transition-colors"
                           onClick={h.column.getToggleSortingHandler()}
                         >
                           {flexRender(h.column.columnDef.header, h.getContext())}
@@ -495,13 +506,13 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
                 </tr>
               ))}
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-border">
               {pageRows.map((row, idx) => (
                 <Fragment key={row.id}>
                   <tr
                     className={`transition-colors cursor-pointer ${
-                      idx === focusedRowIndex ? 'bg-blue-50/70 ring-1 ring-inset ring-blue-200' : 'hover:bg-slate-50/50'
-                    } ${row.getIsExpanded() ? 'bg-slate-50' : ''}`}
+                      idx === focusedRowIndex ? 'bg-blue-50/70 ring-1 ring-inset ring-blue-200 dark:bg-blue-950/40 dark:ring-blue-800' : 'hover:bg-slate-50/50 dark:hover:bg-slate-800/50'
+                    } ${row.getIsExpanded() ? 'bg-slate-50 dark:bg-slate-800/50' : ''}`}
                     onClick={() => row.toggleExpanded()}
                   >
                     {row.getVisibleCells().map((cell) => (
@@ -513,11 +524,13 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
                   {row.getIsExpanded() && (
                     <tr>
                       <td colSpan={columns.length}>
-                        <ExpandedRowPanel
-                          alert={row.original}
-                          onOpenDetail={setDetailAlert}
-                          onResolved={() => onRefetch && onRefetch()}
-                        />
+                        <ErrorBoundary>
+                          <ExpandedRowPanel
+                            alert={row.original}
+                            onOpenDetail={setDetailAlert}
+                            onResolved={() => onRefetch && onRefetch()}
+                          />
+                        </ErrorBoundary>
                       </td>
                     </tr>
                   )}
@@ -528,9 +541,9 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
         </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 bg-slate-50">
-          <p className="text-xs text-slate-500">
-            {data.length} alerts — Page {table.getState().pagination.pageIndex + 1} of{' '}
+        <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted">
+          <p className="text-xs text-muted-foreground">
+            {data.length} {t('alerts.count')} — Page {table.getState().pagination.pageIndex + 1} of{' '}
             {table.getPageCount()}
           </p>
           <div className="flex gap-2">
@@ -541,7 +554,7 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
             >
-              ← Previous
+              ← {t('actions.previous')}
             </Button>
             <Button
               size="sm"
@@ -550,7 +563,7 @@ export function EnhancedAlertsTable({ data = [], isLoading, onRefetch, onSelecti
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
             >
-              Next →
+              {t('actions.next')} →
             </Button>
           </div>
         </div>

@@ -1,13 +1,15 @@
 """
-FinTrack AI — Lambda Handler (v2)
-SQS trigger → ML score → persist DynamoDB → fire-and-forget GenAI microservice.
+FinTrack AI - Lambda Handler (v2)
+SQS trigger -> ML score -> persist DynamoDB -> fire-and-forget GenAI microservice.
 Rate limiting enforced via atomic DynamoDB counter before GenAI invocation.
 """
 import json
 import logging
 import os
+import time
 import urllib.request
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 
 import boto3
 
@@ -22,9 +24,32 @@ TABLE_NAME  = os.environ["DYNAMODB_TABLE"]
 table       = dynamodb.Table(TABLE_NAME)
 
 GENAI_URL           = os.environ.get("GENAI_SERVICE_URL", "http://localhost:8001")
-XAI_THRESHOLD       = 0.70
-SAR_THRESHOLD       = 0.90
-GENAI_INVOKE_TIMEOUT = 2  # seconds — fire-and-forget, non-blocking
+
+# Thresholds from shared single source of truth
+# At Lambda deploy time, shared/ is in the layer alongside lambda_handler/
+try:
+    from shared.project_constants import XAI_THRESHOLD, SAR_THRESHOLD, NORMAL_TTL_DAYS, GENAI_INVOKE_TIMEOUT
+except ImportError:
+    # Fallback: read JSON directly (e.g. when shared/ is a sibling directory)
+    import pathlib as _pl
+    _thresholds_path = _pl.Path(__file__).resolve().parent.parent / "shared" / "project_constants.json"
+    with open(_thresholds_path) as _f:
+        _th = json.load(_f)
+    XAI_THRESHOLD = _th["score"]["xai"]
+    SAR_THRESHOLD = _th["score"]["sar"]
+    NORMAL_TTL_DAYS = _th["data_retention"]["normal_ttl_days"]
+    GENAI_INVOKE_TIMEOUT = _th["api"]["timeouts"]["genai_invoke_seconds"]
+
+
+def _to_dynamodb_value(val):
+    """Recursively convert floats/nested dicts/lists to DynamoDB-compatible Decimal/JSON."""
+    if isinstance(val, float):
+        return Decimal(str(val))
+    if isinstance(val, dict):
+        return {k: _to_dynamodb_value(v) for k, v in val.items()}
+    if isinstance(val, list):
+        return [_to_dynamodb_value(i) for i in val]
+    return val
 
 
 def lambda_handler(event: dict, context) -> dict:
@@ -53,13 +78,16 @@ def _process(payload: dict) -> None:
     score = score_transaction(payload)
     status = "NORMAL" if score < XAI_THRESHOLD else "PENDING_REVIEW"
 
-    # TTL: NORMAL records expire in 7 days; anomalies kept indefinitely
+    # TTL: NORMAL records expire after configured days; anomalies kept indefinitely
     ttl = None
     if status == "NORMAL":
-        ttl = int((datetime.now(timezone.utc) + timedelta(days=7)).timestamp())
+        ttl = int((datetime.now(timezone.utc) + timedelta(days=NORMAL_TTL_DAYS)).timestamp())
+
+    # Convert all numeric values to Decimal for DynamoDB compatibility
+    safe_payload = _to_dynamodb_value(payload)
 
     item = {
-        **payload,
+        **safe_payload,
         "anomaly_score": str(score),  # String avoids DynamoDB Decimal issues
         "status":        status,
         "processed_at":  now,
@@ -71,13 +99,31 @@ def _process(payload: dict) -> None:
     logger.info(json.dumps({"event": "scored", "transaction_id": tid,
                              "score": score, "status": status}))
 
+    genai_invoked = False
+    genai_duration_ms = 0
+    genai_status = "skipped"
+
     if score >= XAI_THRESHOLD:
-        _maybe_invoke_genai(tid, score, payload)
+        genai_invoked = True
+        t0 = time.time()
+        genai_status = _maybe_invoke_genai(tid, score, payload)
+        genai_duration_ms = round((time.time() - t0) * 1000)
+
+    logger.info(json.dumps({
+        "transaction_id": tid,
+        "anomaly_score": score,
+        "genai_invoked": genai_invoked,
+        "genai_duration_ms": genai_duration_ms,
+        "genai_status": genai_status,
+    }))
 
 
-def _maybe_invoke_genai(tid: str, score: float, payload: dict) -> None:
-    """Check rate limit then fire-and-forget to GenAI microservice."""
-    # Flash rate limit check (all scores ≥ 0.70 use Flash)
+def _maybe_invoke_genai(tid: str, score: float, payload: dict) -> str:
+    """Check rate limit then fire-and-forget to GenAI microservice.
+
+    Returns a status string: 'success', 'error', or 'rate_limited'.
+    """
+    # Flash rate limit check (all scores >= 0.70 use Flash)
     if not check_and_increment("flash"):
         logger.warning(json.dumps({"event": "rate_limited", "model": "flash", "tid": tid}))
         table.update_item(
@@ -86,7 +132,7 @@ def _maybe_invoke_genai(tid: str, score: float, payload: dict) -> None:
             ExpressionAttributeNames={"#s": "status"},
             ExpressionAttributeValues={":rl": "rate_limited", ":ps": "rate_limited"},
         )
-        return
+        return "rate_limited"
 
     # Pro rate limit check (only for score > 0.90)
     if score > SAR_THRESHOLD:
@@ -96,11 +142,14 @@ def _maybe_invoke_genai(tid: str, score: float, payload: dict) -> None:
             # Pass a flag so GenAI service skips Pro node
             payload = {**payload, "_skip_pro": True}
 
-    _fire_genai(tid, score, payload)
+    return _fire_genai(tid, score, payload)
 
 
-def _fire_genai(tid: str, score: float, payload: dict) -> None:
-    """HTTP POST to GenAI microservice. Non-blocking (timeout=2s)."""
+def _fire_genai(tid: str, score: float, payload: dict) -> str:
+    """HTTP POST to GenAI microservice. Non-blocking (timeout=2s).
+
+    Returns 'success' or 'error'.
+    """
     try:
         body = json.dumps({"transaction_id": tid, "anomaly_score": score, "payload": payload})
         req  = urllib.request.Request(
@@ -111,6 +160,8 @@ def _fire_genai(tid: str, score: float, payload: dict) -> None:
         )
         with urllib.request.urlopen(req, timeout=GENAI_INVOKE_TIMEOUT) as resp:
             logger.info(json.dumps({"event": "genai_invoked", "tid": tid, "http": resp.status}))
+        return "success"
     except Exception as exc:
         logger.warning(json.dumps({"event": "genai_invoke_failed", "tid": tid, "error": str(exc)}))
         # Non-fatal — record already persisted as PENDING_REVIEW
+        return "error"

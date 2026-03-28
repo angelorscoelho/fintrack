@@ -1,10 +1,20 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import { readFileSync } from 'fs'
+
+// Load shared project constants at build time — single source of truth
+const thresholdsRaw = readFileSync(
+  path.resolve(__dirname, '../shared/project_constants.json'),
+  'utf-8'
+)
 
 export default defineConfig({
   base: '/poc/fintrack/',
   plugins: [react()],
+  define: {
+    __THRESHOLDS__: thresholdsRaw,
+  },
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') }
   },

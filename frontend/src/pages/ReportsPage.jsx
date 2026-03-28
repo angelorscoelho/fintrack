@@ -26,94 +26,107 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { safeFetch } from '@/lib/api'
+import { formatSourceDestination } from '@/lib/formatTransaction'
+import { getScoreVariant, SAR_THRESHOLD, API_MAX_LIMIT } from '@/lib/constants'
+import { useLanguage } from '@/i18n/LanguageContext'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
 function ScoreBadge({ score }) {
   const s = Number(score || 0)
   const pct = (s * 100).toFixed(1)
-  const variant = s > 0.90 ? 'destructive' : s >= 0.70 ? 'warning' : 'outline'
+  const variant = getScoreVariant(s)
   return <Badge variant={variant}>{pct}%</Badge>
 }
 
 function StatusBadge({ status }) {
+  const { t } = useLanguage()
   const map = {
-    PENDING_REVIEW: { label: 'Pending Review', variant: 'warning' },
-    RESOLVED: { label: 'Resolved', variant: 'success' },
-    FALSE_POSITIVE: { label: 'False Positive', variant: 'secondary' },
-    CONFIRMED_FRAUD: { label: 'Confirmed Fraud', variant: 'destructive' },
-    ESCALATED: { label: 'Escalated', variant: 'default' },
-    NORMAL: { label: 'Normal', variant: 'outline' },
-    rate_limited: { label: 'API Limit', variant: 'outline' },
+    PENDING_REVIEW: { key: 'status.pendingReview', variant: 'warning' },
+    RESOLVED: { key: 'status.resolved', variant: 'success' },
+    FALSE_POSITIVE: { key: 'status.falsePositive', variant: 'secondary' },
+    CONFIRMED_FRAUD: { key: 'status.confirmedFraud', variant: 'destructive' },
+    ESCALATED: { key: 'status.escalated', variant: 'default' },
+    NORMAL: { key: 'status.normal', variant: 'outline' },
+    rate_limited: { key: 'status.apiLimit', variant: 'outline' },
   }
-  const st = map[status] || { label: status, variant: 'outline' }
-  return <Badge variant={st.variant}>{st.label}</Badge>
+  const st = map[status]
+  return <Badge variant={st ? st.variant : 'outline'}>{st ? t(st.key) : status}</Badge>
 }
 
-const columns = [
-  {
-    accessorKey: 'timestamp',
-    header: 'Date',
-    cell: ({ getValue }) => {
-      const v = getValue()
-      if (!v) return '—'
-      try {
-        return format(new Date(v), 'dd MMM yyyy HH:mm')
-      } catch {
-        return v
-      }
+function getColumns(t) {
+  return [
+    {
+      accessorKey: 'timestamp',
+      header: t('columns.date'),
+      cell: ({ getValue }) => {
+        const v = getValue()
+        if (!v) return '—'
+        try {
+          return format(new Date(v), 'MMM dd, yyyy HH:mm')
+        } catch {
+          return v
+        }
+      },
     },
-  },
-  {
-    accessorKey: 'merchant_nif',
-    header: 'Merchant NIF',
-  },
-  {
-    accessorKey: 'anomaly_score',
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8"
-        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-      >
-        Score
-        <ArrowUpDown className="ml-1 h-3 w-3" />
-      </Button>
-    ),
-    cell: ({ getValue }) => <ScoreBadge score={getValue()} />,
-    sortingFn: 'basic',
-  },
-  {
-    accessorKey: 'amount',
-    header: 'Amount',
-    cell: ({ getValue }) => {
-      const v = getValue()
-      return v != null ? `€${Number(v).toFixed(2)}` : '—'
+    {
+      id: 'route',
+      accessorFn: (row) => formatSourceDestination(row),
+      header: t('columns.sourceDestination'),
+      cell: ({ row }) => (
+        <span className="max-w-[200px] truncate block" title={formatSourceDestination(row.original)}>
+          {formatSourceDestination(row.original)}
+        </span>
+      ),
     },
-  },
-  {
-    accessorKey: 'status',
-    header: 'Status',
-    cell: ({ getValue }) => <StatusBadge status={getValue()} />,
-  },
-  {
-    id: 'export',
-    header: 'Export',
-    cell: ({ row }) => (
-      <SARExportButton
-        sarContent={row.original.sar_draft}
-        transactionId={row.original.transaction_id}
-        merchantNif={row.original.merchant_nif}
-        score={row.original.anomaly_score}
-      />
-    ),
-  },
-]
+    {
+      accessorKey: 'anomaly_score',
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-3 h-8"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          {t('columns.score')}
+          <ArrowUpDown className="ml-1 h-3 w-3" />
+        </Button>
+      ),
+      cell: ({ getValue }) => <ScoreBadge score={getValue()} />,
+      sortingFn: 'basic',
+    },
+    {
+      accessorKey: 'amount',
+      header: t('columns.amount'),
+      cell: ({ getValue }) => {
+        const v = getValue()
+        return v != null ? `€${Number(v).toFixed(2)}` : '—'
+      },
+    },
+    {
+      accessorKey: 'status',
+      header: t('columns.status'),
+      cell: ({ getValue }) => <StatusBadge status={getValue()} />,
+    },
+    {
+      id: 'export',
+      header: t('columns.export'),
+      cell: ({ row }) => (
+        <SARExportButton
+          sarContent={row.original.sar_draft}
+          transactionId={row.original.transaction_id}
+          merchantNif={row.original.merchant_nif}
+          score={row.original.anomaly_score}
+        />
+      ),
+    },
+  ]
+}
 
 
 export default function ReportsPage() {
   const navigate = useNavigate()
+  const { t } = useLanguage()
   const [sorting, setSorting] = useState([{ id: 'anomaly_score', desc: true }])
   const [zipLoading, setZipLoading] = useState(false)
   const [zipProgress, setZipProgress] = useState('')
@@ -122,7 +135,7 @@ export default function ReportsPage() {
   const { data: alerts = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['alerts-for-reports'],
     queryFn: async () => {
-      const res = await safeFetch(`${API_BASE}/api/alerts?limit=200`)
+      const res = await safeFetch(`${API_BASE}/api/alerts?limit=${API_MAX_LIMIT}`)
       const json = await res.json()
       const arr = Array.isArray(json) ? json : json.alerts || json.items || []
       return arr
@@ -139,7 +152,7 @@ export default function ReportsPage() {
     () =>
       sarAlerts.filter(
         (a) =>
-          a.status === 'PENDING_REVIEW' && Number(a.anomaly_score) > 0.90
+          a.status === 'PENDING_REVIEW' && Number(a.anomaly_score) > SAR_THRESHOLD
       ).length,
     [sarAlerts]
   )
@@ -155,6 +168,8 @@ export default function ReportsPage() {
     const interval = setInterval(refreshExportCount, 2000)
     return () => clearInterval(interval)
   }, [refreshExportCount])
+
+  const columns = useMemo(() => getColumns(t), [t])
 
   const table = useReactTable({
     data: sarAlerts,
@@ -177,7 +192,7 @@ export default function ReportsPage() {
 
       for (let i = 0; i < sarAlerts.length; i++) {
         const alert = sarAlerts[i]
-        setZipProgress(`Generating ${i + 1} of ${sarAlerts.length} PDFs...`)
+        setZipProgress(t('reports.generatingPdf', { current: i + 1, total: sarAlerts.length }))
 
         // Create a temporary hidden div to Render the markdown
         const container = document.createElement('div')
@@ -216,12 +231,12 @@ export default function ReportsPage() {
 
           pdf.setFontSize(12)
           pdf.setFont(undefined, 'bold')
-          pdf.text('SUSPICIOUS ACTIVITY REPORT — CONFIDENTIAL', pageWidth / 2, 15, { align: 'center' })
+          pdf.text(t('reports.sarHeader'), pageWidth / 2, 15, { align: 'center' })
 
           pdf.setFontSize(9)
           pdf.setFont(undefined, 'normal')
           pdf.text(
-            `Transaction: ${alert.transaction_id} | Merchant: ${alert.merchant_nif} | Score: ${scorePct}% | Date: ${today}`,
+            `Transaction: ${alert.transaction_id} | Route: ${formatSourceDestination(alert)} | Score: ${scorePct}% | Date: ${today}`,
             pageWidth / 2,
             22,
             { align: 'center' }
@@ -270,7 +285,7 @@ export default function ReportsPage() {
             pdf.setFontSize(7)
             pdf.setTextColor(150)
             pdf.text(
-              'Automatically generated by FinTrack AI — Requires human review',
+              t('reports.sarFooter'),
               pageWidth / 2,
               footerY,
               { align: 'center' }
@@ -286,7 +301,7 @@ export default function ReportsPage() {
         }
       }
 
-      setZipProgress('Creating ZIP...')
+      setZipProgress(t('reports.creatingZip'))
       const zipBlob = await zip.generateAsync({ type: 'blob' })
       const today = new Date().toISOString().split('T')[0]
       const url = URL.createObjectURL(zipBlob)
@@ -297,15 +312,15 @@ export default function ReportsPage() {
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
-      toast.success(`${sarAlerts.length} PDFs exported as ZIP`)
+      toast.success(t('reports.pdfExported', { count: sarAlerts.length }))
     } catch (err) {
       console.error('ZIP generation error:', err)
-      toast.error('Error generating ZIP')
+      toast.error(t('reports.errorZip'))
     } finally {
       setZipLoading(false)
       setZipProgress('')
     }
-  }, [sarAlerts])
+  }, [sarAlerts, t])
 
   if (isLoading) {
     return (
@@ -328,13 +343,13 @@ export default function ReportsPage() {
   if (isError) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-200">SAR Reports</h1>
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-200">{t('reports.title')}</h1>
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription className="flex items-center justify-between">
-            <span>Error loading data. Please try again.</span>
+            <span>{t('feedback.errorLoading')}</span>
             <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-3 shrink-0">
-              Try again
+              {t('actions.tryAgain')}
             </Button>
           </AlertDescription>
         </Alert>
@@ -344,13 +359,13 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-800">SAR Reports</h1>
+      <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-200">{t('reports.title')}</h1>
 
       {/* SECTION 1 — Stats bar */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">SARs Generated</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-500">{t('reports.sarsGenerated')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -362,7 +377,7 @@ export default function ReportsPage() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Critical Pending</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-500">{t('reports.criticalPending')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -374,7 +389,7 @@ export default function ReportsPage() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500">Exported</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-500">{t('reports.exported')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -389,20 +404,20 @@ export default function ReportsPage() {
       {sarAlerts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-slate-400 gap-3">
           <FileText className="h-10 w-10" />
-          <p className="text-sm">No SARs generated yet.</p>
+          <p className="text-sm">{t('reports.noSars')}</p>
           <Button variant="outline" size="sm" onClick={() => navigate('/alerts')}>
-            View alerts
+            {t('actions.viewAlerts')}
           </Button>
         </div>
       ) : (
-        <div className="rounded-lg border bg-white overflow-hidden">
+        <div className="rounded-lg border bg-white dark:bg-slate-900 dark:border-slate-700 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 {table.getHeaderGroups().map((hg) => (
-                  <tr key={hg.id} className="border-b bg-slate-50">
+                  <tr key={hg.id} className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
                     {hg.headers.map((header) => (
-                      <th key={header.id} className="px-4 py-3 text-left font-medium text-slate-600">
+                      <th key={header.id} className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-400">
                         {header.isPlaceholder
                           ? null
                           : flexRender(header.column.columnDef.header, header.getContext())}
@@ -413,9 +428,9 @@ export default function ReportsPage() {
               </thead>
               <tbody>
                 {table.getRowModel().rows.map((row) => (
-                  <tr key={row.id} className="border-b hover:bg-slate-50/50 transition-colors">
+                  <tr key={row.id} className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
                     {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="px-4 py-3">
+                      <td key={cell.id} className="px-4 py-3 text-slate-700 dark:text-slate-300">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     ))}
@@ -426,10 +441,9 @@ export default function ReportsPage() {
           </div>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between px-4 py-3 border-t bg-slate-50">
-            <span className="text-xs text-slate-500">
-              Page {table.getState().pagination.pageIndex + 1} of{' '}
-              {table.getPageCount()}
+          <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              {t('reports.page', { current: table.getState().pagination.pageIndex + 1, total: table.getPageCount() })}
             </span>
             <div className="flex gap-1">
               <Button
@@ -465,12 +479,12 @@ export default function ReportsPage() {
             {zipLoading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                {zipProgress || 'Generating...'}
+                {zipProgress || t('actions.generating')}
               </>
             ) : (
               <>
                 <Download className="h-4 w-4" />
-                Export All as ZIP
+                {t('actions.exportAllZip')}
               </>
             )}
           </Button>

@@ -7,7 +7,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.db.dynamo import init_dynamo_client
-from api.routes import alerts, stats, resolve, stream
+from api.routes import alerts, health, stats, resolve, stream, config
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -42,8 +42,19 @@ app.include_router(stream.router, prefix="/api")
 app.include_router(alerts.router, prefix="/api")
 app.include_router(stats.router, prefix="/api")
 app.include_router(resolve.router, prefix="/api")
+app.include_router(health.router, prefix="/api")
+app.include_router(config.router)
 
 
 @app.get("/health")
-async def health():
-    return {"status": "ok", "service": "fintrack-api"}
+async def health_check():
+    base = {"status": "ok", "service": "fintrack-api"}
+    try:
+        gemini = await health.get_gemini_status()
+        base["gemini"] = gemini
+        if gemini["status"] != "ok":
+            base["status"] = "degraded"
+    except Exception:
+        base["gemini"] = {"status": "error", "error_message": "health check failed"}
+        base["status"] = "degraded"
+    return base
