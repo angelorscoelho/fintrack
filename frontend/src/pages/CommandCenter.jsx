@@ -14,7 +14,7 @@ import { useLanguage } from '@/i18n/LanguageContext'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
-export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
+export default function CommandCenter({ isIdle, setMutateAlerts }) {
   const { t } = useLanguage()
   const queryClient = useQueryClient()
 
@@ -152,7 +152,7 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
       {/* Row 2: Chart + Live Feed — stacked on mobile, 60/40 on desktop */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div className="md:col-span-3">
-          <VolumeChart isDark={isDark} />
+          <VolumeChart />
         </div>
         <div className="md:col-span-2">
           <LiveAlertFeed />

@@ -132,7 +132,6 @@ export default function App() {
                   <CommandCenter
                     isIdle={isIdle}
                     setMutateAlerts={setMutateAlerts}
-                    isDark={isDark}
                   />
                 }
               />
