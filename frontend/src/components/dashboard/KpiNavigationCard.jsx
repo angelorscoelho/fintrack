@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TrendingUp, TrendingDown, Info } from 'lucide-react'
@@ -23,6 +23,7 @@ export function KpiNavigationCard({
   subLabel,
   route,
 }) {
+  const navigate = useNavigate()
   const variantClass = VARIANT_STYLES[variant] || VARIANT_STYLES.default
 
   const isFraudMetric = variant === 'critical' || variant === 'warning'
@@ -32,12 +33,29 @@ export function KpiNavigationCard({
     : changeIsPositive ? 'text-green-600' : 'text-red-600'
   const ChangeIcon = changeIsPositive ? TrendingUp : TrendingDown
 
+  const handleNavigate = () => {
+    if (route) navigate(route)
+  }
+
+  const handleCardKeyDown = (e) => {
+    if (!route) return
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      navigate(route)
+    }
+  }
+
   const cardContent = (
     <Card
       className={cn(
         'min-w-[160px] snap-start shrink-0 md:shrink md:min-w-0 transition-shadow duration-200 hover:shadow-lg cursor-pointer h-full',
         variantClass
       )}
+      role={route ? 'link' : undefined}
+      tabIndex={route ? 0 : undefined}
+      aria-label={route ? (loading ? `${title}: loading` : `${title}: ${value}`) : undefined}
+      onClick={route ? handleNavigate : undefined}
+      onKeyDown={route ? handleCardKeyDown : undefined}
     >
       <CardContent className="p-4 md:p-6 flex flex-col h-full">
         <div className="flex items-center justify-between mb-2">
@@ -49,7 +67,13 @@ export function KpiNavigationCard({
             {tooltip && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help shrink-0" />
+                  <span
+                    className="inline-flex"
+                    onClick={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help shrink-0" />
+                  </span>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="max-w-xs">
                   <p>{tooltip}</p>
@@ -87,10 +111,10 @@ export function KpiNavigationCard({
   const needsProvider = tooltip || actionTooltip
 
   const linked = route ? (
-    <Link to={route} className="no-underline h-full" aria-label={loading ? `${title}: loading` : `${title}: ${value}`}>
-      {cardContent}
-    </Link>
-  ) : cardContent
+    <div className="h-full no-underline">{cardContent}</div>
+  ) : (
+    cardContent
+  )
 
   const withActionTooltip = actionTooltip ? (
     <Tooltip>

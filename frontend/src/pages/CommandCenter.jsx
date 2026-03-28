@@ -115,7 +115,7 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
           tooltip={t('kpi.transactions24hTooltip')}
           actionTooltip={t('kpi.transactions24hAction')}
           subLabel={last24hSubLabel}
-          route="/transactions"
+          route="/transactions?period=24h"
         />
         <KpiNavigationCard
           title={t('kpi.fraudRate')}
@@ -125,7 +125,7 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
           loading={statsLoading}
           tooltip={t('kpi.fraudRateTooltip')}
           actionTooltip={t('kpi.fraudRateAction')}
-          route="/alerts?status=CONFIRMED_FRAUD"
+          route="/transactions?status=CONFIRMED_FRAUD"
         />
         <KpiNavigationCard
           title={t('kpi.criticalUnreviewed')}
@@ -135,7 +135,7 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
           loading={statsLoading}
           tooltip={t('kpi.criticalUnreviewedTooltip')}
           actionTooltip={t('kpi.criticalUnreviewedAction')}
-          route="/alerts?scoreRange=0.90-1.00&status=PENDING_REVIEW"
+          route="/transactions?status=PENDING_REVIEW&minScore=90"
         />
         <KpiNavigationCard
           title={t('kpi.avgScore')}
@@ -145,7 +145,7 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
           loading={statsLoading}
           tooltip={t('kpi.avgScoreTooltip')}
           actionTooltip={t('kpi.avgScoreAction')}
-          route="/reports"
+          route="/alerts"
         />
       </div>
 

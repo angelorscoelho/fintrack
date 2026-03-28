@@ -52,10 +52,21 @@ const STATUS_I18N_KEY = {
   rate_limited:    'status.apiLimit',
 }
 
+/** URL `minScore`: values >1 are treated as percent (90 → 0.90 on 0–1 anomaly_score scale). */
+function parseMinScoreParam(raw) {
+  if (raw == null || raw === '') return null
+  const n = Number(raw)
+  if (Number.isNaN(n)) return null
+  return n > 1 ? n / 100 : n
+}
+
 export default function TransactionsPage() {
   const { t } = useLanguage()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const initialCategory = searchParams.get('category') || 'all'
+  const periodParam = searchParams.get('period')
+  const statusParam = searchParams.get('status')
+  const minScoreRaw = searchParams.get('minScore')
 
   // --- Filter state ---
   const [searchQuery, setSearchQuery] = useState('')
@@ -77,6 +88,10 @@ export default function TransactionsPage() {
   // --- Debounced search ---
   const debouncedSearch = useDebounce(searchQuery, 300)
 
+  const minScoreThreshold = useMemo(() => parseMinScoreParam(minScoreRaw), [minScoreRaw])
+  const urlQueryActive =
+    periodParam === '24h' || Boolean(statusParam) || minScoreThreshold != null
+
   // --- Data fetching ---
   const { data: transactions = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['transactions'],
@@ -88,7 +103,12 @@ export default function TransactionsPage() {
   })
 
   // --- Computed: has active filters ---
-  const hasActiveFilters = debouncedSearch !== '' || category !== 'all' || dateFrom !== '' || dateTo !== ''
+  const hasActiveFilters =
+    debouncedSearch !== '' ||
+    category !== 'all' ||
+    dateFrom !== '' ||
+    dateTo !== '' ||
+    urlQueryActive
 
   // --- Reset filters ---
   const resetFilters = useCallback(() => {
@@ -97,7 +117,12 @@ export default function TransactionsPage() {
     setDateFrom('')
     setDateTo('')
     setCurrentPage(0)
-  }, [])
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      ;['period', 'status', 'minScore', 'category'].forEach((k) => next.delete(k))
+      return next
+    })
+  }, [setSearchParams])
 
   // --- Filtered + sorted data ---
   const processedData = useMemo(() => {
@@ -132,6 +157,18 @@ export default function TransactionsPage() {
       result = result.filter((tx) => new Date(tx.timestamp) <= to)
     }
 
+    // URL-driven filters (dashboard KPI deep links)
+    if (periodParam === '24h') {
+      const cutoff = Date.now() - 86400000
+      result = result.filter((tx) => new Date(tx.timestamp).getTime() >= cutoff)
+    }
+    if (statusParam) {
+      result = result.filter((tx) => tx.status === statusParam)
+    }
+    if (minScoreThreshold != null) {
+      result = result.filter((tx) => Number(tx.anomaly_score ?? 0) >= minScoreThreshold)
+    }
+
     // Sorting
     result = [...result].sort((a, b) => {
       let cmp = 0
@@ -144,7 +181,18 @@ export default function TransactionsPage() {
     })
 
     return result
-  }, [transactions, debouncedSearch, category, dateFrom, dateTo, sortField, sortDirection])
+  }, [
+    transactions,
+    debouncedSearch,
+    category,
+    dateFrom,
+    dateTo,
+    sortField,
+    sortDirection,
+    periodParam,
+    statusParam,
+    minScoreThreshold,
+  ])
 
   // Reset page when filters change
   const filteredCount = processedData.length
