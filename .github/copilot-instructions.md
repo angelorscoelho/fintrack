@@ -15,6 +15,8 @@ Serverless fraud detection PoC: AWS Lambda + DynamoDB + LangGraph + Gemini API +
 - `ai_explanation` stored as JSON **string** in DynamoDB
 - IAM: least-privilege only
 - CORS: localhost:3000 and localhost:5173 only
+ - Shared constants: Whenever creating or editing code that introduces hardcoded values, put them in `shared/project_constants.json` as the single source of truth instead of hardcoding.
+	 - Keep `shared/project_constants.json` authoritative; avoid duplicating values across backend and frontend—import or load from this shared location in both contexts.
 
 ## Key Files
 - IaC: infra/template.yaml
