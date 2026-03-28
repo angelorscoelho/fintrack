@@ -52,10 +52,26 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
   const pending = stats?.pending ?? 0
   const critical = stats?.critical ?? 0
   const avgScore = stats?.avg_score ?? 0
+  const confirmedFraud = stats?.confirmed_fraud
+  const apiFraudRate = stats?.fraud_rate
 
-  const fraudRate = stats?.fraud_rate ?? 0
-  const fraudRatePercent = fraudRate * 100
-  const fraudRateDisplay = total > 0 ? fraudRatePercent.toFixed(1) + '%' : '–'
+  const fraudRatePercent =
+    total > 0
+      ? (confirmedFraud !== undefined
+          ? (confirmedFraud / total) * 100
+          : apiFraudRate !== undefined && apiFraudRate !== null
+            ? Number(apiFraudRate) * 100
+            : (pending / total) * 100)
+      : 0
+  const fraudRateDisplay =
+    total > 0
+      ? (() => {
+          const r = fraudRatePercent
+          if (r === 0) return '0.00%'
+          if (r < 1) return r.toFixed(2) + '%'
+          return r.toFixed(1) + '%'
+        })()
+      : '–'
   const avgScoreDisplay = (avgScore * 100).toFixed(1) + '%'
 
   const fraudRateVariant = fraudRatePercent > KPI_THRESHOLDS.critical_fraud_rate ? 'critical' : fraudRatePercent > KPI_THRESHOLDS.warning_fraud_rate ? 'warning' : 'default'

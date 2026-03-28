@@ -100,6 +100,7 @@
     "score": "Puntuación",
     "id": "ID",
     "nif": "NIF",
+    "sourceDestination": "Origen → Destino",
     "merchantNif": "NIF del Comerciante",
     "amount": "Importe",
     "category": "Categoría",
@@ -321,6 +322,9 @@
   },
   "alertDetail": {
     "dateTime": "Fecha/Hora",
+    "sourceDestination": "Origen → Destino",
+    "payment": "Pago",
+    "routeCountries": "Países",
     "merchantNif": "NIF del Comerciante",
     "merchant": "Comerciante",
     "country": "País",

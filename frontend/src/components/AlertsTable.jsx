@@ -7,6 +7,7 @@ import { useMemo, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ChevronUp, ChevronDown, ChevronsUpDown, Clock, CheckCircle2, CircleDot, Check, PauseCircle } from 'lucide-react'
+import { formatSourceDestination } from '@/lib/formatTransaction'
 import { getScoreVariant } from '@/lib/constants'
 import { useLanguage } from '@/i18n/LanguageContext'
 
@@ -65,9 +66,14 @@ export function AlertsTable({ data, isLoading, onRowClick }) {
         : '–',
     },
     {
-      accessorKey: 'merchant_nif',
-      header: t('columns.nif'),
-      cell: ({ getValue }) => <span className="font-mono text-xs">{getValue()}</span>,
+      id: 'route',
+      accessorFn: (row) => formatSourceDestination(row),
+      header: t('columns.sourceDestination'),
+      cell: ({ row }) => (
+        <span className="text-xs max-w-[140px] truncate block" title={formatSourceDestination(row.original)}>
+          {formatSourceDestination(row.original)}
+        </span>
+      ),
     },
     {
       accessorKey: 'amount',

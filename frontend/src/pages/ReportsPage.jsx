@@ -26,6 +26,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { safeFetch } from '@/lib/api'
+import { formatSourceDestination } from '@/lib/formatTransaction'
 import { getScoreVariant, SAR_THRESHOLD, API_MAX_LIMIT } from '@/lib/constants'
 import { useLanguage } from '@/i18n/LanguageContext'
 
@@ -69,12 +70,14 @@ function getColumns(t) {
       },
     },
     {
-      accessorKey: 'merchant_nif',
-      header: t('columns.merchantNif'),
-      cell: ({ getValue }) => {
-        const v = getValue()
-        return v ? <span className="font-mono text-xs">{v}</span> : '—'
-      },
+      id: 'route',
+      accessorFn: (row) => formatSourceDestination(row),
+      header: t('columns.sourceDestination'),
+      cell: ({ row }) => (
+        <span className="max-w-[200px] truncate block" title={formatSourceDestination(row.original)}>
+          {formatSourceDestination(row.original)}
+        </span>
+      ),
     },
     {
       accessorKey: 'anomaly_score',
@@ -233,7 +236,7 @@ export default function ReportsPage() {
           pdf.setFontSize(9)
           pdf.setFont(undefined, 'normal')
           pdf.text(
-            `Transaction: ${alert.transaction_id} | Merchant: ${alert.merchant_nif} | Score: ${scorePct}% | Date: ${today}`,
+            `Transaction: ${alert.transaction_id} | Route: ${formatSourceDestination(alert)} | Score: ${scorePct}% | Date: ${today}`,
             pageWidth / 2,
             22,
             { align: 'center' }

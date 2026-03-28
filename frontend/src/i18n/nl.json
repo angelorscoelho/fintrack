@@ -100,6 +100,7 @@
     "score": "Score",
     "id": "ID",
     "nif": "NIF",
+    "sourceDestination": "Bron → Bestemming",
     "merchantNif": "Handelaar NIF",
     "amount": "Bedrag",
     "category": "Categorie",
@@ -321,6 +322,9 @@
   },
   "alertDetail": {
     "dateTime": "Datum/Tijd",
+    "sourceDestination": "Bron → Bestemming",
+    "payment": "Betaling",
+    "routeCountries": "Landen",
     "merchantNif": "Handelaar NIF",
     "merchant": "Handelaar",
     "country": "Land",

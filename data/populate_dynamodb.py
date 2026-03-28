@@ -19,6 +19,10 @@ from pathlib import Path
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
+_DATA_DIR = Path(__file__).resolve().parent
+if str(_DATA_DIR) not in sys.path:
+    sys.path.insert(0, str(_DATA_DIR))
+from banking_fields import attach_banking_fields  # noqa: E402
 
 try:
     import boto3
@@ -122,11 +126,13 @@ def generate_synthetic_transactions(n=1000):
             record["anomaly_score"] = round(random.uniform(0.0, 0.40), 3)
             record["status"] = "NORMAL"
             record["anomaly_type"] = "normal"
-        
+
+        record["ip_address"] = f"{random.randint(1,254)}.{random.randint(0,255)}.{random.randint(0,255)}.{random.randint(1,254)}"
+        attach_banking_fields(record)
+
         # Add processing metadata
         record["processing_status"] = "xai_complete"
         record["processed_at"] = timestamp.isoformat()
-        record["ip_address"] = f"{random.randint(1,254)}.{random.randint(0,255)}.{random.randint(0,255)}.{random.randint(1,254)}"
         
         # Add AI explanation for anomalies
         if is_anomaly:

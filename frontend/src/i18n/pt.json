@@ -102,6 +102,7 @@
     "score": "Score",
     "id": "ID",
     "nif": "NIF",
+    "sourceDestination": "Origem → Destino",
     "merchantNif": "NIF Comerciante",
     "amount": "Montante",
     "category": "Categoria",
@@ -324,6 +325,9 @@
   },
   "alertDetail": {
     "dateTime": "Data/Hora",
+    "sourceDestination": "Origem → Destino",
+    "payment": "Pagamento",
+    "routeCountries": "Países",
     "merchantNif": "NIF Comerciante",
     "merchant": "Comerciante",
     "country": "País",

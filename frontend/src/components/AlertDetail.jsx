@@ -8,6 +8,7 @@ import { AlertTriangle, Clock, Globe, Cpu, FileText, ChevronDown, ChevronUp } fr
 import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { Button } from '@/components/ui/button'
+import { formatSourceDestination } from '@/lib/formatTransaction'
 import { getScoreRingColors } from '@/lib/constants'
 import { useLanguage } from '@/i18n/LanguageContext'
 
@@ -156,8 +157,19 @@ export function AlertDetail({ alert, open, onClose, onResolved }) {
           {/* Data fields */}
           <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3">
             <DataRow icon={Clock} label={t('alertDetail.dateTime')} value={alert.timestamp} />
+            <DataRow icon={Globe} label={t('alertDetail.sourceDestination')} value={formatSourceDestination(alert)} />
+            {alert.payment_platform && (
+              <DataRow icon={FileText} label={t('alertDetail.payment')} value={String(alert.payment_platform).replace(/_/g, ' ')} />
+            )}
+            {(alert.source_country || alert.destination_country) && (
+              <DataRow
+                icon={Globe}
+                label={t('alertDetail.routeCountries')}
+                value={`${alert.source_country ?? '—'} → ${alert.destination_country ?? '—'}`}
+              />
+            )}
             <DataRow icon={Globe} label={t('alertDetail.merchantNif')} value={alert.merchant_nif} />
-            <DataRow icon={Globe} label={t('alertDetail.merchant')} value={alert.merchant_name} />
+            {alert.merchant_name && <DataRow icon={Globe} label={t('alertDetail.merchant')} value={alert.merchant_name} />}
             <DataRow icon={Globe} label={t('alertDetail.country')} value={alert.merchant_country} />
             <DataRow icon={FileText} label={t('alertDetail.amount')} value={alert.amount != null ? `€${Number(alert.amount).toFixed(2)}` : null} />
             <DataRow icon={FileText} label={t('alertDetail.category')} value={alert.category} />

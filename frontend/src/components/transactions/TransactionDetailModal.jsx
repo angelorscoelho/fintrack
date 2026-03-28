@@ -9,6 +9,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
+import { formatSourceDestination } from '@/lib/formatTransaction'
 import {
   Tooltip,
   TooltipContent,
@@ -142,10 +143,8 @@ export function TransactionDetailModal({ transaction, open, onOpenChange }) {
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* ── Identificação ──────────────────────────────────────────── */}
           <SectionHeader title={t('transactions.sections.identification')} />
 
-          {/* Transaction ID + copy */}
           <div className="flex items-center justify-between gap-2">
             <span className="text-sm text-muted-foreground">{t('columns.id')}</span>
             <div className="flex items-center gap-1.5 min-w-0">
@@ -156,22 +155,51 @@ export function TransactionDetailModal({ transaction, open, onOpenChange }) {
             </div>
           </div>
 
-          {/* Date */}
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground">{t('columns.date')}</span>
             <span className="text-sm">{formattedDate}</span>
           </div>
 
-          {/* ── Dados Financeiros ──────────────────────────────────────── */}
           <SectionHeader title={t('transactions.sections.financialData')} />
 
-          {/* Amount — large highlight */}
           <div className="rounded-lg bg-muted/60 p-4 text-center">
             <span className="text-2xl font-bold tracking-tight">
               €{Number(transaction.amount).toFixed(2)}
             </span>
             <p className="text-xs text-muted-foreground mt-1">{t('columns.amount')}</p>
           </div>
+
+          <div className="flex justify-between items-start gap-4">
+            <span className="text-sm text-muted-foreground shrink-0">{t('columns.sourceDestination')}</span>
+            <span className="text-sm font-medium text-right break-words max-w-[70%]">
+              {formatSourceDestination(transaction)}
+            </span>
+          </div>
+
+          {transaction.payment_platform && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">{t('alertDetail.payment')}</span>
+              <span className="text-sm capitalize">{transaction.payment_platform.replace(/_/g, ' ')}</span>
+            </div>
+          )}
+
+          {(transaction.source_country || transaction.destination_country) && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">{t('alertDetail.routeCountries')}</span>
+              <span className="text-sm font-mono">
+                {(transaction.source_country || '—') + ' → ' + (transaction.destination_country || '—')}
+              </span>
+            </div>
+          )}
+
+          {(transaction.merchant_name || transaction.merchant_nif) && (
+            <div className="flex justify-between items-start gap-4">
+              <span className="text-sm text-muted-foreground shrink-0">{t('alertDetail.merchantNif')}</span>
+              <span className="text-sm text-right break-words max-w-[70%]">
+                {transaction.merchant_name || transaction.merchant_nif}
+              </span>
+            </div>
+          )}
 
           {/* Category */}
           <div className="flex justify-between items-center">
@@ -211,24 +239,14 @@ export function TransactionDetailModal({ transaction, open, onOpenChange }) {
           {/* ── Contexto ───────────────────────────────────────────────── */}
           <SectionHeader title={t('transactions.sections.context')} />
 
-          {/* Merchant */}
-          <div className="flex justify-between items-start">
-            <span className="text-sm text-muted-foreground">{t('columns.merchant')}</span>
-            <span className="text-sm font-medium text-right">
-              {transaction.merchant_name || transaction.merchant_nif}
-            </span>
-          </div>
-
-          {/* Origin Country */}
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground">{t('transactions.originCountry')}</span>
-            <span className="text-sm">{transaction.cardholder_country ?? '—'}</span>
+            <span className="text-sm">{transaction.source_country ?? transaction.cardholder_country ?? '—'}</span>
           </div>
 
-          {/* Destination Country */}
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground">{t('transactions.destinationCountry')}</span>
-            <span className="text-sm">{transaction.merchant_country ?? '—'}</span>
+            <span className="text-sm">{transaction.destination_country ?? transaction.merchant_country ?? '—'}</span>
           </div>
 
           {/* Notes (analyst_notes) */}

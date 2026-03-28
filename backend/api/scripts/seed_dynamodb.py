@@ -4,12 +4,17 @@ Usage: python -m backend.api.scripts.seed_dynamodb
 """
 import os
 import random
+import sys
 import uuid
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
+from pathlib import Path
 
 import boto3
 
+_ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(_ROOT / "data"))
+from banking_fields import attach_banking_fields  # noqa: E402
 from shared.project_constants import XAI_THRESHOLD, SAR_THRESHOLD, NORMAL_TTL_DAYS
 
 # Configuration
@@ -17,7 +22,7 @@ TABLE_NAME = os.environ.get("DYNAMODB_TABLE", "transactions")
 AWS_REGION = os.environ.get("AWS_REGION", "eu-west-1")
 
 # Sample data for realistic transactions
-MERCHANT_COUNTRIES = ["PT", "ES", "FR", "DE", "IT", "UK", "US", "BR"]
+MERCHANT_COUNTRIES = ["PT", "ES", "FR", "DE", "IT", "GB", "US", "BR"]
 CATEGORIES = ["retail", "online", "restaurant", "gas_station", "supermarket", "electronics", "travel", "pharmacy"]
 IP_PREFIXES = ["185.15.", "91.22.", "78.34.", "186.20.", "201.45.", "54.23."]
 NIF_PREFIXES = ["PT", "ES", "FR", "DE", "IT"]
@@ -103,7 +108,8 @@ def generate_transaction(index: int, hours_ago: float = 0) -> dict:
         "status": status,
         "processed_at": (timestamp + timedelta(seconds=random.randint(1, 30))).isoformat(),
     }
-    
+    attach_banking_fields(item)
+
     # Add TTL for NORMAL transactions
     if status == "NORMAL":
         ttl = int((timestamp + timedelta(days=NORMAL_TTL_DAYS)).timestamp())

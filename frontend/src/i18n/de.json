@@ -100,6 +100,7 @@
     "score": "Score",
     "id": "ID",
     "nif": "NIF",
+    "sourceDestination": "Quelle → Ziel",
     "merchantNif": "Händler-NIF",
     "amount": "Betrag",
     "category": "Kategorie",
@@ -321,6 +322,9 @@
   },
   "alertDetail": {
     "dateTime": "Datum/Uhrzeit",
+    "sourceDestination": "Quelle → Ziel",
+    "payment": "Zahlung",
+    "routeCountries": "Länder",
     "merchantNif": "Händler-NIF",
     "merchant": "Händler",
     "country": "Land",
