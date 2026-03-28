@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { KpiNavigationCard } from '@/components/dashboard/KpiNavigationCard'
 import { VolumeChart } from '@/components/dashboard/VolumeChart'
@@ -9,10 +9,13 @@ import { Activity, ShieldAlert, Gauge, Loader2, AlertTriangle } from 'lucide-rea
 import { usePullToRefresh } from '@/hooks/usePullToRefresh'
 import { safeFetch } from '@/lib/api'
 import { ErrorState } from '@/components/feedback/ErrorState'
+import { KPI_THRESHOLDS } from '@/lib/constants'
+import { useLanguage } from '@/i18n/LanguageContext'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
 export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
+  const { t } = useLanguage()
   const queryClient = useQueryClient()
 
   const handlePullRefresh = useCallback(() => {
@@ -45,19 +48,25 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
 
   // Derived KPI values
   const total = stats?.total ?? 0
+  const last24h = stats?.last_24h ?? 0
   const pending = stats?.pending ?? 0
   const critical = stats?.critical ?? 0
   const avgScore = stats?.avg_score ?? 0
   const confirmedFraud = stats?.confirmed_fraud
+  const apiFraudRate = stats?.fraud_rate
 
-  const fraudRate =
+  const fraudRatePercent =
     total > 0
-      ? (confirmedFraud !== undefined ? (confirmedFraud / total) * 100 : (pending / total) * 100)
+      ? (confirmedFraud !== undefined
+          ? (confirmedFraud / total) * 100
+          : apiFraudRate !== undefined && apiFraudRate !== null
+            ? Number(apiFraudRate) * 100
+            : (pending / total) * 100)
       : 0
   const fraudRateDisplay =
     total > 0
       ? (() => {
-          const r = fraudRate
+          const r = fraudRatePercent
           if (r === 0) return '0.00%'
           if (r < 1) return r.toFixed(2) + '%'
           return r.toFixed(1) + '%'
@@ -65,8 +74,19 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
       : '–'
   const avgScoreDisplay = (avgScore * 100).toFixed(1) + '%'
 
-  const fraudRateVariant = fraudRate > 10 ? 'critical' : fraudRate > 5 ? 'warning' : 'default'
-  const avgScoreVariant = avgScore >= 0.70 ? 'critical' : avgScore >= 0.50 ? 'warning' : 'default'
+  const fraudRateVariant = fraudRatePercent > KPI_THRESHOLDS.critical_fraud_rate ? 'critical' : fraudRatePercent > KPI_THRESHOLDS.warning_fraud_rate ? 'warning' : 'default'
+  const avgScoreVariant = avgScore >= KPI_THRESHOLDS.critical_avg_score ? 'critical' : avgScore >= KPI_THRESHOLDS.warning_avg_score ? 'warning' : 'default'
+
+  // Sub-label: "Since HH:MM of dd/MM/yyyy"
+  const last24hSubLabel = useMemo(() => {
+    const since = new Date(Date.now() - 86400 * 1000)
+    const hh = String(since.getHours()).padStart(2, '0')
+    const mm = String(since.getMinutes()).padStart(2, '0')
+    const dd = String(since.getDate()).padStart(2, '0')
+    const mo = String(since.getMonth() + 1).padStart(2, '0')
+    const yyyy = since.getFullYear()
+    return t('kpi.since', { time: `${hh}:${mm}`, date: `${dd}/${mo}/${yyyy}` })
+  }, [stats, t])
 
   return (
     <>
@@ -88,38 +108,43 @@ export default function CommandCenter({ isIdle, setMutateAlerts, isDark }) {
       {/* Row 1: KPI Cards — horizontal scroll on mobile, 4-column grid on desktop */}
       <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 md:grid md:grid-cols-4 md:overflow-visible md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
         <KpiNavigationCard
-          title="Transactions Today"
-          value={total}
+          title={t('kpi.transactions24h')}
+          value={last24h}
           icon={Activity}
           loading={statsLoading}
-          tooltip="Total number of transactions processed in the last 24 hours"
+          tooltip={t('kpi.transactions24hTooltip')}
+          actionTooltip={t('kpi.transactions24hAction')}
+          subLabel={last24hSubLabel}
           route="/transactions"
         />
         <KpiNavigationCard
-          title="Fraud Rate"
+          title={t('kpi.fraudRate')}
           value={fraudRateDisplay}
           icon={AlertTriangle}
           variant={fraudRateVariant}
           loading={statsLoading}
-          tooltip="Share of transactions confirmed as fraud (typical card-network range ~0.01–0.03%)"
-          route="/alerts"
+          tooltip={t('kpi.fraudRateTooltip')}
+          actionTooltip={t('kpi.fraudRateAction')}
+          route="/alerts?status=CONFIRMED_FRAUD"
         />
         <KpiNavigationCard
-          title="Critical Alerts"
+          title={t('kpi.criticalUnreviewed')}
           value={critical}
           icon={ShieldAlert}
           variant={critical > 0 ? 'critical' : 'default'}
           loading={statsLoading}
-          tooltip="Number of high-risk transactions requiring immediate analyst review"
-          route="/alerts"
+          tooltip={t('kpi.criticalUnreviewedTooltip')}
+          actionTooltip={t('kpi.criticalUnreviewedAction')}
+          route="/alerts?scoreRange=0.90-1.00&status=PENDING_REVIEW"
         />
         <KpiNavigationCard
-          title="Average Score"
+          title={t('kpi.avgScore')}
           value={avgScoreDisplay}
           icon={Gauge}
           variant={avgScoreVariant}
           loading={statsLoading}
-          tooltip="Represents the rolling average of risk scores over the last 24 hours."
+          tooltip={t('kpi.avgScoreTooltip')}
+          actionTooltip={t('kpi.avgScoreAction')}
           route="/reports"
         />
       </div>

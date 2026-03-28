@@ -1,24 +1,27 @@
 import { AlertTriangle } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { useLanguage } from '@/i18n/LanguageContext'
 
 /**
  * Reusable error feedback component.
  *
  * Renders a destructive Alert banner with a retry button.
  *
- * @param {string}   message  Error message shown to the user
+ * @param {string}   [message]  Error message shown to the user (defaults to translated 'feedback.errorLoading')
  * @param {function} onRetry  Click handler for the retry button
  */
 export function ErrorState({
-  message = 'Error loading data. Please try again.',
+  message,
   onRetry,
 }) {
+  const { t } = useLanguage()
+
   return (
     <Alert variant="destructive">
       <AlertTriangle className="h-4 w-4" />
       <AlertDescription className="flex items-center justify-between">
-        <span>{message}</span>
+        <span>{message ?? t('feedback.errorLoading')}</span>
         {onRetry && (
           <Button
             variant="outline"
@@ -26,7 +29,7 @@ export function ErrorState({
             onClick={onRetry}
             className="ml-3 shrink-0"
           >
-            Try again
+            {t('actions.tryAgain')}
           </Button>
         )}
       </AlertDescription>

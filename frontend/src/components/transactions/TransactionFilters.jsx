@@ -7,16 +7,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useLanguage } from '@/i18n/LanguageContext'
 
-const CATEGORIES = [
-  { value: 'retail', label: 'Retail' },
-  { value: 'online', label: 'Online' },
-  { value: 'restaurant', label: 'Restaurant' },
-  { value: 'gas_station', label: 'Gas Station' },
-  { value: 'supermarket', label: 'Supermarket' },
-  { value: 'electronics', label: 'Electronics' },
-  { value: 'travel', label: 'Travel' },
-  { value: 'pharmacy', label: 'Pharmacy' },
+const CATEGORY_KEYS = [
+  { value: 'retail', key: 'categories.retail' },
+  { value: 'online', key: 'categories.online' },
+  { value: 'restaurant', key: 'categories.restaurant' },
+  { value: 'gas_station', key: 'categories.gasStation' },
+  { value: 'supermarket', key: 'categories.supermarket' },
+  { value: 'electronics', key: 'categories.electronics' },
+  { value: 'travel', key: 'categories.travel' },
+  { value: 'pharmacy', key: 'categories.pharmacy' },
 ]
 
 export function TransactionFilters({
@@ -31,6 +32,8 @@ export function TransactionFilters({
   onReset,
   hasActiveFilters,
 }) {
+  const { t } = useLanguage()
+
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:flex-wrap">
       {/* Search input */}
@@ -38,7 +41,7 @@ export function TransactionFilters({
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <input
           type="text"
-          placeholder="Search accounts, category, or transaction ID…"
+          placeholder={t('transactions.searchPlaceholder')}
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-9 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -57,13 +60,13 @@ export function TransactionFilters({
       <div className="w-full sm:w-[180px]">
         <Select value={category} onValueChange={onCategoryChange}>
           <SelectTrigger>
-            <SelectValue placeholder="All Categories" />
+            <SelectValue placeholder={t('transactions.allCategories')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
-            {CATEGORIES.map((cat) => (
+            <SelectItem value="all">{t('transactions.allCategories')}</SelectItem>
+            {CATEGORY_KEYS.map((cat) => (
               <SelectItem key={cat.value} value={cat.value}>
-                {cat.label}
+                {t(cat.key)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -77,14 +80,14 @@ export function TransactionFilters({
           value={dateFrom}
           onChange={(e) => onDateFromChange(e.target.value)}
           className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          aria-label="Date from"
+          aria-label={t('transactions.dateFrom')}
         />
         <input
           type="date"
           value={dateTo}
           onChange={(e) => onDateToChange(e.target.value)}
           className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          aria-label="Date to"
+          aria-label={t('transactions.dateTo')}
         />
       </div>
 
@@ -92,7 +95,7 @@ export function TransactionFilters({
       {hasActiveFilters && (
         <Button variant="ghost" size="sm" onClick={onReset}>
           <X className="h-4 w-4 mr-1" />
-          Reset
+          {t('actions.reset')}
         </Button>
       )}
     </div>

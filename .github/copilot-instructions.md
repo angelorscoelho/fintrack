@@ -23,3 +23,6 @@ Serverless fraud detection PoC: AWS Lambda + DynamoDB + LangGraph + Gemini API +
 - API: backend/api/main.py
 - GenAI graph: backend/genai/graph.py
 - Dashboard: frontend/src/App.jsx
+
+## Memory Bank Protocol
+- Agents and Copilot: ALWAYS read `.roo/rules/01-memory-bank-protocol.md` at the start of every session. This file prescribes the memory-bank workflow (what to read at session start, the UMB update flow, and forbidden actions) and should be used as authoritative guidance for handling files under `memory-bank/`.

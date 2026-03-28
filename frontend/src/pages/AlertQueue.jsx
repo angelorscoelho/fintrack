@@ -4,16 +4,19 @@ import { AlertTriangle, Loader2 } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { safeFetch } from '@/lib/api'
+import { useLanguage } from '@/i18n/LanguageContext'
 import { EnhancedAlertsTable } from '@/components/alerts/EnhancedAlertsTable'
 import { BulkActionBar } from '@/components/alerts/BulkActionBar'
 import { FilterBar } from '@/components/alerts/FilterBar'
 import { ScoreHistogram } from '@/components/alerts/ScoreHistogram'
 import { MobileAlertCards } from '@/components/alerts/MobileAlertCard'
 import { usePullToRefresh } from '@/hooks/usePullToRefresh'
+import { useFilterParams } from '@/hooks/useFilterParams'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
 export default function AlertQueue({ isDark }) {
+  const { t } = useLanguage()
   const queryClient = useQueryClient()
   const clearSelectionRef = useRef(null)
 
@@ -23,7 +26,7 @@ export default function AlertQueue({ isDark }) {
 
   const { isRefreshing, pullDistance } = usePullToRefresh(handlePullRefresh)
 
-  const [filters, setFilters] = useState({ status: '', scoreRange: '', category: '' })
+  const { filters, setFilters, resetFilters, isFromUrl, dismissBanner } = useFilterParams()
   const [selectedRows, setSelectedRows] = useState([])
 
   const { data: rawAlerts = [], isLoading, isError } = useQuery({
@@ -92,8 +95,8 @@ export default function AlertQueue({ isDark }) {
         <div className="flex items-center gap-3">
           <AlertTriangle className="h-6 w-6 text-amber-500" />
           <div>
-            <h1 className="text-lg font-bold text-slate-800">Alert Queue</h1>
-            <p className="text-xs text-slate-500">{filteredAlerts.length} alerts</p>
+            <h1 className="text-lg font-bold text-slate-800 dark:text-slate-200">{t('alerts.title')}</h1>
+            <p className="text-xs text-slate-500">{filteredAlerts.length} {t('alerts.count')}</p>
           </div>
         </div>
       </div>
@@ -103,16 +106,22 @@ export default function AlertQueue({ isDark }) {
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription className="flex items-center justify-between">
-            <span>Error loading data. Please try again.</span>
+            <span>{t('feedback.errorLoading')}</span>
             <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-3 shrink-0">
-              Try again
+              {t('actions.tryAgain')}
             </Button>
           </AlertDescription>
         </Alert>
       )}
 
       {/* Filters */}
-      <FilterBar filters={filters} onFilterChange={setFilters} />
+      <FilterBar
+        filters={filters}
+        onFilterChange={setFilters}
+        onReset={resetFilters}
+        isFromUrl={isFromUrl}
+        onDismissBanner={dismissBanner}
+      />
 
       {/* Score histogram + Bulk actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

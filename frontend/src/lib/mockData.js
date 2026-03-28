@@ -1,7 +1,10 @@
 /**
  * Mock data for FinTrack AI dashboard — used as fallback when the API is unreachable.
- * ~10k records with industry-scale confirmed-fraud rate and pinned demo rows.
+ * ~20k records: industry-scale confirmed-fraud rate (pinned rows), lognormal NORMAL scores,
+ * IBAN routing fields, and stats aligned with GET /api/stats (including last_24h, fraud_rate).
  */
+
+import { XAI_THRESHOLD, SAR_THRESHOLD } from '@/lib/constants'
 
 const CATEGORIES = ['retail', 'online', 'restaurant', 'gas_station', 'supermarket', 'electronics', 'travel', 'pharmacy']
 const COUNTRIES = ['PT', 'ES', 'FR', 'DE', 'IT', 'GB', 'US', 'BR']
@@ -18,7 +21,6 @@ const PAYMENT_POOL = [
   ...Array(3).fill('cash'),
 ]
 
-/* Deterministic pseudo-random number generator (mulberry32) */
 function mulberry32(seed) {
   return function () {
     let t = (seed += 0x6d2b79f5)
@@ -120,7 +122,21 @@ function attachBanking(merchantCountry, obj) {
   obj.merchant_country = src
 }
 
-function generateMockAlerts(count = 10000) {
+function boxMuller() {
+  let u1 = rand()
+  while (u1 < 1e-10) u1 = rand()
+  const u2 = rand()
+  return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2)
+}
+
+function lognormalScore() {
+  const mu = -4.5
+  const sigma = 0.7
+  const raw = Math.exp(mu + sigma * boxMuller())
+  return Math.round(Math.max(0.001, Math.min(raw, 0.35)) * 1000) / 1000
+}
+
+function generateMockAlerts(count = 20000) {
   const now = Date.now()
   const dayStr = new Date(now).toISOString().slice(0, 10).replace(/-/g, '')
   const alerts = []
@@ -163,13 +179,13 @@ function generateMockAlerts(count = 10000) {
     } else {
       const roll = rand()
       if (roll < 0.97) {
-        anomalyScore = Math.round(randRange(0.0, 0.5) * 1000) / 1000
+        anomalyScore = lognormalScore()
         status = 'NORMAL'
       } else if (roll < 0.995) {
-        anomalyScore = Math.round(randRange(0.5, 0.89) * 1000) / 1000
+        anomalyScore = Math.round(randRange(XAI_THRESHOLD, SAR_THRESHOLD - 0.01) * 1000) / 1000
         status = 'PENDING_REVIEW'
       } else {
-        anomalyScore = Math.round(randRange(0.7, 0.95) * 1000) / 1000
+        anomalyScore = Math.round(randRange(SAR_THRESHOLD, 0.995) * 1000) / 1000
         status = 'PENDING_REVIEW'
       }
 
@@ -180,14 +196,14 @@ function generateMockAlerts(count = 10000) {
     }
 
     const sarDraft =
-      anomalyScore >= 0.7
+      anomalyScore >= XAI_THRESHOLD
         ? `# Relatório de Atividade Suspeita\n\n**Transação:** MOCK-${dayStr}-${String(i).padStart(6, '0')}\n**Merchant NIF:** ${merchantNif}\n**Score:** ${(anomalyScore * 100).toFixed(1)}%\n**Montante:** €${amount.toFixed(2)}\n\n## Análise\nTransação com score de anomalia elevado detectada pelo modelo de ML. Requer análise manual.`
         : null
 
     const aiExplanation =
-      anomalyScore >= 0.7
+      anomalyScore >= XAI_THRESHOLD
         ? {
-            risk_level: anomalyScore > 0.9 ? 'CRÍTICO' : 'ALTO',
+            risk_level: anomalyScore > SAR_THRESHOLD ? 'CRÍTICO' : 'ALTO',
             summary_pt: `Transação de €${amount.toFixed(2)} com score ${(anomalyScore * 100).toFixed(1)}% — padrão anómalo detectado.`,
             bullets: [
               { id: '1', icon: '⚡', text: 'Montante acima da média do merchant' },
@@ -223,19 +239,23 @@ function generateMockAlerts(count = 10000) {
     }
 
     attachBanking(row.merchant_country, row)
-
     alerts.push(row)
   }
 
   return alerts
 }
 
-export const MOCK_ALERTS = generateMockAlerts(10000)
+export const MOCK_ALERTS = generateMockAlerts(20000)
 
 export const MOCK_STATS = (() => {
+  const now = Date.now()
+  const cutoff = now - 86400 * 1000
   const total = MOCK_ALERTS.length
+  const last24h = MOCK_ALERTS.filter((a) => new Date(a.timestamp).getTime() >= cutoff).length
   const pending = MOCK_ALERTS.filter((a) => a.status === 'PENDING_REVIEW').length
-  const critical = MOCK_ALERTS.filter((a) => Number(a.anomaly_score) > 0.9).length
+  const critical = MOCK_ALERTS.filter(
+    (a) => Number(a.anomaly_score) > SAR_THRESHOLD && a.status === 'PENDING_REVIEW'
+  ).length
   const resolved = MOCK_ALERTS.filter((a) => a.status === 'RESOLVED').length
   const falsePositives = MOCK_ALERTS.filter((a) => a.status === 'FALSE_POSITIVE').length
   const rateLimited = 0
@@ -244,9 +264,11 @@ export const MOCK_STATS = (() => {
   const confirmed_fraud = MOCK_ALERTS.filter(
     (a) => a.status === 'RESOLVED' && a.resolution_type === 'CONFIRMED_FRAUD'
   ).length
+  const fraud_rate = total > 0 ? confirmed_fraud / total : 0
 
   return {
     total,
+    last_24h: last24h,
     pending,
     critical,
     resolved,
@@ -255,6 +277,7 @@ export const MOCK_STATS = (() => {
     confirmed_fraud,
     fp_rate: Math.round(fpRate * 1000) / 1000,
     avg_score: Math.round(avgScore * 1000) / 1000,
+    fraud_rate: Math.round(fraud_rate * 1000) / 1000,
     rate_limits: {},
   }
 })()

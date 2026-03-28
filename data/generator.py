@@ -61,14 +61,19 @@ COUNTRY_WEIGHTS = {
 COUNTRIES = list(COUNTRY_WEIGHTS.keys())
 COUNTRY_PROBS = list(COUNTRY_WEIGHTS.values())
 
-# Anomaly type distribution (must sum to 0.30)
+# Anomaly type distribution — realistic fraud rate ≈ 0.06 % by transaction count.
+# Cross-referenced from: Nilson Report 2023 (~8.6 bps by value, global), ECB 7th Card
+# Fraud Report (2.8 bps by value, SEPA), UK Finance 2024 (4.6 bps), Visa/Mastercard
+# annual reports (5–10 bps), Federal Reserve Reg II (7.2 bps, US debit).  EU/SEPA
+# by-count midpoint ≈ 0.06 %.  IsolationForest is unsupervised; it learns "normal"
+# and flags deviations.  With --n 10000 you get ~6 anomalies; smaller sets may have 0.
 ANOMALY_DISTRIBUTION = {
-    "velocity_fraud":       0.08,
-    "amount_spike":         0.08,
-    "geo_hopping":          0.07,
-    "invoice_manipulation": 0.07,
+    "velocity_fraud":       0.00015,   # 0.015 %
+    "amount_spike":         0.00015,   # 0.015 %
+    "geo_hopping":          0.00015,   # 0.015 %
+    "invoice_manipulation": 0.00015,   # 0.015 %
 }
-NORMAL_RATIO = 0.70
+NORMAL_RATIO = 1.0 - sum(ANOMALY_DISTRIBUTION.values())
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

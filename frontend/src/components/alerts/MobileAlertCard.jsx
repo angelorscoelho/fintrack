@@ -7,6 +7,9 @@ import { pt } from 'date-fns/locale'
 import { Loader2, Clock, CheckCircle2, CircleDot, Check, PauseCircle, XCircle, ArrowUpCircle, Cpu, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatSourceDestination } from '@/lib/formatTransaction'
+import { ErrorBoundary } from '@/components/feedback/ErrorBoundary'
+import { getScoreVariant } from '@/lib/constants'
+import { useLanguage } from '@/i18n/LanguageContext'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -20,22 +23,23 @@ function formatTimestamp(timestamp) {
 }
 
 const STATUS_CONFIG = {
-  PENDING_REVIEW:  { label: 'Pending Review',       variant: 'warning',   Icon: Clock },
-  CONFIRMED_FRAUD: { label: 'Confirmed Fraud',        variant: 'destructive', Icon: XCircle },
-  RESOLVED:        { label: 'Resolved',              variant: 'success',   Icon: CheckCircle2 },
-  FALSE_POSITIVE:  { label: 'False Positive',        variant: 'secondary', Icon: CircleDot },
-  ESCALATED:       { label: 'Escalated',              variant: 'warning',   Icon: ArrowUpCircle },
-  NORMAL:          { label: 'Normal',                variant: 'outline',   Icon: Check },
-  rate_limited:    { label: 'API Limit',              variant: 'outline',   Icon: PauseCircle },
+  PENDING_REVIEW:  { label: 'status.pendingReview',       variant: 'warning',   Icon: Clock },
+  CONFIRMED_FRAUD: { label: 'status.confirmedFraud',        variant: 'destructive', Icon: XCircle },
+  RESOLVED:        { label: 'status.resolved',              variant: 'success',   Icon: CheckCircle2 },
+  FALSE_POSITIVE:  { label: 'status.falsePositive',        variant: 'secondary', Icon: CircleDot },
+  ESCALATED:       { label: 'status.escalated',              variant: 'warning',   Icon: ArrowUpCircle },
+  NORMAL:          { label: 'status.normal',                variant: 'outline',   Icon: Check },
+  rate_limited:    { label: 'status.apiLimit',              variant: 'outline',   Icon: PauseCircle },
 }
 
 function ScoreBadge({ score }) {
   const s = Number(score || 0)
-  const variant = s > 0.90 ? 'destructive' : s >= 0.70 ? 'warning' : 'outline'
+  const variant = getScoreVariant(s)
   return <Badge variant={variant} className="font-mono text-xs">{(s * 100).toFixed(1)}%</Badge>
 }
 
 export function MobileAlertCard({ alert, onRefetch }) {
+  const { t } = useLanguage()
   const [expanded, setExpanded] = useState(false)
   const [resolving, setResolving] = useState(false)
   const navigate = useNavigate()
@@ -50,15 +54,15 @@ export function MobileAlertCard({ alert, onRefetch }) {
         body: JSON.stringify({ resolution_type: type }),
       })
       if (res.status === 409) {
-        toast.info('Already resolved')
+        toast.info(t('resolution.alreadyResolved'))
       } else if (res.ok) {
-        toast.success(`Alert marked as ${label}.`)
+        toast.success(t('resolution.markedAs', { label }))
         if (onRefetch) onRefetch()
       } else {
         toast.error(`Error: HTTP ${res.status}`)
       }
     } catch {
-      toast.error('Network error.')
+      toast.error(t('feedback.networkError'))
     } finally {
       setResolving(false)
     }
@@ -67,20 +71,20 @@ export function MobileAlertCard({ alert, onRefetch }) {
   const swipeHandlers = useSwipeable({
     onSwipedRight: () => {
       if (alert.status === 'PENDING_REVIEW') {
-        toast('Mark as False Positive?', {
+        toast(t('bulk.markFalsePositive'), {
           action: {
-            label: 'Confirm',
-            onClick: () => resolveAlert('FALSE_POSITIVE', 'False Positive'),
+            label: t('actions.confirm'),
+            onClick: () => resolveAlert('FALSE_POSITIVE', t('status.falsePositive')),
           },
         })
       }
     },
     onSwipedLeft: () => {
       if (alert.status === 'PENDING_REVIEW') {
-        toast('Mark as Confirmed Fraud?', {
+        toast(t('bulk.markConfirmedFraud'), {
           action: {
-            label: 'Confirm',
-            onClick: () => resolveAlert('CONFIRMED_FRAUD', 'Confirmed Fraud'),
+            label: t('actions.confirm'),
+            onClick: () => resolveAlert('CONFIRMED_FRAUD', t('status.confirmedFraud')),
           },
         })
       }
@@ -113,7 +117,7 @@ export function MobileAlertCard({ alert, onRefetch }) {
         <div className="flex items-center justify-between">
           <ScoreBadge score={alert.anomaly_score} />
           <Badge variant={cfg.variant} className="text-xs gap-1">
-            <StatusIcon className="h-3 w-3" />{cfg.label}
+            <StatusIcon className="h-3 w-3" />{t(cfg.label)}
           </Badge>
         </div>
 
@@ -143,48 +147,52 @@ export function MobileAlertCard({ alert, onRefetch }) {
 
       {/* Expanded XAI panel */}
       {expanded && (
-        <div className="bg-slate-50 dark:bg-slate-800/50 border border-t-0 border-slate-200 dark:border-slate-700 rounded-b-lg px-3 py-3 space-y-2 -mt-1">
-          {explanation && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold text-amber-800 dark:text-amber-400">
-                <Cpu className="h-3.5 w-3.5" />
-                AI Analysis
+        <ErrorBoundary>
+          <div className="bg-slate-50 dark:bg-slate-800/50 border border-t-0 border-slate-200 dark:border-slate-700 rounded-b-lg px-3 py-3 space-y-2 -mt-1">
+            {explanation && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs font-semibold text-amber-800 dark:text-amber-400">
+                  <Cpu className="h-3.5 w-3.5" />
+                  {t('alerts.aiAnalysis')}
+                </div>
+                {explanation.summary_pt && (
+                  <p className="text-xs text-slate-600 dark:text-slate-400 italic">{explanation.summary_pt}</p>
+                )}
+                <ul className="space-y-1">
+                  {(explanation.bullets || []).map((b) => (
+                    <li key={b.id} className="flex gap-2 text-xs text-slate-700 dark:text-slate-300">
+                      <span>{b.icon}</span>
+                      <span>{b.text}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              {explanation.summary_pt && (
-                <p className="text-xs text-slate-600 dark:text-slate-400 italic">{explanation.summary_pt}</p>
-              )}
-              <ul className="space-y-1">
-                {(explanation.bullets || []).map((b) => (
-                  <li key={b.id} className="flex gap-2 text-xs text-slate-700 dark:text-slate-300">
-                    <span>{b.icon}</span>
-                    <span>{b.text}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {alert.sar_draft && (
-            <div className="flex items-center gap-2">
-              <FileText className="h-3.5 w-3.5 text-red-600" />
-              <Badge variant="destructive" className="text-xs">SAR Available</Badge>
-            </div>
-          )}
-          {!explanation && !alert.sar_draft && (
-            <p className="text-xs text-muted-foreground">No AI analysis available.</p>
-          )}
-        </div>
+            )}
+            {alert.sar_draft && (
+              <div className="flex items-center gap-2">
+                <FileText className="h-3.5 w-3.5 text-red-600" />
+                <Badge variant="destructive" className="text-xs">{t('alerts.sarAvailable')}</Badge>
+              </div>
+            )}
+            {!explanation && !alert.sar_draft && (
+              <p className="text-xs text-muted-foreground">{t('alerts.noAiAnalysis')}</p>
+            )}
+          </div>
+        </ErrorBoundary>
       )}
     </div>
   )
 }
 
 export function MobileAlertCards({ data = [], isLoading, onRefetch }) {
+  const { t } = useLanguage()
+
   if (isLoading && data.length === 0) {
     return (
       <div className="flex items-center justify-center h-48 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
-          Loading alerts…
+          {t('alerts.loading')}
         </div>
       </div>
     )
@@ -193,7 +201,7 @@ export function MobileAlertCards({ data = [], isLoading, onRefetch }) {
   if (!isLoading && data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-48 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 gap-2">
-        <p className="text-sm text-muted-foreground">No alerts for the selected filter.</p>
+        <p className="text-sm text-muted-foreground">{t('alerts.noAlerts')}</p>
       </div>
     )
   }

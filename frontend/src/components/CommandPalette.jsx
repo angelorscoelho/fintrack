@@ -13,9 +13,11 @@ import {
   CircleDot,
   Building2,
 } from 'lucide-react'
+import { useLanguage } from '@/i18n/LanguageContext'
 
 export default function CommandPalette({ open, onClose, isDark, onToggleDark }) {
   const navigate = useNavigate()
+  const { t } = useLanguage()
   const [search, setSearch] = useState('')
 
   // Close on Escape
@@ -58,55 +60,55 @@ export default function CommandPalette({ open, onClose, isDark, onToggleDark }) 
           <Command.Input
             value={search}
             onValueChange={setSearch}
-            placeholder="Search commands..."
+            placeholder={t('commandPalette.searchPlaceholder')}
             className="w-full px-4 py-3 text-sm border-b border-slate-200 dark:border-slate-700 bg-transparent text-foreground placeholder:text-muted-foreground outline-none"
           />
           <Command.List className="max-h-80 overflow-y-auto p-2">
             <Command.Empty className="py-6 text-center text-sm text-muted-foreground">
-              No results found.
+              {t('commandPalette.noResults')}
             </Command.Empty>
 
             {/* Navigation group */}
-            <Command.Group heading="Navigation" className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-muted-foreground">
+            <Command.Group heading={t('commandPalette.navigation')} className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-muted-foreground">
               <CommandItem
                 icon={Home}
-                label="Command Center"
+                label={t('commandPalette.commandCenter')}
                 shortcut="G C"
                 onSelect={() => runCommand(() => navigate('/'))}
               />
               <CommandItem
                 icon={AlertTriangle}
-                label="Alert Queue"
+                label={t('commandPalette.alertQueue')}
                 shortcut="G A"
                 onSelect={() => runCommand(() => navigate('/alerts'))}
               />
               <CommandItem
                 icon={FileText}
-                label="SAR Reports"
+                label={t('commandPalette.sarReports')}
                 shortcut="G R"
                 onSelect={() => runCommand(() => navigate('/reports'))}
               />
             </Command.Group>
 
             {/* Filter presets group */}
-            <Command.Group heading="Filters" className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-muted-foreground">
+            <Command.Group heading={t('commandPalette.filters')} className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-muted-foreground">
               <CommandItem
                 icon={Filter}
-                label="View critical alerts"
+                label={t('commandPalette.viewCritical')}
                 onSelect={() =>
                   runCommand(() => navigate('/alerts', { state: { scoreRange: '0.90-1.00' } }))
                 }
               />
               <CommandItem
                 icon={Clock}
-                label="View pending"
+                label={t('commandPalette.viewPending')}
                 onSelect={() =>
                   runCommand(() => navigate('/alerts', { state: { status: 'PENDING_REVIEW' } }))
                 }
               />
               <CommandItem
                 icon={CircleDot}
-                label="View false positives"
+                label={t('commandPalette.viewFalsePositives')}
                 onSelect={() =>
                   runCommand(() => navigate('/alerts', { state: { status: 'FALSE_POSITIVE' } }))
                 }
@@ -114,25 +116,25 @@ export default function CommandPalette({ open, onClose, isDark, onToggleDark }) 
             </Command.Group>
 
             {/* Actions group */}
-            <Command.Group heading="Actions" className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-muted-foreground">
+            <Command.Group heading={t('commandPalette.actions')} className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-muted-foreground">
               <CommandItem
                 icon={isDark ? Sun : Moon}
-                label={isDark ? 'Disable dark mode' : 'Enable dark mode'}
+                label={isDark ? t('commandPalette.disableDarkMode') : t('commandPalette.enableDarkMode')}
                 onSelect={() => runCommand(() => onToggleDark())}
               />
               <CommandItem
                 icon={Download}
-                label="Export all SARs"
+                label={t('commandPalette.exportAllSars')}
                 onSelect={() => runCommand(() => navigate('/reports', { state: { exportAll: true } }))}
               />
             </Command.Group>
 
             {/* Dynamic merchant search */}
             {merchantNif && (
-              <Command.Group heading="Merchant" className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-muted-foreground">
+              <Command.Group heading={t('commandPalette.merchant')} className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-muted-foreground">
                 <CommandItem
                   icon={Building2}
-                  label={`View merchant ${merchantNif}`}
+                  label={t('commandPalette.viewMerchant', { nif: merchantNif })}
                   onSelect={() => runCommand(() => navigate(`/merchants/${merchantNif}`))}
                 />
               </Command.Group>

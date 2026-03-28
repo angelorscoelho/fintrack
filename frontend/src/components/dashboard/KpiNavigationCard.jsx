@@ -19,6 +19,8 @@ export function KpiNavigationCard({
   icon: Icon,
   loading = false,
   tooltip,
+  actionTooltip,
+  subLabel,
   route,
 }) {
   const variantClass = VARIANT_STYLES[variant] || VARIANT_STYLES.default
@@ -33,11 +35,11 @@ export function KpiNavigationCard({
   const cardContent = (
     <Card
       className={cn(
-        'min-w-[160px] snap-start shrink-0 md:shrink md:min-w-0 transition-shadow duration-200 hover:shadow-lg cursor-pointer',
+        'min-w-[160px] snap-start shrink-0 md:shrink md:min-w-0 transition-shadow duration-200 hover:shadow-lg cursor-pointer h-full',
         variantClass
       )}
     >
-      <CardContent className="p-4 md:p-6">
+      <CardContent className="p-4 md:p-6 flex flex-col h-full">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide truncate">
             {title}
@@ -63,8 +65,8 @@ export function KpiNavigationCard({
             <Skeleton className="h-4 w-14" />
           </div>
         ) : (
-          <>
-            <p className="text-2xl md:text-3xl font-bold text-foreground leading-none">
+          <div className="flex flex-col flex-1 justify-center">
+            <p className="text-xl md:text-2xl font-bold text-foreground leading-none">
               {value ?? '–'}
             </p>
             {change != null && (
@@ -73,25 +75,41 @@ export function KpiNavigationCard({
                 <span>{change > 0 ? '+' : ''}{change.toFixed(1)}%</span>
               </div>
             )}
-          </>
+            {subLabel && (
+              <p className="mt-1 text-[10px] text-muted-foreground truncate">{subLabel}</p>
+            )}
+          </div>
         )}
       </CardContent>
     </Card>
   )
 
-  const wrappedCard = tooltip ? (
-    <TooltipProvider delayDuration={300}>
+  const needsProvider = tooltip || actionTooltip
+
+  const linked = route ? (
+    <Link to={route} className="no-underline h-full" aria-label={loading ? `${title}: loading` : `${title}: ${value}`}>
       {cardContent}
-    </TooltipProvider>
+    </Link>
   ) : cardContent
 
-  if (route) {
+  const withActionTooltip = actionTooltip ? (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {linked}
+      </TooltipTrigger>
+      <TooltipContent side="bottom" className="max-w-xs">
+        <p>{actionTooltip}</p>
+      </TooltipContent>
+    </Tooltip>
+  ) : linked
+
+  if (needsProvider) {
     return (
-      <Link to={route} className="no-underline" aria-label={loading ? `${title}: loading` : `${title}: ${value}`}>
-        {wrappedCard}
-      </Link>
+      <TooltipProvider delayDuration={400}>
+        {withActionTooltip}
+      </TooltipProvider>
     )
   }
 
-  return wrappedCard
+  return withActionTooltip
 }

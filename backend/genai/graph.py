@@ -1,7 +1,7 @@
 """
 FinTrack AI — LangGraph Workflow
-Phase 1 (S05E): Single node — Gemini Flash XAI for scores 0.70–0.90
-Phase 2 (S06E): Conditional edge added — Gemini Pro SAR for scores > 0.90
+Phase 1 (S05E): Single node — Gemini Flash XAI for scores >= XAI_THRESHOLD
+Phase 2 (S06E): Conditional edge added — Gemini Pro SAR for scores > SAR_THRESHOLD
 """
 import logging
 import os
@@ -9,6 +9,8 @@ from typing import Optional, TypedDict
 
 import boto3
 from langgraph.graph import END, StateGraph
+
+from shared.project_constants import SAR_THRESHOLD
 
 logger = logging.getLogger(__name__)
 
@@ -65,12 +67,12 @@ def _route_by_risk(state: TransactionState) -> str:
 
     Logic:
     - If processing failed: go to END (no escalation)
-    - If score > 0.90: go to audit_deep (Gemini Pro)
+    - If score > SAR_THRESHOLD: go to audit_deep (Gemini Pro)
     - Otherwise: go to END (Flash XAI is sufficient)
     """
     if state.get("processing_status") == "error":
         return "__end__"  # Graceful failure — don't escalate broken state
-    if state["anomaly_score"] > 0.90:
+    if state["anomaly_score"] > SAR_THRESHOLD:
         return "audit_deep"
     return "__end__"
 

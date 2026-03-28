@@ -3,24 +3,31 @@ FinTrack AI — Gemini 1.5 Pro SAR Draft Node
 Generates Suspicious Activity Report (SAR) draft for critical anomalies (score > 0.90).
 Only invoked when anomaly_score > 0.90 — cost control per PRD Golden Rules.
 """
+import json
 import logging
 import os
+import time
 
 import google.api_core.exceptions
 import google.generativeai as genai
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from backend.genai.graph import TransactionState
+from shared.project_constants import (
+    GEMINI_PRO_MODEL,
+    GEMINI_PRO_MAX_TOKENS,
+    GEMINI_PRO_TEMPERATURE,
+)
 
 logger = logging.getLogger(__name__)
 
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY", ""))
 
 _pro_model = genai.GenerativeModel(
-    model_name="gemini-1.5-pro-latest",
+    model_name=GEMINI_PRO_MODEL,
     generation_config=genai.types.GenerationConfig(
-        temperature=0.2,           # Slight creativity for natural language drafting
-        max_output_tokens=2048,    # SAR needs space
+        temperature=GEMINI_PRO_TEMPERATURE,
+        max_output_tokens=GEMINI_PRO_MAX_TOKENS,
     ),
 )
 
@@ -70,10 +77,10 @@ Escreve o SAR de forma profissional, concisa e factual. Usa os dados reais da tr
     )),
     reraise=True,
 )
-def _call_pro(prompt: str) -> str:
+def _call_pro(prompt: str):
     """Call Gemini Pro with tenacity retry (3 attempts, exponential backoff)."""
     response = _pro_model.generate_content(prompt)
-    return response.text.strip()
+    return response
 
 
 def _extract_xai_summary(ai_explanation: str | None) -> str:
@@ -81,7 +88,6 @@ def _extract_xai_summary(ai_explanation: str | None) -> str:
     if not ai_explanation:
         return "Análise XAI não disponível."
     try:
-        import json
         data = json.loads(ai_explanation)
         bullets = data.get("bullets", [])
         summary = data.get("summary_pt", "")
@@ -91,18 +97,31 @@ def _extract_xai_summary(ai_explanation: str | None) -> str:
         return ai_explanation[:200]
 
 
+def _log_genai_call(transaction_id: str, model: str, status: str,
+                    duration_ms: int, prompt_tokens: int = 0,
+                    response_tokens: int = 0) -> None:
+    """Emit structured JSON log for a GenAI model call."""
+    logger.info(json.dumps({
+        "transaction_id": transaction_id,
+        "model": model,
+        "prompt_tokens": prompt_tokens,
+        "response_tokens": response_tokens,
+        "duration_ms": duration_ms,
+        "status": status,
+    }))
+
+
 def audit_deep(state: TransactionState) -> TransactionState:
     """
     LangGraph node: Deep Audit via Gemini 1.5 Pro.
     Only reached when anomaly_score > 0.90 (enforced by conditional edge in graph.py).
     """
-    import json
-
     transaction_id = state["transaction_id"]
     score          = state["anomaly_score"]
     payload        = state["payload"]
     xai_summary    = _extract_xai_summary(state.get("ai_explanation"))
 
+    t0 = time.time()
     try:
         prompt = _SAR_PROMPT_TEMPLATE.format(
             score=score,
@@ -110,7 +129,13 @@ def audit_deep(state: TransactionState) -> TransactionState:
             xai_summary=xai_summary,
         )
 
-        sar_text = _call_pro(prompt)
+        response = _call_pro(prompt)
+        duration_ms = round((time.time() - t0) * 1000)
+        sar_text = response.text.strip()
+
+        usage = getattr(response, "usage_metadata", None)
+        prompt_tokens = getattr(usage, "prompt_token_count", 0) or 0
+        response_tokens = getattr(usage, "candidates_token_count", 0) or 0
 
         # Validate structure — must contain all 6 section headers
         required_sections = [
@@ -128,6 +153,9 @@ def audit_deep(state: TransactionState) -> TransactionState:
         state["sar_draft"] = sar_text
         state["processing_status"] = "sar_complete"
 
+        _log_genai_call(transaction_id, "pro", "success", duration_ms,
+                        prompt_tokens, response_tokens)
+
         logger.warning(json.dumps({  # warning level = critical alert
             "event": "sar_generated",
             "transaction_id": transaction_id,
@@ -136,6 +164,8 @@ def audit_deep(state: TransactionState) -> TransactionState:
         }))
 
     except Exception as exc:
+        _log_genai_call(transaction_id, "pro", "error",
+                        round((time.time() - t0) * 1000))
         logger.error(f"Pro SAR failed for {transaction_id}: {exc}")
         # Don't overwrite ai_explanation — Flash XAI still valid
         state["sar_draft"] = None
