@@ -9,7 +9,7 @@ from typing import Any, Optional, Tuple, List
 import boto3
 from boto3.dynamodb.conditions import Key
 
-from shared.project_constants import SAR_THRESHOLD
+from shared.project_constants import LIVE_ALERT_FEED_MAX_ITEMS, SAR_THRESHOLD
 
 logger = logging.getLogger(__name__)
 
@@ -136,7 +136,7 @@ async def resolve_alert(
     )
 
 
-async def get_latest_alerts(limit: int = 20) -> list[dict]:
+async def get_latest_alerts(limit: int = LIVE_ALERT_FEED_MAX_ITEMS) -> list[dict]:
     """For SSE: fetch most recent alerts sorted by processed_at."""
     table = get_table()
     try:

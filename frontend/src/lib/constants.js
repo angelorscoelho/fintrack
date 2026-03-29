@@ -59,6 +59,7 @@ export function getRiskLevel(score) {
 export const HISTOGRAM_BUCKETS = THRESHOLDS.ui.histogram_buckets
 export const FILTER_OPTIONS = THRESHOLDS.ui.filter_options
 export const KPI_THRESHOLDS = THRESHOLDS.ui.kpi_variant
+export const LIVE_ALERT_FEED_MAX_ITEMS = THRESHOLDS.ui.live_alert_feed_max_items
 export const BUDGET_THRESHOLDS = THRESHOLDS.budget
 
 // ── API config re-exports ────────────────────────────────────────────────────

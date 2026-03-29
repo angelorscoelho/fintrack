@@ -50,6 +50,9 @@ GEMINI_PRO_MAX_TOKENS: int = _data["gemini"]["generation_config"]["pro"]["max_ou
 NORMAL_TTL_DAYS: int = _data["data_retention"]["normal_ttl_days"]
 RATE_LIMITER_TTL_DAYS: int = _data["data_retention"]["rate_limiter_ttl_days"]
 
+# ── UI (dashboard) ───────────────────────────────────────────────────────────
+LIVE_ALERT_FEED_MAX_ITEMS: int = _data["ui"]["live_alert_feed_max_items"]
+
 # ── API configuration ─────────────────────────────────────────────────────────
 API_DEFAULT_LIMIT: int = _data["api"]["pagination"]["default_limit"]
 API_MAX_LIMIT: int = _data["api"]["pagination"]["max_limit"]

@@ -149,20 +149,20 @@ export default function CommandCenter({ isIdle, setMutateAlerts }) {
         />
       </div>
 
-      {/* Row 2: Chart + Live Feed — stacked on mobile, 60/40 on desktop */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="md:col-span-3">
+      {/* Cards 8, 9, 10: 2 equal columns — Hourly Volume + Category (left); High Risk spans full height (right, scrolls) */}
+      <div className="grid min-w-0 grid-cols-2 gap-4">
+        <div className="col-start-1 row-start-1 min-h-0 min-w-0">
           <VolumeChart />
         </div>
-        <div className="md:col-span-2">
+        <div className="col-start-1 row-start-2 min-h-0 min-w-0">
+          <CategoryChart />
+        </div>
+        <div className="col-start-2 row-span-2 row-start-1 max-h-full min-h-0 min-w-0 overflow-y-auto">
           <LiveAlertFeed />
         </div>
       </div>
 
-      {/* Row 3: Category breakdown chart */}
-      <CategoryChart />
-
-      {/* Row 4: Geographic alert distribution map */}
+      {/* Card 12: Geographic alert distribution map */}
       <GeoMap />
     </>
   )
