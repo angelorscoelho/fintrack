@@ -105,8 +105,8 @@ export default function CommandCenter({ isIdle, setMutateAlerts }) {
         <ErrorState onRetry={() => refetchStats()} />
       )}
 
-      {/* Row 1: KPI Cards — horizontal scroll on mobile, 4-column grid on desktop */}
-      <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 md:grid md:grid-cols-4 md:overflow-visible md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
+      {/* Row 1: KPI Cards — horizontal scroll on mobile, 5-column grid on desktop */}
+      <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-5 md:overflow-visible md:px-0 md:pb-0">
         <KpiNavigationCard
           title={t('kpi.transactions24h')}
           value={last24h}
@@ -159,17 +159,15 @@ export default function CommandCenter({ isIdle, setMutateAlerts }) {
           aiContext={{ card: 'avg_score', value: avgScore }}
           aiLabel="Average Anomaly Score"
         />
+        <CategoryChart />
       </div>
 
-      {/* Cards 8, 9, 10: 2 equal columns — Hourly Volume + Category (left); High Risk spans full height (right, scrolls) */}
-      <div className="grid min-w-0 grid-cols-2 gap-4">
-        <div className="col-start-1 row-start-1 min-h-0 min-w-0">
+      {/* Hourly volume + High Risk feed */}
+      <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="min-h-0 min-w-0">
           <VolumeChart />
         </div>
-        <div className="col-start-1 row-start-2 min-h-0 min-w-0">
-          <CategoryChart />
-        </div>
-        <div className="col-start-2 row-span-2 row-start-1 max-h-full min-h-0 min-w-0 overflow-y-auto">
+        <div className="min-h-0 min-w-0">
           <LiveAlertFeed />
         </div>
       </div>

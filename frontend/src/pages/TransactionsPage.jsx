@@ -68,6 +68,8 @@ export default function TransactionsPage() {
   const periodParam = searchParams.get('period')
   const statusParam = searchParams.get('status')
   const minScoreRaw = searchParams.get('minScore')
+  const sourceCountryParam = searchParams.get('sourceCountry')
+  const destCountryParam = searchParams.get('destCountry')
 
   // --- Filter state ---
   const [searchQuery, setSearchQuery] = useState('')
@@ -87,7 +89,11 @@ export default function TransactionsPage() {
 
   const minScoreThreshold = useMemo(() => parseMinScoreParam(minScoreRaw), [minScoreRaw])
   const urlQueryActive =
-    periodParam === '24h' || Boolean(statusParam) || minScoreThreshold != null
+    periodParam === '24h' ||
+    Boolean(statusParam) ||
+    minScoreThreshold != null ||
+    Boolean(sourceCountryParam) ||
+    Boolean(destCountryParam)
 
   // --- Data fetching ---
   const { data: transactions = [], isLoading, isError, refetch } = useQuery({
@@ -129,7 +135,9 @@ export default function TransactionsPage() {
     setCurrentPage(0)
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev)
-      ;['period', 'status', 'minScore', 'category'].forEach((k) => next.delete(k))
+      ;['period', 'status', 'minScore', 'category', 'sourceCountry', 'destCountry'].forEach((k) =>
+        next.delete(k),
+      )
       return next
     })
   }, [setSearchParams])
@@ -178,6 +186,14 @@ export default function TransactionsPage() {
     if (minScoreThreshold != null) {
       result = result.filter((tx) => Number(tx.anomaly_score ?? 0) >= minScoreThreshold)
     }
+    if (sourceCountryParam) {
+      const sc = sourceCountryParam.toUpperCase()
+      result = result.filter((tx) => (tx.source_country || '').toUpperCase() === sc)
+    }
+    if (destCountryParam) {
+      const dc = destCountryParam.toUpperCase()
+      result = result.filter((tx) => (tx.destination_country || '').toUpperCase() === dc)
+    }
 
     // Sorting
     result = [...result].sort((a, b) => {
@@ -202,6 +218,8 @@ export default function TransactionsPage() {
     periodParam,
     statusParam,
     minScoreThreshold,
+    sourceCountryParam,
+    destCountryParam,
   ])
 
   // Reset page when filters change
