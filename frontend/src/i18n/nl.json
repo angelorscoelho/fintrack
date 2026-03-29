@@ -217,6 +217,7 @@
     "alertMap": "Meldingenkaart",
     "loadingMap": "Kaart laden...",
     "noGeoData": "Geen geografische gegevens beschikbaar",
+    "geoMapArcGroupedHint": "{count} transacties — klik om te filteren",
     "alertCount": "Meldingen: {count}",
     "averageScore": "Gemiddelde score: {score}%",
     "noCategoryData": "Geen categoriegegevens beschikbaar",

@@ -217,6 +217,7 @@
     "alertMap": "Warnungskarte",
     "loadingMap": "Karte wird geladen...",
     "noGeoData": "Keine geografischen Daten verfügbar",
+    "geoMapArcGroupedHint": "{count} Transaktionen — Klicken zum Filtern",
     "alertCount": "Warnungen: {count}",
     "averageScore": "Durchschnittlicher Score: {score}%",
     "noCategoryData": "Keine Kategoriedaten verfügbar",

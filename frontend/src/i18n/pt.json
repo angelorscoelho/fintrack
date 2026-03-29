@@ -219,6 +219,7 @@
     "alertMap": "Mapa de Alertas",
     "loadingMap": "A carregar mapa...",
     "noGeoData": "Sem dados geográficos disponíveis",
+    "geoMapArcGroupedHint": "{count} transações — clique para filtrar",
     "alertCount": "Alertas: {count}",
     "averageScore": "Score Médio: {score}%",
     "noCategoryData": "Sem dados de categoria disponíveis",
