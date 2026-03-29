@@ -7,7 +7,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.db.dynamo import init_dynamo_client
-from api.routes import alerts, health, stats, resolve, stream, config
+from api.routes import alerts, chat, health, stats, resolve, stream, config
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -39,6 +39,7 @@ async def request_id_middleware(request: Request, call_next):
 
 
 app.include_router(stream.router, prefix="/api")
+app.include_router(chat.router, prefix="/api")
 app.include_router(alerts.router, prefix="/api")
 app.include_router(stats.router, prefix="/api")
 app.include_router(resolve.router, prefix="/api")

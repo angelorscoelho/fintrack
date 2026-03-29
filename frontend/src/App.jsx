@@ -12,6 +12,7 @@ import { useInactivityTimer } from '@/hooks/useInactivityTimer'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { useDarkMode } from '@/hooks/useDarkMode'
 import { useSidebar } from '@/contexts/SidebarContext'
+import { AISidebar, AISidebarFab } from '@/components/ai-sidebar/AISidebar'
 import { cn } from '@/lib/utils'
 import { Loader2 } from 'lucide-react'
 
@@ -146,18 +147,24 @@ export default function App() {
           </Suspense>
         </main>
 
-        {/* AI Sidebar placeholder (US-027) */}
+        {/* AI Sidebar (US-027) */}
         <aside
           className={cn(
-            'ai-sidebar bg-white dark:bg-slate-900 overflow-hidden',
-            isSidebarOpen && 'border-l border-slate-200 dark:border-slate-700'
+            'ai-sidebar flex min-h-0 flex-col overflow-hidden bg-card',
+            isSidebarOpen && 'border-l border-border'
           )}
           style={{
             width: isSidebarOpen ? 'var(--sidebar-width)' : '0px',
             transition: 'width 300ms ease',
           }}
-        />
+        >
+          <div className="h-full min-h-0 min-w-[var(--sidebar-width)]">
+            <AISidebar />
+          </div>
+        </aside>
       </div>
+
+      {!isSidebarOpen ? <AISidebarFab /> : null}
 
       {/* Mobile page dots indicator */}
       {isSwipeable && (

@@ -309,6 +309,18 @@
     "confirmFraud": "Confirmar Fraude",
     "thisHelp": "Esta ajuda"
   },
+  "aiSidebar": {
+    "title": "FinTrack AI",
+    "welcome": "Olá! Sou o FinTrack AI. Pergunte sobre transações, scores de risco ou alertas.",
+    "inputPlaceholder": "Pergunte sobre transações, risco ou alertas…",
+    "send": "Enviar",
+    "openAssistant": "Abrir assistente FinTrack AI",
+    "suggestionSummarise": "Resumir os alertas de hoje",
+    "suggestionRisk": "Mostrar transações com maior risco",
+    "suggestionAnomaly": "Explicar o score de anomalia",
+    "errorConnect": "⚠️ Não foi possível ligar à IA. Tente novamente.",
+    "emptyReply": "(Sem resposta)"
+  },
   "commandPalette": {
     "searchPlaceholder": "Pesquisar comandos...",
     "noResults": "Sem resultados.",
