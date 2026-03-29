@@ -1,13 +1,12 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import {
-  PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer,
-} from 'recharts'
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { PieChartIcon, AlertTriangle } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { safeFetch } from '@/lib/api'
 import { API_MAX_LIMIT } from '@/lib/constants'
 import { useLanguage } from '@/i18n/LanguageContext'
@@ -63,17 +62,18 @@ function CustomTooltip({ active, payload, t }) {
   if (!active || !payload?.length) return null
   const data = payload[0]?.payload
   if (!data) return null
+  const pct = data.percentage.toFixed(1)
   return (
-    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-3 shadow-lg text-sm">
-      <p className="font-semibold text-slate-800 dark:text-slate-200 mb-1">{data.label}</p>
-      <p className="text-slate-600 dark:text-slate-400">
-        {t('dashboard.tooltipPercentage', { value: data.percentage.toFixed(1) })}
+    <div className="rounded-lg border border-border bg-popover p-3 text-sm text-popover-foreground shadow-md">
+      <p className="mb-2 font-semibold leading-tight">{data.label}</p>
+      <p className="tabular-nums text-foreground">
+        {t('dashboard.categoryPieCardinal', { count: data.count })}
       </p>
-      <p className="text-slate-600 dark:text-slate-400">
-        {t('dashboard.tooltipTotalAmount', { value: data.totalAmount.toFixed(2) })}
+      <p className="mt-1 text-muted-foreground">
+        {t('dashboard.categoryPieShare', { percent: pct })}
       </p>
-      <p className="text-slate-600 dark:text-slate-400">
-        {t('dashboard.tooltipTransactions', { count: data.count })}
+      <p className="mt-1 text-xs text-muted-foreground tabular-nums">
+        {t('dashboard.categoryPieAmount', { value: data.totalAmount.toFixed(2) })}
       </p>
     </div>
   )
@@ -114,58 +114,64 @@ export function CategoryChart() {
   }
 
   return (
-    <Card className="relative">
+    <Card
+      className={cn(
+        'relative h-full min-w-[160px] snap-start shrink-0 transition-shadow duration-200 md:min-w-0 md:shrink',
+        'hover:shadow-lg',
+      )}
+    >
       <CardAIButton context={categoryAiContext} label="Category Distribution" />
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold flex items-center gap-2">
-          <PieChartIcon className="h-4 w-4 text-muted-foreground" />
-          {t('dashboard.transactionsByCategory')}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-4 pt-0">
+      <CardContent className="flex h-full flex-col p-4 md:p-6">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <span className="truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {t('dashboard.transactionsByCategory')}
+          </span>
+          <PieChartIcon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+        </div>
+
         {isLoading ? (
-          <Skeleton className="h-[280px] w-full" />
+          <div className="flex flex-1 flex-col justify-center">
+            <Skeleton className="mx-auto aspect-square w-[min(100%,7.5rem)] rounded-full" />
+          </div>
         ) : isError ? (
-          <div className="flex flex-col items-center justify-center h-[280px] gap-2">
+          <div className="flex min-h-[132px] flex-col items-center justify-center gap-2 py-2">
             <AlertTriangle className="h-6 w-6 text-destructive" />
-            <p className="text-sm text-muted-foreground">{t('feedback.errorLoading')}</p>
-            <Button variant="outline" size="sm" onClick={() => refetch()}>{t('actions.tryAgain')}</Button>
+            <p className="text-center text-xs text-muted-foreground">{t('feedback.errorLoading')}</p>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              {t('actions.tryAgain')}
+            </Button>
           </div>
         ) : !hasData ? (
-          <div className="flex items-center justify-center h-[280px] text-sm text-muted-foreground">
+          <div className="flex min-h-[132px] items-center justify-center text-center text-xs text-muted-foreground">
             {t('dashboard.noCategoryData')}
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={280}>
-            <PieChart>
-              <Pie
-                data={chartData}
-                dataKey="count"
-                nameKey="label"
-                cx="50%"
-                cy="45%"
-                outerRadius={90}
-                innerRadius={45}
-                paddingAngle={2}
-                cursor="pointer"
-                isAnimationActive={false}
-                onClick={handleClick}
-              >
-                {chartData.map((entry) => (
-                  <Cell
-                    key={entry.category}
-                    fill={CATEGORY_COLORS[entry.category] || '#94a3b8'}
-                  />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip t={t} />} />
-              <Legend
-                verticalAlign="bottom"
-                height={36}
-                wrapperStyle={{ fontSize: 11 }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+          <div className="flex min-h-0 flex-1 flex-col justify-center">
+            <div className="h-[140px] w-full">
+              <ResponsiveContainer width="100%" height={140}>
+                <PieChart>
+                  <Pie
+                    data={chartData}
+                    dataKey="count"
+                    nameKey="label"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={58}
+                    innerRadius={30}
+                    paddingAngle={2}
+                    cursor="pointer"
+                    isAnimationActive={false}
+                    onClick={handleClick}
+                  >
+                    {chartData.map((entry) => (
+                      <Cell key={entry.category} fill={CATEGORY_COLORS[entry.category] || '#94a3b8'} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip t={t} />} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>
