@@ -2,9 +2,8 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install dependencies first for better layer caching
-# Build context is the project root on Railway, so use full path
-COPY backend/api/requirements.txt .
+# Install dependencies (root requirements.txt, build context = repo root)
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the API package (backend/api → /app/api) so that
