@@ -46,7 +46,7 @@ async def stream_alerts():
         try:
             while True:
                 try:
-                    alerts = await get_latest_alerts(limit=20)
+                    alerts = await get_latest_alerts()
                     new_alerts = [
                         a for a in alerts
                         if a.get("transaction_id") not in seen_ids

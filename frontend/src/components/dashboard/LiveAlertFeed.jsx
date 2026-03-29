@@ -11,11 +11,10 @@ import { toast } from 'sonner'
 import { Radio, Info, CheckCircle } from 'lucide-react'
 import { safeFetch } from '@/lib/api'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
-import { XAI_THRESHOLD, SAR_THRESHOLD, API_MAX_LIMIT } from '@/lib/constants'
+import { XAI_THRESHOLD, SAR_THRESHOLD, API_MAX_LIMIT, LIVE_ALERT_FEED_MAX_ITEMS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
-const MAX_ALERTS = 20
 
 const EXCLUDED_STATUSES = new Set(['NORMAL', 'RESOLVED', 'FALSE_POSITIVE'])
 
@@ -121,7 +120,7 @@ export function LiveAlertFeed() {
     setAlerts((prev) => {
       const next = [alert, ...prev.filter((a) => a.transaction_id !== alert.transaction_id)]
       next.sort(sortAlerts)
-      return next.slice(0, MAX_ALERTS)
+      return next.slice(0, LIVE_ALERT_FEED_MAX_ITEMS)
     })
 
     const score = Number(alert.anomaly_score ?? 0)
@@ -151,7 +150,7 @@ export function LiveAlertFeed() {
     })
   }, [eligible, showCritical, showSuspicious])
 
-  const displayList = useMemo(() => visible.slice(0, MAX_ALERTS), [visible])
+  const displayList = useMemo(() => visible.slice(0, LIVE_ALERT_FEED_MAX_ITEMS), [visible])
 
   const chipClass = (active) =>
     cn(

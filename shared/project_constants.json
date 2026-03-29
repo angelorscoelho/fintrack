@@ -36,6 +36,7 @@
       "critical_fraud_rate":  0.15,
       "warning_fraud_rate":   0.08
     },
+    "live_alert_feed_max_items": 20,
     "histogram_buckets": [
       { "key": "0-20",   "label": "0–20%",   "min": 0.00, "max": 0.20 },
       { "key": "20-40",  "label": "20–40%",  "min": 0.20, "max": 0.40 },
