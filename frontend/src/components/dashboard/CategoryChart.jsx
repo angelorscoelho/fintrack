@@ -11,6 +11,7 @@ import { PieChartIcon, AlertTriangle } from 'lucide-react'
 import { safeFetch } from '@/lib/api'
 import { API_MAX_LIMIT } from '@/lib/constants'
 import { useLanguage } from '@/i18n/LanguageContext'
+import { CardAIButton } from '@/components/ai-sidebar/CardAIButton'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -98,6 +99,14 @@ export function CategoryChart() {
 
   const hasData = chartData.length > 0
 
+  const categoryAiContext = useMemo(
+    () => ({
+      card: 'category_distribution',
+      categories: chartData.map((c) => ({ name: c.label, count: c.count })),
+    }),
+    [chartData]
+  )
+
   const handleClick = (entry) => {
     if (entry?.category) {
       navigate(`/transactions?category=${encodeURIComponent(entry.category)}`)
@@ -105,7 +114,8 @@ export function CategoryChart() {
   }
 
   return (
-    <Card>
+    <Card className="relative">
+      <CardAIButton context={categoryAiContext} label="Category Distribution" />
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
           <PieChartIcon className="h-4 w-4 text-muted-foreground" />

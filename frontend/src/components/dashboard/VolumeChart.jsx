@@ -19,6 +19,7 @@ import { startOfHour, subHours, format, parseISO } from 'date-fns'
 import { safeFetch } from '@/lib/api'
 import { XAI_THRESHOLD, SAR_THRESHOLD, API_MAX_LIMIT } from '@/lib/constants'
 import { cn } from '@/lib/utils'
+import { CardAIButton } from '@/components/ai-sidebar/CardAIButton'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -150,6 +151,16 @@ export function VolumeChart() {
 
   const hasData = baseData.some((d) => d.total > 0)
 
+  const total24hTx = useMemo(() => baseData.reduce((sum, d) => sum + d.total, 0), [baseData])
+
+  const volumeAiContext = useMemo(
+    () => ({
+      card: 'hourly_volume',
+      summary: `Last 24h chart data — ${total24hTx} transactions`,
+    }),
+    [total24hTx]
+  )
+
   const axisTick = { fontSize: 11, fill: 'hsl(var(--muted-foreground))' }
   const gridStroke = 'hsl(var(--border))'
 
@@ -162,7 +173,8 @@ export function VolumeChart() {
     )
 
   return (
-    <Card className="min-w-0 overflow-hidden">
+    <Card className="relative min-w-0 overflow-hidden">
+      <CardAIButton context={volumeAiContext} label="Hourly Volume Chart" />
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-sm font-semibold">
           <BarChart3 className="h-4 w-4 text-muted-foreground" />
