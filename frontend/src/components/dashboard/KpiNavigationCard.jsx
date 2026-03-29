@@ -4,6 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { TrendingUp, TrendingDown, Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
+import { CardAIButton } from '@/components/ai-sidebar/CardAIButton'
 
 const VARIANT_STYLES = {
   default: '',
@@ -22,6 +23,8 @@ export function KpiNavigationCard({
   actionTooltip,
   subLabel,
   route,
+  aiContext,
+  aiLabel,
 }) {
   const navigate = useNavigate()
   const variantClass = VARIANT_STYLES[variant] || VARIANT_STYLES.default
@@ -48,7 +51,7 @@ export function KpiNavigationCard({
   const cardContent = (
     <Card
       className={cn(
-        'min-w-[160px] snap-start shrink-0 md:shrink md:min-w-0 transition-shadow duration-200 hover:shadow-lg cursor-pointer h-full',
+        'relative min-w-[160px] snap-start shrink-0 md:shrink md:min-w-0 transition-shadow duration-200 hover:shadow-lg cursor-pointer h-full',
         variantClass
       )}
       role={route ? 'link' : undefined}
@@ -57,6 +60,9 @@ export function KpiNavigationCard({
       onClick={route ? handleNavigate : undefined}
       onKeyDown={route ? handleCardKeyDown : undefined}
     >
+      {aiContext != null && aiLabel && !loading ? (
+        <CardAIButton context={aiContext} label={aiLabel} />
+      ) : null}
       <CardContent className="p-4 md:p-6 flex flex-col h-full">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide truncate">

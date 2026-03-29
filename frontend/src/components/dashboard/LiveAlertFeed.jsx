@@ -13,6 +13,7 @@ import { safeFetch } from '@/lib/api'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { XAI_THRESHOLD, SAR_THRESHOLD, API_MAX_LIMIT, LIVE_ALERT_FEED_MAX_ITEMS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
+import { CardAIButton } from '@/components/ai-sidebar/CardAIButton'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -152,6 +153,19 @@ export function LiveAlertFeed() {
 
   const displayList = useMemo(() => visible.slice(0, LIVE_ALERT_FEED_MAX_ITEMS), [visible])
 
+  const highRiskAiContext = useMemo(
+    () => ({
+      card: 'high_risk_alerts',
+      alerts: eligible.slice(0, 5).map((a) => ({
+        id: a.transaction_id,
+        amount: a.amount,
+        anomaly_score: a.anomaly_score,
+        status: a.status,
+      })),
+    }),
+    [eligible]
+  )
+
   const chipClass = (active) =>
     cn(
       'h-8 shrink-0 gap-1 rounded-md border px-2.5 text-xs font-medium transition-opacity',
@@ -169,11 +183,12 @@ export function LiveAlertFeed() {
     <TooltipProvider delayDuration={400}>
       <Card
         className={cn(
-          'flex flex-col',
+          'relative flex flex-col',
           '[--high-risk-suspicious:25_95%_47%] [--high-risk-suspicious-foreground:0_0%_100%]',
           'dark:[--high-risk-suspicious:32_92%_52%] dark:[--high-risk-suspicious-foreground:0_0%_98%]'
         )}
       >
+        <CardAIButton context={highRiskAiContext} label="High Risk Transactions" />
         <CardHeader className="space-y-3 pb-2">
           <CardTitle className="flex flex-col gap-2 text-sm font-semibold sm:flex-row sm:items-start sm:justify-between">
             <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
