@@ -23,6 +23,7 @@ with open(_CONSTANTS_FILE, "r") as f:
 XAI_THRESHOLD: float = _data["score"]["xai"]            # 0.70
 SAR_THRESHOLD: float = _data["score"]["sar"]            # 0.90
 FLASH_RISK_ALTO: float = _data["score"]["flash_risk_alto"]  # 0.85
+AI_ANALYSIS_MIN_SCORE: float = float(_data["score"].get("ai_analysis_min", 0.50))
 
 # ── Risk level bands (sorted descending by min) ──────────────────────────────
 RISK_LEVELS: list[dict] = sorted(_data["risk_levels"], key=lambda r: r["min"], reverse=True)

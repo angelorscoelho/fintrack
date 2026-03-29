@@ -4,7 +4,8 @@
   "score": {
     "xai":              0.70,
     "sar":              0.90,
-    "flash_risk_alto":  0.85
+    "flash_risk_alto":  0.85,
+    "ai_analysis_min":  0.50
   },
 
   "risk_levels": [
