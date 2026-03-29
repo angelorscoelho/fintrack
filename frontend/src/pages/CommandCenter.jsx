@@ -116,6 +116,8 @@ export default function CommandCenter({ isIdle, setMutateAlerts }) {
           actionTooltip={t('kpi.transactions24hAction')}
           subLabel={last24hSubLabel}
           route="/transactions?period=24h"
+          aiContext={{ card: 'transactions_24h', value: last24h, period: 'last 24h' }}
+          aiLabel="Transactions (24h)"
         />
         <KpiNavigationCard
           title={t('kpi.fraudRate')}
@@ -126,6 +128,8 @@ export default function CommandCenter({ isIdle, setMutateAlerts }) {
           tooltip={t('kpi.fraudRateTooltip')}
           actionTooltip={t('kpi.fraudRateAction')}
           route="/transactions?status=CONFIRMED_FRAUD"
+          aiContext={{ card: 'fraud_rate', value: fraudRateDisplay, period: 'last 24h' }}
+          aiLabel="Fraud Rate"
         />
         <KpiNavigationCard
           title={t('kpi.criticalUnreviewed')}
@@ -136,6 +140,12 @@ export default function CommandCenter({ isIdle, setMutateAlerts }) {
           tooltip={t('kpi.criticalUnreviewedTooltip')}
           actionTooltip={t('kpi.criticalUnreviewedAction')}
           route="/transactions?status=PENDING_REVIEW&minScore=90"
+          aiContext={{
+            card: 'critical_alerts',
+            count: critical,
+            filter: 'score>90 & PENDING_REVIEW',
+          }}
+          aiLabel="Critical Unreviewed"
         />
         <KpiNavigationCard
           title={t('kpi.avgScore')}
@@ -146,6 +156,8 @@ export default function CommandCenter({ isIdle, setMutateAlerts }) {
           tooltip={t('kpi.avgScoreTooltip')}
           actionTooltip={t('kpi.avgScoreAction')}
           route="/alerts"
+          aiContext={{ card: 'avg_score', value: avgScore }}
+          aiLabel="Average Anomaly Score"
         />
       </div>
 
