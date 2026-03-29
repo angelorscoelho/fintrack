@@ -1,0 +1,37 @@
+---
+description: Mandatory bootstrap — read copilot instructions, memory bank, git workflow before any task
+alwaysApply: true
+---
+
+# FinTrack — session bootstrap (run before every task)
+
+These files are **authoritative**. Do not skip or summarize from memory alone.
+
+## 1. Always read first (every session)
+
+- **`.github/copilot-instructions.md`** — stack, critical rules, key paths, **git workflow** (`git fetch`, branch from up-to-date `main`), `shared/project_constants.json` policy.
+- **`.roo/rules/01-memory-bank-protocol.md`** — how to read/update `memory-bank/`, UMB triggers, forbidden actions.
+
+## 2. If `memory-bank/` exists (project root)
+
+At **session start**, read in order:
+
+1. `memory-bank/productContext.md`
+2. `memory-bank/activeContext.md`
+3. `memory-bank/systemPatterns.md`
+
+Emit one line: `[Memory Bank: Active — fintrack, focus: {≤10 words from activeContext}]`
+
+Do not write to `memory-bank/` except on **UMB** (user says "UMB" / "update memory bank") or explicit instruction.
+
+## 3. Git (feature work)
+
+Before implementing features: `git fetch`, then `git checkout main && git pull`, then `git checkout -b feat/…` or `fix/…`. Do not start feature work on a stale branch without user approval.
+
+## 4. Optional: print instructions locally
+
+From repo root: **`python scripts/agent-instructions.py`** (or **`make agent-instructions`** if Make is installed).
+
+## 5. `.cursorrules`
+
+The repo `.cursorrules` file points here; this rule (`alwaysApply: true`) ensures Cursor agents load the same obligations in every chat.

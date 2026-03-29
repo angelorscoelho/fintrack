@@ -18,15 +18,17 @@
 - [x] Frontend built with base=/poc/fintrack/ (Siemens approach)
 - [x] angelorscoelho.dev vercel.json updated with /poc/fintrack/ rewrite
 - [x] angelorscoelho.dev package.json updated with build:fintrack script
+- [x] **Dashboard — Hourly volume chart (on `main`):** stacked tiers, last 24h, tier chips, custom tooltip; fraud-rate line removed.
+- [x] **Dashboard — Card 9 (`LiveAlertFeed`, branch `feat/us-017-us-018-high-risk-card`):** US-017 filtering, US-018 sorting, tier chips, modal VIEW, i18n — **pending git commit**.
 
 ## In Progress
-- [ ] Copy frontend/dist/* to ../angelorscoelho.dev/dist/fintrack/
-- [ ] Deploy portfolio: cd ../angelorscoelho.dev && vercel --prod
+- [ ] Commit + push `feat/us-017-us-018-high-risk-card` (Card 9 + i18n)
+- [ ] Copy frontend/dist/* to ../angelorscoelho.dev/dist/fintrack/ (if still using Siemens deploy path)
+- [ ] Deploy portfolio: cd ../angelorscoelho.dev && vercel --prod (if applicable)
 
 ## Backlog
 - [ ] GitHub Actions: Configure secrets for CI/CD
 - [ ] E2E smoke test: `make test-e2e`
 
 ## Known Issues / Tech Debt
-<!-- Things that need fixing but aren't blocking current work. -->
 - deploy.sh deletes and recreates stack on every run (could be improved)

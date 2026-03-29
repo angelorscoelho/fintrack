@@ -2,6 +2,8 @@
 
 **This file is the primary general agent instructions document for this repository.** Use it for stack, rules, workflow, and key paths. For `memory-bank/` files specifically, follow `.roo/rules/01-memory-bank-protocol.md` (UMB workflow and forbidden actions).
 
+**Cursor / IDE:** Project rules in **`.cursor/rules/`** (`fintrack-session-bootstrap.mdc`, `alwaysApply: true`) enforce the same bootstrap. Root **`.cursorrules`** and **`AGENTS.md`** point here. To print this file in a terminal (repo root): **`python scripts/agent-instructions.py`** or **`make agent-instructions`** (if `make` is available).
+
 ## Agent session workflow
 
 1. Run `git fetch` (and `git pull` on `main` when using a local tracking branch) so refs are current.
