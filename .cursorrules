@@ -1,1 +1,7 @@
-Always follow the instructions defined in .github/copilot-instructions.md.
+# FinTrack — mandatory instructions for all AI assistants
+
+1. Read and follow **`.github/copilot-instructions.md`** in full at the start of every session (git workflow, stack, critical rules, key paths).
+2. Read **`.roo/rules/01-memory-bank-protocol.md`** before any work involving `memory-bank/`.
+3. If `memory-bank/` exists: at session start read `memory-bank/productContext.md`, `activeContext.md`, and `systemPatterns.md` per that protocol.
+4. Cursor-specific rules: **`.cursor/rules/*.mdc`** (especially `fintrack-session-bootstrap.mdc`, `alwaysApply: true`).
+5. Optional: run **`python scripts/agent-instructions.py`** (or **`make agent-instructions`**) from the repo root to print the canonical copilot instructions.

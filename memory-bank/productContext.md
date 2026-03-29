@@ -1,31 +1,24 @@
 # Product Context
 
-> Fill this in when initializing the project. Commit and keep updated.
-> This is the first file any Roo Code mode reads at session start.
+> First file read at session start (with activeContext + systemPatterns).
 
 ## Project Overview
-<!-- What does this project do? 2–3 sentences max. -->
-[FILL IN]
+**FinTrack AI** — serverless fraud-detection PoC: AWS Lambda + DynamoDB, ML scoring, optional GenAI (LangGraph + Gemini), React dashboard (Vite, shadcn/ui, Tailwind). Analysts review **pending high-risk** transactions and charts on the Command Center.
 
 ## Tech Stack
-<!-- Be specific: framework versions, key libraries, runtime. -->
-- Language: [e.g. TypeScript 5.4]
-- Framework: [e.g. Vue 3 / Next.js 14 / FastAPI]
-- Runtime: [e.g. Node 22 / Python 3.12]
-- Database: [e.g. PostgreSQL 16]
-- Infra: [e.g. AWS Lambda + S3 / Docker + Compose]
-- Key libs: [list the ones that matter for AI context]
+- **Backend:** Python 3.12, FastAPI, boto3, scikit-learn; AWS Lambda, API Gateway, DynamoDB, SQS.
+- **Frontend:** React 18, Vite, TanStack Table / Query, Recharts, Tailwind, react-router-dom.
+- **Data:** DynamoDB table `transactions`, PK `transaction_id`.
+- **Shared:** `shared/project_constants.json` — score thresholds, API limits, UI config.
 
 ## Architecture Summary
-<!-- One paragraph or a bullet list of the main modules/layers. -->
-[FILL IN]
+- Ingest → SQS → Lambda (ML + optional async GenAI) → DynamoDB.
+- REST API for alerts, stats, transactions; SSE for live alert stream on dashboard.
+- Dashboard: KPIs, volume chart, category chart, **high-risk feed (Card 9)**, map.
 
 ## Constraints & Non-Negotiables
-<!-- Things Roo must NEVER change or must always respect. -->
-- [e.g. "All API responses must follow the existing error envelope format"]
-- [e.g. "No new dependencies without explicit user approval"]
-- [e.g. "All DB access through the repository pattern only"]
+- Follow `.github/copilot-instructions.md` and `.cursorrules` (git workflow, DynamoDB keys, no sync HTTP in SQS handler, CORS, shared constants).
+- Do not duplicate threshold values — use `project_constants.json` / `THRESHOLDS` on the frontend.
 
 ## Serena Language Config
-<!-- The language set here must match .serena/project.yml -->
-- Primary language for Serena indexing: [typescript | python | java | go | rust | cpp]
+- Primary language for Serena indexing: **typescript** | **javascript** (frontend); Python in backend — match `.serena/project.yml` if present.

@@ -1,4 +1,4 @@
-.PHONY: secrets train test-e2e deploy-infra
+.PHONY: secrets train test-e2e deploy-infra agent-instructions
 
 # Set your Gemini API key before running: export GEMINI_API_KEY=AIza...
 # Or on Windows CMD: set GEMINI_API_KEY=AIza... && make secrets
@@ -17,6 +17,10 @@ train:
 
 deploy-infra:
 	./scripts/deploy.sh
+
+# Print canonical agent instructions (delegates to scripts/agent-instructions.py)
+agent-instructions:
+	@python scripts/agent-instructions.py
 
 test-e2e:
 	@export ENDPOINT=$$(aws cloudformation describe-stacks --stack-name fintrack-ai-poc --region eu-west-1 --query "Stacks[0].Outputs[?OutputKey=='IngestEndpoint'].OutputValue" --output text 2>/dev/null) && \

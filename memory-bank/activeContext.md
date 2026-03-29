@@ -4,48 +4,21 @@
 > Roo reads this at session start to resume without re-investigation.
 
 ## Current Focus
-<!-- What is being worked on RIGHT NOW? -->
-FinTrack deployment - Siemens approach (static files in portfolio) - Build in progress on Vercel
+Dashboard Command Center: **Card 9 (High Risk Transactions / `LiveAlertFeed`)** — US-017 & US-018 fixes on branch `feat/us-017-us-018-high-risk-card`; uncommitted changes in `LiveAlertFeed.jsx` + i18n.
 
 ## Recent Changes
-<!-- What was last changed, by which mode, and why? -->
-- [2026-03-22] Code mode: Built frontend locally (npm ci && VITE_API_URL=... npm run build)
-- [2026-03-22] Code mode: Copied static files to ../angelorscoelho.dev/dist/fintrack/
-- [2026-03-22] Code mode: Fixed portfolio vercel.json with FinTrack rewrite rules
-- [2026-03-22] Code mode: Fixed build:fintrack script to clone fintrack repo during Vercel build
-- [2026-03-22] Code mode: Changed npm install --omit=dev to npm ci in build:fintrack
-- [2026-03-22] Code mode: Pushed fixes to GitHub (commits e720406, 675115d, ad40df6)
-- [2026-03-22] Code mode: Vercel build now working - clone + npm ci completing successfully
+- [2026-03-28] Agent: **Volume chart** (merged on `main`): stacked 24h volume by tier (Normal / Suspicious / Critical), Recharts, tier chips, rolling window, no fraud-rate line; `VolumeChart.jsx`, `CommandCenter`, i18n.
+- [2026-03-28] Agent: **Card 9** — filter `PENDING_REVIEW` + `anomaly_score >= 0.70`, exclude NORMAL/RESOLVED/FALSE_POSITIVE; sort score DESC then timestamp DESC; tier filter chips; counter = visible count; abbreviated tx id, €, badges (destructive + scoped `--high-risk-suspicious*` on Card), VIEW → `TransactionDetailModal`; empty states + i18n. **Branch created from `main`:** `feat/us-017-us-018-high-risk-card`.
 
-## Deployment Architecture (Siemens Approach)
-- Clone fintrack repo during Vercel build to /tmp/fintrack
-- Build FinTrack React frontend with base=/poc/fintrack/
-- Copy built files to dist/fintrack/
-- Rewrite /poc/fintrack/(.*) → /fintrack/index.html
-
-## Deployment Status
-| Component | Status | URL/Value |
-|-----------|--------|-----------|
-| AWS CloudFormation | ✅ Deployed | stack: fintrack-ai-poc |
-| SSM Parameters | ✅ Configured | /fintrack/gemini_api_key |
-| Railway fintrack-genai | ✅ Deployed | https://fintrack-genai.railway.app |
-| Railway fintrack-api | ✅ Deployed | https://fintrack-api.railway.app |
-| Lambda GENAI_SERVICE_URL | ✅ Updated | https://fintrack-genai.railway.app |
-| Frontend Built | ✅ Done | frontend/dist/ with base=/poc/fintrack/ |
-| Portfolio Rewrite Rules | ✅ Done | /poc/fintrack/(.*) → /fintrack/index.html |
-| build:fintrack Script | ✅ Fixed | Clone + npm ci + copy to dist/fintrack/ |
-| GitHub Push | ✅ Done | Commit e720406 |
-| Vercel Build | ⏳ In Progress | build:fintrack running on Vercel |
-
-## Next Steps (Continue on another session)
-1. Check Vercel deployment status at https://vercel.com/angelo-coelhos-projects/angelorscoelho-dev
-2. Wait for build completion (may take 2-3 minutes due to git clone + npm ci)
-3. Verify FinTrack loads at https://angelorscoelho.dev/poc/fintrack/
-4. Test end-to-end with sample transactions
-5. Configure GitHub Actions CI/CD secrets
-6. Run E2E smoke test: `make test-e2e`
+## Next Steps
+1. Review unstaged diffs on `feat/us-017-us-018-high-risk-card`; run `npm run build` in `frontend/`.
+2. Commit with message referencing GitHub issues #61 / #62 (US-017, US-018).
+3. Push branch and open PR toward `main`.
+4. Reconcile or delete old local branch `feat/improve-charts` if no longer needed.
 
 ## Known Issues
-- Vercel build can take 2-3 minutes due to cloning repo and npm ci
-- Build cache may need to be cleared if issues persist
-- Current URL still shows portfolio (waiting for new deployment)
+- Prior session did not run **git workflow** (fetch, branch from `main`) or **memory-bank updates** at task start — corrected per `.cursorrules` + `.github/copilot-instructions.md`.
+
+## Repo workflow (non-negotiable for agents)
+- Read `.github/copilot-instructions.md` and obey **git fetch / branch from up-to-date `main`** for feature work.
+- `.cursorrules` points agents to those instructions — treat as mandatory.

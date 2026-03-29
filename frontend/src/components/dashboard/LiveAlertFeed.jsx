@@ -1,175 +1,277 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useLanguage } from '@/i18n/LanguageContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { TransactionDetailModal } from '@/components/transactions/TransactionDetailModal'
 import { useAlertStream } from '@/hooks/useAlertStream'
-import { formatDistanceToNow, parseISO } from 'date-fns'
-import { pt } from 'date-fns/locale'
 import { toast } from 'sonner'
-import { Radio, Info } from 'lucide-react'
+import { Radio, Info, CheckCircle } from 'lucide-react'
 import { safeFetch } from '@/lib/api'
-import { formatSourceDestination } from '@/lib/formatTransaction'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
-import { XAI_THRESHOLD, SAR_THRESHOLD } from '@/lib/constants'
+import { XAI_THRESHOLD, SAR_THRESHOLD, API_MAX_LIMIT } from '@/lib/constants'
+import { cn } from '@/lib/utils'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 const MAX_ALERTS = 20
 
-function ScoreBadge({ score }) {
-  const s = Number(score || 0)
-  const isCritical = s > SAR_THRESHOLD
-  const isWarning = s >= XAI_THRESHOLD
-  const variant = isCritical ? 'destructive' : isWarning ? 'warning' : 'outline'
+const EXCLUDED_STATUSES = new Set(['NORMAL', 'RESOLVED', 'FALSE_POSITIVE'])
+
+function isHighRiskPending(alert) {
+  if (!alert?.transaction_id) return false
+  const st = alert.status
+  if (EXCLUDED_STATUSES.has(st)) return false
+  if (st !== 'PENDING_REVIEW') return false
+  const score = Number(alert.anomaly_score ?? 0)
+  return score >= XAI_THRESHOLD
+}
+
+function tsValue(timestamp) {
+  if (!timestamp) return 0
+  try {
+    const d = typeof timestamp === 'string' ? new Date(timestamp) : new Date(timestamp)
+    const n = d.getTime()
+    return Number.isNaN(n) ? 0 : n
+  } catch {
+    return 0
+  }
+}
+
+function sortAlerts(a, b) {
+  const sa = Number(a.anomaly_score ?? 0)
+  const sb = Number(b.anomaly_score ?? 0)
+  if (sb !== sa) return sb - sa
+  return tsValue(b.timestamp) - tsValue(a.timestamp)
+}
+
+function abbreviateTxId(id) {
+  if (!id || typeof id !== 'string') return '—'
+  if (id.length <= 14) return id
+  return `${id.slice(0, 8)}…${id.slice(-4)}`
+}
+
+function isCriticalTier(score) {
+  return Number(score ?? 0) >= SAR_THRESHOLD
+}
+
+function isSuspiciousTier(score) {
+  const s = Number(score ?? 0)
+  return s >= XAI_THRESHOLD && s < SAR_THRESHOLD
+}
+
+function TierScoreBadge({ score }) {
+  const s = Number(score ?? 0)
+  if (isCriticalTier(s)) {
+    return (
+      <Badge variant="destructive" className="shrink-0 font-mono text-xs">
+        {(s * 100).toFixed(1)}%
+      </Badge>
+    )
+  }
   return (
     <Badge
-      variant={variant}
-      className={`font-mono text-xs ${isCritical ? 'animate-pulse' : ''}`}
+      variant="outline"
+      className="shrink-0 border-transparent bg-[hsl(var(--high-risk-suspicious))] font-mono text-xs text-[hsl(var(--high-risk-suspicious-foreground))]"
     >
       {(s * 100).toFixed(1)}%
     </Badge>
   )
 }
 
-function timeAgo(timestamp) {
-  if (!timestamp) return ''
-  try {
-    const d = typeof timestamp === 'string' ? parseISO(timestamp) : new Date(timestamp)
-    return formatDistanceToNow(d, { addSuffix: true, locale: pt })
-  } catch {
-    return ''
-  }
-}
-
 export function LiveAlertFeed() {
   const { t } = useLanguage()
   const [alerts, setAlerts] = useState([])
   const [sseConnected, setSseConnected] = useState(false)
+  const [selectedTx, setSelectedTx] = useState(null)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [showCritical, setShowCritical] = useState(true)
+  const [showSuspicious, setShowSuspicious] = useState(true)
   const listRef = useRef(null)
-  const navigate = useNavigate()
   const seenIds = useRef(new Set())
 
-  // Seed with recent pending alerts
   const { data: seedData, isLoading } = useQuery({
     queryKey: ['feed-alerts'],
     queryFn: async () => {
-      const res = await safeFetch(`${API_BASE}/api/alerts?status=PENDING_REVIEW&limit=5`)
+      const res = await safeFetch(`${API_BASE}/api/alerts?status=PENDING_REVIEW&limit=${API_MAX_LIMIT}`)
       return res.json()
     },
     refetchInterval: 8000,
   })
 
-  // Initialize from seed data
   useEffect(() => {
-    if (seedData?.items) {
-      setAlerts(prev => {
-        const existing = new Set(prev.map(a => a.transaction_id))
-        const newItems = seedData.items.filter(a => !existing.has(a.transaction_id))
-        if (newItems.length === 0) return prev
-        // Track seen IDs
-        for (const item of newItems) seenIds.current.add(item.transaction_id)
-        return [...newItems, ...prev].slice(0, MAX_ALERTS)
-      })
-    }
+    if (!seedData?.items) return
+    setAlerts((prev) => {
+      const byId = new Map(prev.map((a) => [a.transaction_id, a]))
+      for (const item of seedData.items) {
+        if (!isHighRiskPending(item)) continue
+        byId.set(item.transaction_id, item)
+        seenIds.current.add(item.transaction_id)
+      }
+      return Array.from(byId.values()).sort(sortAlerts)
+    })
   }, [seedData])
 
-  // Handle new SSE alerts
   const handleNewAlert = useCallback((alert) => {
-    if (!alert?.transaction_id) return
-    // Skip duplicates
+    if (!isHighRiskPending(alert)) return
     if (seenIds.current.has(alert.transaction_id)) return
     seenIds.current.add(alert.transaction_id)
 
-    setAlerts(prev => [alert, ...prev].slice(0, MAX_ALERTS))
+    setAlerts((prev) => {
+      const next = [alert, ...prev.filter((a) => a.transaction_id !== alert.transaction_id)]
+      next.sort(sortAlerts)
+      return next.slice(0, MAX_ALERTS)
+    })
 
-    // Critical alert toast
-    const score = Number(alert.anomaly_score || 0)
-    if (score > SAR_THRESHOLD) {
-      const amount = Number(alert.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })
-      toast.error(`Critical Alert: €${amount}`, { duration: 8000 })
+    const score = Number(alert.anomaly_score ?? 0)
+    if (score >= SAR_THRESHOLD) {
+      const amount = Number(alert.amount ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })
+      toast.error(t('dashboard.criticalAlert', { amount }), { duration: 8000 })
     }
 
-    // Scroll to top
     if (listRef.current) {
       listRef.current.scrollTo({ top: 0, behavior: 'smooth' })
     }
-  }, [])
+  }, [t])
 
   useAlertStream(handleNewAlert, false, setSseConnected)
 
+  const eligible = useMemo(
+    () => alerts.filter(isHighRiskPending).sort(sortAlerts),
+    [alerts]
+  )
+
+  const visible = useMemo(() => {
+    return eligible.filter((a) => {
+      const s = Number(a.anomaly_score ?? 0)
+      if (isCriticalTier(s)) return showCritical
+      if (isSuspiciousTier(s)) return showSuspicious
+      return false
+    })
+  }, [eligible, showCritical, showSuspicious])
+
+  const displayList = useMemo(() => visible.slice(0, MAX_ALERTS), [visible])
+
+  const chipClass = (active) =>
+    cn(
+      'h-8 shrink-0 gap-1 rounded-md border px-2.5 text-xs font-medium transition-opacity',
+      active
+        ? 'border-[hsl(var(--border))] bg-[hsl(var(--card))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))]'
+        : 'border-dashed border-[hsl(var(--border))] bg-transparent text-[hsl(var(--muted-foreground))] opacity-50 hover:opacity-70'
+    )
+
+  const openDetail = useCallback((tx) => {
+    setSelectedTx(tx)
+    setModalOpen(true)
+  }, [])
+
   return (
     <TooltipProvider delayDuration={400}>
-      <Card className="flex flex-col">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <Radio className="h-4 w-4 text-muted-foreground" />
-              {t('dashboard.highRiskTransactions')}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help shrink-0" />
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-xs">
-                  <p>{t('dashboard.highRiskTooltip')}</p>
-                </TooltipContent>
-              </Tooltip>
+      <Card
+        className={cn(
+          'flex flex-col',
+          '[--high-risk-suspicious:25_95%_47%] [--high-risk-suspicious-foreground:0_0%_100%]',
+          'dark:[--high-risk-suspicious:32_92%_52%] dark:[--high-risk-suspicious-foreground:0_0%_98%]'
+        )}
+      >
+        <CardHeader className="space-y-3 pb-2">
+          <CardTitle className="flex flex-col gap-2 text-sm font-semibold sm:flex-row sm:items-start sm:justify-between">
+            <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="flex items-center gap-2">
+                <Radio className="h-4 w-4 shrink-0 text-[hsl(var(--muted-foreground))]" />
+                {t('dashboard.highRiskTransactions')}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-[hsl(var(--muted-foreground))]" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs">
+                    <p>{t('dashboard.highRiskTooltip')}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </span>
+              <span className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--muted))] px-2 py-0.5 font-mono text-xs text-[hsl(var(--muted-foreground))] tabular-nums">
+                {visible.length}
+              </span>
             </span>
             {sseConnected && (
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+              <span className="relative flex h-2.5 w-2.5 shrink-0 self-end sm:self-start">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500" />
               </span>
             )}
           </CardTitle>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className={chipClass(showCritical)}
+              aria-pressed={showCritical}
+              onClick={() => setShowCritical((v) => !v)}
+            >
+              {t('dashboard.filterCriticalChip')}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className={chipClass(showSuspicious)}
+              aria-pressed={showSuspicious}
+              onClick={() => setShowSuspicious((v) => !v)}
+            >
+              {t('dashboard.filterSuspiciousChip')}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <div
-            ref={listRef}
-            className="h-[320px] overflow-y-auto space-y-2 pr-1"
-          >
+          <div ref={listRef} className="h-[320px] space-y-2 overflow-y-auto pr-1">
             {isLoading && alerts.length === 0 ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <Skeleton key={i} className="h-16 w-full" />
               ))
-            ) : alerts.length === 0 ? (
-              <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-                {t('dashboard.noRecentAlerts')}
+            ) : eligible.length === 0 ? (
+              <div className="flex h-full flex-col items-center justify-center gap-2 px-2 text-center text-sm text-[hsl(var(--muted-foreground))]">
+                <CheckCircle className="h-8 w-8 text-[hsl(142_76%_36%)] dark:text-[hsl(142_71%_45%)]" />
+                <p>{t('dashboard.highRiskEmpty')}</p>
+              </div>
+            ) : displayList.length === 0 ? (
+              <div className="flex h-full items-center justify-center px-2 text-center text-sm text-[hsl(var(--muted-foreground))]">
+                {t('dashboard.highRiskFilterNoMatch')}
               </div>
             ) : (
-              alerts.map((alert) => {
-                const score = Number(alert.anomaly_score || 0)
-                const isCritical = score > SAR_THRESHOLD
+              displayList.map((alert) => {
+                const s = Number(alert.anomaly_score ?? 0)
+                const critical = isCriticalTier(s)
                 return (
                   <div
                     key={alert.transaction_id}
-                    className={`flex items-center gap-3 p-3 rounded-lg border bg-white dark:bg-slate-900 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 ${
-                      isCritical ? 'border-l-4 border-l-red-500' : ''
-                    }`}
+                    className={cn(
+                      'flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-3 transition-colors hover:bg-[hsl(var(--accent))]',
+                      critical && 'border-l-4 border-l-[hsl(var(--destructive))]'
+                    )}
                   >
-                    <ScoreBadge score={alert.anomaly_score} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-slate-700 dark:text-slate-300 truncate" title={formatSourceDestination(alert)}>
-                        {formatSourceDestination(alert) || alert.transaction_id?.substring(0, 12)}
-                      </p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                        <span className="font-semibold text-slate-800 dark:text-slate-200">
-                          €{Number(alert.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                        </span>
-                        <span>·</span>
-                        <span>{timeAgo(alert.timestamp)}</span>
-                      </div>
-                    </div>
+                    <span
+                      className="min-w-0 flex-1 font-mono text-xs text-[hsl(var(--foreground))]"
+                      title={alert.transaction_id}
+                    >
+                      {abbreviateTxId(alert.transaction_id)}
+                    </span>
+                    <span className="shrink-0 text-xs font-semibold tabular-nums text-[hsl(var(--foreground))]">
+                      €
+                      {Number(alert.amount ?? 0).toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                      })}
+                    </span>
+                    <TierScoreBadge score={alert.anomaly_score} />
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-xs shrink-0 h-7"
+                          className="h-7 shrink-0 text-xs text-[hsl(var(--foreground))]"
                           aria-label={t('dashboard.viewDetails')}
-                          onClick={() => navigate('/alerts', { state: { alertId: alert.transaction_id } })}
+                          onClick={() => openDetail(alert)}
                         >
                           {t('actions.view')}
                         </Button>
@@ -185,6 +287,15 @@ export function LiveAlertFeed() {
           </div>
         </CardContent>
       </Card>
+
+      <TransactionDetailModal
+        transaction={selectedTx}
+        open={modalOpen}
+        onOpenChange={(open) => {
+          setModalOpen(open)
+          if (!open) setSelectedTx(null)
+        }}
+      />
     </TooltipProvider>
   )
 }
