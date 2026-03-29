@@ -15,6 +15,8 @@ export const THRESHOLDS = __THRESHOLDS__
 // ── Score thresholds ─────────────────────────────────────────────────────────
 export const XAI_THRESHOLD = THRESHOLDS.score.xai          // 0.70
 export const SAR_THRESHOLD = THRESHOLDS.score.sar          // 0.90
+/** Minimum anomaly score (0–1) to show / request on-demand AI analysis in the transaction modal. */
+export const AI_ANALYSIS_MIN_SCORE = Number(THRESHOLDS.score.ai_analysis_min ?? 0.5)
 
 // ── Risk levels (sorted descending by min for fast classification) ───────────
 const RISK_LEVELS = [...THRESHOLDS.risk_levels].sort((a, b) => b.min - a.min)

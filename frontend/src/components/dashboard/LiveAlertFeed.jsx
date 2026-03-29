@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TransactionDetailModal } from '@/components/transactions/TransactionDetailModal'
 import { useAlertStream } from '@/hooks/useAlertStream'
+import { useTransactionModalUrl } from '@/hooks/useTransactionModalUrl'
 import { toast } from 'sonner'
 import { Radio, Info, CheckCircle } from 'lucide-react'
 import { safeFetch } from '@/lib/api'
@@ -83,8 +84,6 @@ export function LiveAlertFeed() {
   const { t } = useLanguage()
   const [alerts, setAlerts] = useState([])
   const [sseConnected, setSseConnected] = useState(false)
-  const [selectedTx, setSelectedTx] = useState(null)
-  const [modalOpen, setModalOpen] = useState(false)
   const [showCritical, setShowCritical] = useState(true)
   const [showSuspicious, setShowSuspicious] = useState(true)
   const listRef = useRef(null)
@@ -152,6 +151,19 @@ export function LiveAlertFeed() {
 
   const displayList = useMemo(() => visible.slice(0, LIVE_ALERT_FEED_MAX_ITEMS), [visible])
 
+  const findAlertInList = useCallback(
+    (id) => alerts.find((a) => a.transaction_id === id),
+    [alerts]
+  )
+
+  const {
+    selectedTx,
+    modalOpen,
+    openModal,
+    onModalOpenChange,
+    setSelectedTx,
+  } = useTransactionModalUrl({ findInList: findAlertInList })
+
   const chipClass = (active) =>
     cn(
       'h-8 shrink-0 gap-1 rounded-md border px-2.5 text-xs font-medium transition-opacity',
@@ -160,10 +172,12 @@ export function LiveAlertFeed() {
         : 'border-dashed border-[hsl(var(--border))] bg-transparent text-[hsl(var(--muted-foreground))] opacity-50 hover:opacity-70'
     )
 
-  const openDetail = useCallback((tx) => {
-    setSelectedTx(tx)
-    setModalOpen(true)
-  }, [])
+  const openDetail = useCallback(
+    (tx) => {
+      openModal(tx)
+    },
+    [openModal]
+  )
 
   return (
     <TooltipProvider delayDuration={400}>
@@ -290,10 +304,8 @@ export function LiveAlertFeed() {
       <TransactionDetailModal
         transaction={selectedTx}
         open={modalOpen}
-        onOpenChange={(open) => {
-          setModalOpen(open)
-          if (!open) setSelectedTx(null)
-        }}
+        onOpenChange={onModalOpenChange}
+        onTransactionUpdate={setSelectedTx}
       />
     </TooltipProvider>
   )

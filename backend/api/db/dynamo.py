@@ -99,6 +99,16 @@ async def get_alerts_by_status(
         return [], 0
 
 
+async def update_ai_explanation(transaction_id: str, ai_explanation_json: str) -> None:
+    """Persist AI explanation as a JSON string (DynamoDB storage format)."""
+    table = get_table()
+    table.update_item(
+        Key={"transaction_id": transaction_id},
+        UpdateExpression="SET ai_explanation = :x",
+        ExpressionAttributeValues={":x": ai_explanation_json},
+    )
+
+
 async def get_alert_by_id(transaction_id: str) -> Optional[dict]:
     table = get_table()
     try:

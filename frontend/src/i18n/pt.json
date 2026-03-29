@@ -161,6 +161,21 @@
       "financialData": "Dados Financeiros",
       "riskAnalysis": "Análise de Risco",
       "context": "Contexto"
+    },
+    "aiPanel": {
+      "title": "🤖 Análise IA",
+      "belowThreshold": "ℹ️ Pontuação abaixo do limiar de análise IA ({pct}%)",
+      "analyzeCta": "🤖 Analisar com IA",
+      "generating": "A gerar análise...",
+      "retry": "🔄 Tentar novamente",
+      "boundaryError": "⚠️ Não foi possível carregar a análise IA",
+      "riskLabel": "Nível de risco",
+      "risk": {
+        "CRITICAL": "CRÍTICO",
+        "HIGH": "ALTO",
+        "MEDIUM": "MÉDIO",
+        "LOW": "BAIXO"
+      }
     }
   },
   "reports": {

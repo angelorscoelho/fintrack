@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { useTransactionModalUrl } from '@/hooks/useTransactionModalUrl'
 import { useQuery } from '@tanstack/react-query'
 import {
   ArrowLeft,
@@ -81,10 +82,6 @@ export default function TransactionsPage() {
   // --- Pagination ---
   const [currentPage, setCurrentPage] = useState(0)
 
-  // --- Modal state ---
-  const [selectedTx, setSelectedTx] = useState(null)
-  const [modalOpen, setModalOpen] = useState(false)
-
   // --- Debounced search ---
   const debouncedSearch = useDebounce(searchQuery, 300)
 
@@ -101,6 +98,19 @@ export default function TransactionsPage() {
       return Array.isArray(json) ? json : json.alerts || json.items || []
     },
   })
+
+  const findTransactionInList = useCallback(
+    (id) => transactions.find((tx) => tx.transaction_id === id),
+    [transactions]
+  )
+
+  const {
+    selectedTx,
+    modalOpen,
+    openModal,
+    onModalOpenChange,
+    setSelectedTx,
+  } = useTransactionModalUrl({ findInList: findTransactionInList })
 
   // --- Computed: has active filters ---
   const hasActiveFilters =
@@ -214,10 +224,12 @@ export default function TransactionsPage() {
   }, [])
 
   // --- Row click handler ---
-  const handleRowClick = useCallback((tx) => {
-    setSelectedTx(tx)
-    setModalOpen(true)
-  }, [])
+  const handleRowClick = useCallback(
+    (tx) => {
+      openModal(tx)
+    },
+    [openModal]
+  )
 
   // --- Sort icon helper ---
   const SortIcon = ({ field }) => {
@@ -419,7 +431,8 @@ export default function TransactionsPage() {
       <TransactionDetailModal
         transaction={selectedTx}
         open={modalOpen}
-        onOpenChange={setModalOpen}
+        onOpenChange={onModalOpenChange}
+        onTransactionUpdate={setSelectedTx}
       />
     </>
   )
