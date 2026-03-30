@@ -97,8 +97,8 @@ export default function CommandCenter({ setMutateAlerts }) {
         <ErrorState onRetry={() => refetchStats()} />
       )}
 
-      {/* Row 1: KPI Cards — horizontal scroll on mobile, 5-column grid on desktop */}
-      <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-5 md:overflow-visible md:px-0 md:pb-0">
+      {/* Row 1: KPI Cards — compact and uniform */}
+      <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-4 md:overflow-visible md:px-0 md:pb-0">
         <KpiNavigationCard
           title={t('kpi.transactions24h')}
           value={last24h}
@@ -151,17 +151,21 @@ export default function CommandCenter({ setMutateAlerts }) {
           aiContext={{ card: 'avg_score', value: avgScore }}
           aiLabel="Average Anomaly Score"
         />
-        <CategoryChart />
       </div>
 
-      {/* Hourly volume + High Risk feed */}
+      {/* Row 2: Hourly volume + category distribution */}
       <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="min-h-0 min-w-0">
           <VolumeChart />
         </div>
         <div className="min-h-0 min-w-0">
-          <LiveAlertFeed />
+          <CategoryChart />
         </div>
+      </div>
+
+      {/* Row 3: High Risk feed */}
+      <div className="min-h-0 min-w-0">
+        <LiveAlertFeed />
       </div>
 
       {/* Card 12: Geographic alert distribution map */}

@@ -12,7 +12,7 @@ function readStoredOpen() {
   } catch {
     // ignore
   }
-  return false
+  return true
 }
 
 export function SidebarProvider({ children }) {

@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -54,9 +54,7 @@ function groupByCategory(items, t) {
     .sort((a, b) => b.count - a.count)
 }
 
-function CustomTooltip({ active, payload, t }) {
-  if (!active || !payload?.length) return null
-  const data = payload[0]?.payload
+function CustomTooltip({ data, t }) {
   if (!data) return null
   const pct = data.percentage.toFixed(1)
   return (
@@ -76,6 +74,14 @@ function CustomTooltip({ active, payload, t }) {
 }
 
 export function CategoryChart() {
+  const chartWrapRef = useRef(null)
+  const [tooltipState, setTooltipState] = useState({
+    visible: false,
+    x: 0,
+    y: 0,
+    data: null,
+  })
+
   const navigate = useNavigate()
   const { t } = useLanguage()
 
@@ -102,8 +108,39 @@ export function CategoryChart() {
     }
   }
 
+  const updateTooltipPosition = (active, pointer) => {
+    if (!active || !chartWrapRef.current) return
+    const rect = chartWrapRef.current.getBoundingClientRect()
+    const x = pointer?.chartX ?? pointer?.offsetX ?? pointer?.nativeEvent?.offsetX ?? 0
+    const y = pointer?.chartY ?? pointer?.offsetY ?? pointer?.nativeEvent?.offsetY ?? 0
+    setTooltipState({
+      visible: true,
+      x: Math.max(8, Math.min(x + 12, rect.width - 190)),
+      y: Math.max(8, Math.min(y + 12, rect.height - 90)),
+      data: active,
+    })
+  }
+
+  const handleMouseMove = (state) => {
+    const active = state?.activePayload?.[0]?.payload
+    updateTooltipPosition(active, state)
+  }
+
+  const handlePieMouseEnter = (entry, _index, event) => {
+    updateTooltipPosition(entry?.payload || entry, event)
+  }
+
+  const handlePieMouseMove = (entry, _index, event) => {
+    updateTooltipPosition(entry?.payload || entry, event)
+  }
+
+  const handleMouseLeave = () => {
+    setTooltipState((prev) => ({ ...prev, visible: false }))
+  }
+
   return (
     <Card
+      data-testid="category-chart-card"
       className={cn(
         'relative h-full min-w-[160px] snap-start shrink-0 transition-shadow duration-200 md:min-w-0 md:shrink',
         'hover:shadow-lg',
@@ -136,9 +173,9 @@ export function CategoryChart() {
           </div>
         ) : (
           <div className="flex min-h-0 flex-1 flex-col justify-center">
-            <div className="h-[140px] w-full">
-              <ResponsiveContainer width="100%" height={140}>
-                <PieChart>
+            <div ref={chartWrapRef} className="relative h-[200px] w-full" data-testid="category-chart-wrap">
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}>
                   <Pie
                     data={chartData}
                     dataKey="count"
@@ -151,14 +188,25 @@ export function CategoryChart() {
                     cursor="pointer"
                     isAnimationActive={false}
                     onClick={handleClick}
+                    onMouseEnter={handlePieMouseEnter}
+                    onMouseMove={handlePieMouseMove}
+                    onMouseLeave={handleMouseLeave}
                   >
                     {chartData.map((entry) => (
                       <Cell key={entry.category} fill={CATEGORY_COLORS[entry.category] || '#94a3b8'} />
                     ))}
                   </Pie>
-                  <Tooltip content={<CustomTooltip t={t} />} />
                 </PieChart>
               </ResponsiveContainer>
+              {tooltipState.visible && tooltipState.data ? (
+                <div
+                  data-testid="category-tooltip"
+                  className="pointer-events-none absolute z-10 rounded-lg border border-border bg-popover p-3 text-sm text-popover-foreground shadow-md"
+                  style={{ left: `${tooltipState.x}px`, top: `${tooltipState.y}px` }}
+                >
+                  <CustomTooltip data={tooltipState.data} t={t} />
+                </div>
+              ) : null}
             </div>
           </div>
         )}
