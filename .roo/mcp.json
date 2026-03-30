@@ -33,7 +33,7 @@
         "@e2b/mcp-server"
       ],
       "env": {
-        "E2B_API_KEY": "e2b_c1febdc56e0fb55540f7a2ad2213cb49bb880f1f"
+        "E2B_API_KEY": "${env:E2B_API_KEY}"
       }
     },
     "sentry": {
