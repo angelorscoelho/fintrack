@@ -24,6 +24,7 @@ const MerchantIndex = lazy(() => import('@/pages/MerchantIndex'))
 const MerchantProfile = lazy(() => import('@/pages/MerchantProfile'))
 const ReportsPage = lazy(() => import('@/pages/ReportsPage'))
 const TransactionsPage = lazy(() => import('@/pages/TransactionsPage'))
+const TransactionDetailPage = lazy(() => import('@/pages/TransactionDetailPage'))
 const BudgetPage = lazy(() => import('@/pages/BudgetPage'))
 
 function PageFallback() {
@@ -136,6 +137,7 @@ export default function App() {
               />
               <Route path="alerts" element={<AlertQueue isDark={isDark} />} />
               <Route path="transactions" element={<TransactionsPage />} />
+              <Route path="transactions/:id" element={<TransactionDetailPage />} />
               <Route path="merchants" element={<MerchantIndex />} />
               <Route path="merchants/:nif" element={<MerchantProfile />} />
               <Route path="reports" element={<ReportsPage />} />

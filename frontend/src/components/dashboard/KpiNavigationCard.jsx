@@ -25,6 +25,7 @@ export function KpiNavigationCard({
   route,
   aiContext,
   aiLabel,
+  aiPrompt,
 }) {
   const navigate = useNavigate()
   const variantClass = VARIANT_STYLES[variant] || VARIANT_STYLES.default
@@ -61,7 +62,7 @@ export function KpiNavigationCard({
       onKeyDown={route ? handleCardKeyDown : undefined}
     >
       {aiContext != null && aiLabel && !loading ? (
-        <CardAIButton context={aiContext} label={aiLabel} />
+        <CardAIButton context={aiContext} label={aiLabel} prompt={aiPrompt} />
       ) : null}
       <CardContent className="p-3 md:p-3.5 flex flex-col h-full">
         <div className="flex items-center justify-between mb-2">

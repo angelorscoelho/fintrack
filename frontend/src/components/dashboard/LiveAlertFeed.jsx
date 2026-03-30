@@ -4,9 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { TransactionDetailModal } from '@/components/transactions/TransactionDetailModal'
 import { useAlertStream } from '@/hooks/useAlertStream'
-import { useTransactionModalUrl } from '@/hooks/useTransactionModalUrl'
 import { useTransactionData } from '@/hooks/useTransactionData'
 import { toast } from 'sonner'
 import { Radio, Info, CheckCircle } from 'lucide-react'
@@ -14,6 +12,8 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/comp
 import { XAI_THRESHOLD, SAR_THRESHOLD, LIVE_ALERT_FEED_MAX_ITEMS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { CardAIButton } from '@/components/ai-sidebar/CardAIButton'
+import { useNavigate } from 'react-router-dom'
+import { useSidebar } from '@/contexts/SidebarContext'
 
 const EXCLUDED_STATUSES = new Set(['NORMAL', 'RESOLVED', 'FALSE_POSITIVE'])
 
@@ -80,6 +80,8 @@ function TierScoreBadge({ score }) {
 
 export function LiveAlertFeed() {
   const { t } = useLanguage()
+  const navigate = useNavigate()
+  const { openWithPrompt } = useSidebar()
   const [alerts, setAlerts] = useState([])
   const [sseConnected, setSseConnected] = useState(false)
   const [showCritical, setShowCritical] = useState(true)
@@ -143,19 +145,6 @@ export function LiveAlertFeed() {
 
   const displayList = useMemo(() => visible.slice(0, LIVE_ALERT_FEED_MAX_ITEMS), [visible])
 
-  const findAlertInList = useCallback(
-    (id) => alerts.find((a) => a.transaction_id === id),
-    [alerts]
-  )
-
-  const {
-    selectedTx,
-    modalOpen,
-    openModal,
-    onModalOpenChange,
-    setSelectedTx,
-  } = useTransactionModalUrl({ findInList: findAlertInList })
-
   const highRiskAiContext = useMemo(
     () => ({
       card: 'high_risk_alerts',
@@ -178,12 +167,14 @@ export function LiveAlertFeed() {
         : 'border-dashed border-[hsl(var(--border))] bg-transparent text-[hsl(var(--muted-foreground))] opacity-50 hover:opacity-70'
     )
 
-  const openDetail = useCallback(
-    (tx) => {
-      openModal(tx)
-    },
-    [openModal]
-  )
+  const openDetail = useCallback((tx) => {
+    navigate(`/transactions/${encodeURIComponent(tx.transaction_id)}`)
+  }, [navigate])
+
+  const analyzeTx = useCallback((tx) => {
+    const prompt = `Analisa esta transacao de risco elevado: ID ${tx.transaction_id}, Valor ${Number(tx.amount ?? 0).toFixed(2)}, Score de anomalia ${(Number(tx.anomaly_score ?? 0) * 100).toFixed(1)}%. Quais os principais red flags? Que padrao de fraude pode explicar este score?`
+    openWithPrompt({ itemType: 'high_risk_transaction', txId: tx.transaction_id }, prompt)
+  }, [openWithPrompt])
 
   return (
     <TooltipProvider delayDuration={400}>
@@ -194,7 +185,11 @@ export function LiveAlertFeed() {
           'dark:[--high-risk-suspicious:32_92%_52%] dark:[--high-risk-suspicious-foreground:0_0%_98%]'
         )}
       >
-        <CardAIButton context={highRiskAiContext} label="High Risk Transactions" />
+        <CardAIButton
+          context={highRiskAiContext}
+          label="High Risk Transactions"
+          prompt={`Analisa este indicador: ${t('dashboard.highRiskTransactions')} = ${visible.length}. E um valor preocupante? O que pode estar a causar este resultado?`}
+        />
         <CardHeader className="space-y-3 pb-2">
           <CardTitle className="flex flex-col gap-2 text-sm font-semibold sm:flex-row sm:items-start sm:justify-between">
             <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
@@ -284,6 +279,12 @@ export function LiveAlertFeed() {
                       })}
                     </span>
                     <TierScoreBadge score={alert.anomaly_score} />
+                    <CardAIButton
+                      absolute={false}
+                      context={{ itemType: 'high_risk_transaction', txId: alert.transaction_id }}
+                      label="Analisar com AI"
+                      prompt={`Analisa esta transacao de risco elevado: ID ${alert.transaction_id}, Valor ${Number(alert.amount ?? 0).toFixed(2)}, Score de anomalia ${(Number(alert.anomaly_score ?? 0) * 100).toFixed(1)}%. Quais os principais red flags? Que padrao de fraude pode explicar este score?`}
+                    />
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
@@ -307,13 +308,6 @@ export function LiveAlertFeed() {
           </div>
         </CardContent>
       </Card>
-
-      <TransactionDetailModal
-        transaction={selectedTx}
-        open={modalOpen}
-        onOpenChange={onModalOpenChange}
-        onTransactionUpdate={setSelectedTx}
-      />
     </TooltipProvider>
   )
 }

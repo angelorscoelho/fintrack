@@ -18,6 +18,7 @@ function readStoredOpen() {
 export function SidebarProvider({ children }) {
   const [isOpen, setIsOpen] = useState(readStoredOpen)
   const [currentContext, setCurrentContext] = useState(null)
+  const [queuedPrompt, setQueuedPrompt] = useState(null)
 
   const toggle = useCallback(() => {
     setIsOpen((prev) => {
@@ -35,9 +36,30 @@ export function SidebarProvider({ children }) {
     setCurrentContext(ctx ?? null)
   }, [])
 
+  const openWithPrompt = useCallback((ctx, prompt) => {
+    setCurrentContext(ctx ?? null)
+    setQueuedPrompt(typeof prompt === 'string' ? prompt : null)
+    setIsOpen((prev) => {
+      if (!prev) {
+        try {
+          localStorage.setItem(STORAGE_KEY_OPEN, 'true')
+        } catch {
+          // ignore
+        }
+      }
+      return true
+    })
+  }, [])
+
+  const consumeQueuedPrompt = useCallback(() => {
+    const next = queuedPrompt
+    setQueuedPrompt(null)
+    return next
+  }, [queuedPrompt])
+
   const value = useMemo(
-    () => ({ isOpen, toggle, setContext, currentContext }),
-    [isOpen, toggle, setContext, currentContext],
+    () => ({ isOpen, toggle, setContext, currentContext, openWithPrompt, consumeQueuedPrompt }),
+    [isOpen, toggle, setContext, currentContext, openWithPrompt, consumeQueuedPrompt],
   )
 
   return (

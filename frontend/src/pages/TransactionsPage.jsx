@@ -1,6 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import { useTransactionModalUrl } from '@/hooks/useTransactionModalUrl'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTransactionData } from '@/hooks/useTransactionData'
 import {
   ArrowLeft,
@@ -19,7 +18,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useDebounce } from '@/hooks/useDebounce'
 import { TransactionFilters } from '@/components/transactions/TransactionFilters'
-import { TransactionDetailModal } from '@/components/transactions/TransactionDetailModal'
 import { TableSkeleton } from '@/components/feedback/LoadingSkeleton'
 import { EmptyState } from '@/components/feedback/EmptyState'
 import { ErrorState } from '@/components/feedback/ErrorState'
@@ -60,6 +58,7 @@ function parseMinScoreParam(raw) {
 
 export default function TransactionsPage() {
   const { t } = useLanguage()
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const initialCategory = searchParams.get('category') || 'all'
   const periodParam = searchParams.get('period')
@@ -95,19 +94,6 @@ export default function TransactionsPage() {
   // --- Data fetching ---
   const { data, isLoading, error, refetch } = useTransactionData()
   const transactions = data?.alerts || []
-
-  const findTransactionInList = useCallback(
-    (id) => transactions.find((tx) => tx.transaction_id === id),
-    [transactions]
-  )
-
-  const {
-    selectedTx,
-    modalOpen,
-    openModal,
-    onModalOpenChange,
-    setSelectedTx,
-  } = useTransactionModalUrl({ findInList: findTransactionInList })
 
   // --- Computed: has active filters ---
   const hasActiveFilters =
@@ -235,9 +221,9 @@ export default function TransactionsPage() {
   // --- Row click handler ---
   const handleRowClick = useCallback(
     (tx) => {
-      openModal(tx)
+      navigate(`/transactions/${encodeURIComponent(tx.transaction_id)}`)
     },
-    [openModal]
+    [navigate]
   )
 
   // --- Sort icon helper ---
@@ -436,13 +422,6 @@ export default function TransactionsPage() {
         </CardContent>
       </Card>
 
-      {/* Transaction detail modal */}
-      <TransactionDetailModal
-        transaction={selectedTx}
-        open={modalOpen}
-        onOpenChange={onModalOpenChange}
-        onTransactionUpdate={setSelectedTx}
-      />
     </>
   )
 }

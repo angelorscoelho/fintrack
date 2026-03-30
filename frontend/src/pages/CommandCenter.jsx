@@ -110,6 +110,7 @@ export default function CommandCenter({ setMutateAlerts }) {
           route="/transactions?period=24h"
           aiContext={{ card: 'transactions_24h', value: last24h, period: 'last 24h' }}
           aiLabel="Transactions (24h)"
+          aiPrompt={`Analisa este indicador: ${t('kpi.transactions24h')} = ${last24h}. E um valor preocupante? O que pode estar a causar este resultado?`}
         />
         <KpiNavigationCard
           title={t('kpi.fraudRate')}
@@ -122,6 +123,7 @@ export default function CommandCenter({ setMutateAlerts }) {
           route="/transactions?status=CONFIRMED_FRAUD"
           aiContext={{ card: 'fraud_rate', value: fraudRateDisplay, period: 'last 24h' }}
           aiLabel="Fraud Rate"
+          aiPrompt={`Analisa este indicador: ${t('kpi.fraudRate')} = ${fraudRateDisplay}. E um valor preocupante? O que pode estar a causar este resultado?`}
         />
         <KpiNavigationCard
           title={t('kpi.criticalUnreviewed')}
@@ -138,6 +140,7 @@ export default function CommandCenter({ setMutateAlerts }) {
             filter: 'score>90 & PENDING_REVIEW',
           }}
           aiLabel="Critical Unreviewed"
+          aiPrompt={`Analisa este indicador: ${t('kpi.criticalUnreviewed')} = ${critical}. E um valor preocupante? O que pode estar a causar este resultado?`}
         />
         <KpiNavigationCard
           title={t('kpi.avgScore')}
@@ -150,6 +153,7 @@ export default function CommandCenter({ setMutateAlerts }) {
           route="/alerts"
           aiContext={{ card: 'avg_score', value: avgScore }}
           aiLabel="Average Anomaly Score"
+          aiPrompt={`Analisa este indicador: ${t('kpi.avgScore')} = ${avgScoreDisplay}. E um valor preocupante? O que pode estar a causar este resultado?`}
         />
       </div>
 
