@@ -10,6 +10,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # absolute imports like "from api.db.dynamo import ..." resolve correctly
 COPY backend/api/ api/
 
+# Copy shared constants module so "from shared.project_constants import ..."
+# resolves correctly inside the container
+COPY shared/ shared/
+
 # Railway assigns $PORT dynamically; default to 8000 for local dev
 ENV PORT=8000
 
