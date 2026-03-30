@@ -2,19 +2,16 @@ import { useMemo, useState, useLayoutEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import L from 'leaflet'
 import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Globe, AlertTriangle } from 'lucide-react'
-import { safeFetch } from '@/lib/api'
-import { API_MAX_LIMIT, SAR_THRESHOLD, XAI_THRESHOLD } from '@/lib/constants'
+import { useTransactionData } from '@/hooks/useTransactionData'
+import { SAR_THRESHOLD, XAI_THRESHOLD } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/i18n/LanguageContext'
-
-const API_BASE = import.meta.env.VITE_API_URL || ''
 
 /**
  * ISO 3166-1 alpha-2 → [lat, lng] approximate centroids (WGS84).
@@ -288,19 +285,12 @@ export function GeoMap() {
     normal: true,
   })
 
-  const { data: rawData, isLoading, isError, refetch } = useQuery({
-    queryKey: ['geo-alerts'],
-    queryFn: async () => {
-      const res = await safeFetch(`${API_BASE}/api/alerts?limit=${API_MAX_LIMIT}`)
-      return res.json()
-    },
-    refetchInterval: 30000,
-  })
+  const { data, isLoading, error, refetch } = useTransactionData()
 
   const arcGroups = useMemo(() => {
-    const items = rawData?.items || []
+    const items = data?.alerts || []
     return buildArcGroups(items)
-  }, [rawData])
+  }, [data])
 
   const hasData = arcGroups.length > 0
 
@@ -334,7 +324,7 @@ export function GeoMap() {
           <div className="flex flex-col items-center justify-center h-[280px] rounded-lg bg-muted/30">
             <p className="text-sm text-muted-foreground">{t('dashboard.loadingMap')}</p>
           </div>
-        ) : isError ? (
+        ) : error ? (
           <div className="flex flex-col items-center justify-center h-[280px] gap-2">
             <AlertTriangle className="h-6 w-6 text-destructive" />
             <p className="text-sm text-muted-foreground">{t('feedback.errorLoading')}</p>

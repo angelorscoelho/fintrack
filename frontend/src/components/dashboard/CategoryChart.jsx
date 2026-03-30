@@ -1,18 +1,14 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { PieChartIcon, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { safeFetch } from '@/lib/api'
-import { API_MAX_LIMIT } from '@/lib/constants'
+import { useTransactionData } from '@/hooks/useTransactionData'
 import { useLanguage } from '@/i18n/LanguageContext'
 import { CardAIButton } from '@/components/ai-sidebar/CardAIButton'
-
-const API_BASE = import.meta.env.VITE_API_URL || ''
 
 const CATEGORY_COLORS = {
   retail: '#3b82f6',
@@ -83,19 +79,12 @@ export function CategoryChart() {
   const navigate = useNavigate()
   const { t } = useLanguage()
 
-  const { data: rawData, isLoading, isError, refetch } = useQuery({
-    queryKey: ['alerts-category'],
-    queryFn: async () => {
-      const res = await safeFetch(`${API_BASE}/api/alerts?limit=${API_MAX_LIMIT}`)
-      return res.json()
-    },
-    refetchInterval: 30000,
-  })
+  const { data, isLoading, error, refetch } = useTransactionData()
 
   const chartData = useMemo(() => {
-    const items = rawData?.items || []
+    const items = data?.alerts || []
     return groupByCategory(items, t)
-  }, [rawData, t])
+  }, [data, t])
 
   const hasData = chartData.length > 0
 
@@ -133,7 +122,7 @@ export function CategoryChart() {
           <div className="flex flex-1 flex-col justify-center">
             <Skeleton className="mx-auto aspect-square w-[min(100%,7.5rem)] rounded-full" />
           </div>
-        ) : isError ? (
+        ) : error ? (
           <div className="flex min-h-[132px] flex-col items-center justify-center gap-2 py-2">
             <AlertTriangle className="h-6 w-6 text-destructive" />
             <p className="text-center text-xs text-muted-foreground">{t('feedback.errorLoading')}</p>

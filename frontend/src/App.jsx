@@ -14,6 +14,7 @@ import { useDarkMode } from '@/hooks/useDarkMode'
 import { useSidebar } from '@/contexts/SidebarContext'
 import { AISidebar, AISidebarFab } from '@/components/ai-sidebar/AISidebar'
 import { cn } from '@/lib/utils'
+import { useTransactionData } from '@/hooks/useTransactionData'
 import { Loader2 } from 'lucide-react'
 
 // Lazy-loaded pages
@@ -39,6 +40,7 @@ export default function App() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const mutateRef = useRef(null)
+  const { isMockMode } = useTransactionData()
 
   // Dark mode
   const { isDark, toggle: toggleDark } = useDarkMode()
@@ -112,7 +114,7 @@ export default function App() {
       />
 
       {/* Demo mode banner — shown when backend API is unreachable */}
-      <DemoBanner />
+      <DemoBanner isMockMode={isMockMode} />
 
       {/* CSS Grid layout: main-content + ai-sidebar */}
       <div
@@ -182,6 +184,12 @@ export default function App() {
 
       {/* Mobile-only bottom navigation */}
       <BottomNav />
+
+      {import.meta.env.DEV && (
+        <div className="fixed bottom-2 left-2 z-50 rounded border bg-background/95 px-2 py-1 text-xs text-foreground shadow">
+          API: {isMockMode ? 'mock' : 'live'}
+        </div>
+      )}
 
       {/* Inactivity overlay — blocks interaction until user resumes */}
       <InactivityOverlay isVisible={isIdle} onResume={handleResume} />

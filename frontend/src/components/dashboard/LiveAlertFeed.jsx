@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { useLanguage } from '@/i18n/LanguageContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -8,15 +7,13 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { TransactionDetailModal } from '@/components/transactions/TransactionDetailModal'
 import { useAlertStream } from '@/hooks/useAlertStream'
 import { useTransactionModalUrl } from '@/hooks/useTransactionModalUrl'
+import { useTransactionData } from '@/hooks/useTransactionData'
 import { toast } from 'sonner'
 import { Radio, Info, CheckCircle } from 'lucide-react'
-import { safeFetch } from '@/lib/api'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
-import { XAI_THRESHOLD, SAR_THRESHOLD, API_MAX_LIMIT, LIVE_ALERT_FEED_MAX_ITEMS } from '@/lib/constants'
+import { XAI_THRESHOLD, SAR_THRESHOLD, LIVE_ALERT_FEED_MAX_ITEMS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { CardAIButton } from '@/components/ai-sidebar/CardAIButton'
-
-const API_BASE = import.meta.env.VITE_API_URL || ''
 
 const EXCLUDED_STATUSES = new Set(['NORMAL', 'RESOLVED', 'FALSE_POSITIVE'])
 
@@ -90,20 +87,14 @@ export function LiveAlertFeed() {
   const listRef = useRef(null)
   const seenIds = useRef(new Set())
 
-  const { data: seedData, isLoading } = useQuery({
-    queryKey: ['feed-alerts'],
-    queryFn: async () => {
-      const res = await safeFetch(`${API_BASE}/api/alerts?status=PENDING_REVIEW&limit=${API_MAX_LIMIT}`)
-      return res.json()
-    },
-    refetchInterval: 8000,
-  })
+  const { data, isLoading } = useTransactionData()
+  const seedData = data?.alerts || []
 
   useEffect(() => {
-    if (!seedData?.items) return
+    if (!Array.isArray(seedData)) return
     setAlerts((prev) => {
       const byId = new Map(prev.map((a) => [a.transaction_id, a]))
-      for (const item of seedData.items) {
+      for (const item of seedData) {
         if (!isHighRiskPending(item)) continue
         byId.set(item.transaction_id, item)
         seenIds.current.add(item.transaction_id)

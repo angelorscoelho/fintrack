@@ -1,5 +1,4 @@
 import { useMemo, useState, useCallback } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { useLanguage } from '@/i18n/LanguageContext'
 import {
   BarChart,
@@ -16,12 +15,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { BarChart3, AlertTriangle } from 'lucide-react'
 import { startOfHour, subHours, format, parseISO } from 'date-fns'
-import { safeFetch } from '@/lib/api'
-import { XAI_THRESHOLD, SAR_THRESHOLD, API_MAX_LIMIT } from '@/lib/constants'
+import { useTransactionData } from '@/hooks/useTransactionData'
+import { XAI_THRESHOLD, SAR_THRESHOLD } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { CardAIButton } from '@/components/ai-sidebar/CardAIButton'
-
-const API_BASE = import.meta.env.VITE_API_URL || ''
 
 const MS_24H = 86400000
 
@@ -124,19 +121,12 @@ export function VolumeChart() {
     setVisibility((v) => ({ ...v, [tier]: !v[tier] }))
   }, [])
 
-  const { data: rawData, isLoading, isError, refetch } = useQuery({
-    queryKey: ['alerts-volume'],
-    queryFn: async () => {
-      const res = await safeFetch(`${API_BASE}/api/alerts?limit=${API_MAX_LIMIT}`)
-      return res.json()
-    },
-    refetchInterval: 30000,
-  })
+  const { data, isLoading, error, refetch } = useTransactionData()
 
   const baseData = useMemo(() => {
-    const items = rawData?.items || []
+    const items = data?.alerts || []
     return bucketVolumeByHour(items)
-  }, [rawData])
+  }, [data])
 
   const chartData = useMemo(
     () =>
@@ -184,7 +174,7 @@ export function VolumeChart() {
       <CardContent className="min-w-0 p-4 pt-0">
         {isLoading ? (
           <Skeleton className="h-[280px] w-full min-w-0 max-w-full" />
-        ) : isError ? (
+        ) : error ? (
           <div className="flex h-[280px] flex-col items-center justify-center gap-2">
             <AlertTriangle className="h-6 w-6 text-destructive" />
             <p className="text-sm text-muted-foreground">{t('feedback.errorLoading')}</p>
