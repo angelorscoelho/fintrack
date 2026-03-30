@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useMemo } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { KpiNavigationCard } from '@/components/dashboard/KpiNavigationCard'
 import { VolumeChart } from '@/components/dashboard/VolumeChart'
 import { CategoryChart } from '@/components/dashboard/CategoryChart'
@@ -7,14 +7,12 @@ import { LiveAlertFeed } from '@/components/dashboard/LiveAlertFeed'
 import { GeoMap } from '@/components/dashboard/GeoMap'
 import { Activity, ShieldAlert, Gauge, Loader2, AlertTriangle } from 'lucide-react'
 import { usePullToRefresh } from '@/hooks/usePullToRefresh'
-import { safeFetch } from '@/lib/api'
+import { useTransactionData } from '@/hooks/useTransactionData'
 import { ErrorState } from '@/components/feedback/ErrorState'
 import { KPI_THRESHOLDS } from '@/lib/constants'
 import { useLanguage } from '@/i18n/LanguageContext'
 
-const API_BASE = import.meta.env.VITE_API_URL || ''
-
-export default function CommandCenter({ isIdle, setMutateAlerts }) {
+export default function CommandCenter({ setMutateAlerts }) {
   const { t } = useLanguage()
   const queryClient = useQueryClient()
 
@@ -24,24 +22,15 @@ export default function CommandCenter({ isIdle, setMutateAlerts }) {
 
   const { isRefreshing, pullDistance } = usePullToRefresh(handlePullRefresh)
 
-  const { data: stats, isLoading: statsLoading, isError: statsError, refetch: refetchStats } = useQuery({
-    queryKey: ['stats'],
-    queryFn: async () => {
-      const res = await safeFetch(`${API_BASE}/api/stats`)
-      return res.json()
-    },
-    refetchInterval: isIdle ? false : 15000,
-  })
+  const { data, isLoading: statsLoading, error, refetch: refetchStats } = useTransactionData()
+  const stats = data?.stats || {}
+  const statsError = Boolean(error)
 
   // Expose a mutate-like function so SSE stream can trigger refetch
   useEffect(() => {
     if (setMutateAlerts) {
       setMutateAlerts(() => () => {
-        queryClient.invalidateQueries({ queryKey: ['stats'] })
-        queryClient.invalidateQueries({ queryKey: ['feed-alerts'] })
-        queryClient.invalidateQueries({ queryKey: ['alerts-volume'] })
-        queryClient.invalidateQueries({ queryKey: ['alerts-category'] })
-        queryClient.invalidateQueries({ queryKey: ['geo-alerts'] })
+        queryClient.invalidateQueries({ queryKey: ['transaction-data'] })
       })
     }
   }, [setMutateAlerts, queryClient])
@@ -50,10 +39,12 @@ export default function CommandCenter({ isIdle, setMutateAlerts }) {
   const total = stats?.total ?? 0
   const last24h = stats?.last_24h ?? 0
   const pending = stats?.pending ?? 0
-  const critical = stats?.critical ?? 0
+  const apiFraudRate = stats?.fraud_rate
+  const critical = total > 0 && apiFraudRate !== undefined && apiFraudRate !== null
+    ? Math.ceil(Number(apiFraudRate) * total)
+    : (stats?.critical ?? 0)
   const avgScore = stats?.avg_score ?? 0
   const confirmedFraud = stats?.confirmed_fraud
-  const apiFraudRate = stats?.fraud_rate
 
   const fraudRatePercent =
     total > 0
@@ -68,6 +59,7 @@ export default function CommandCenter({ isIdle, setMutateAlerts }) {
       ? (() => {
           const r = fraudRatePercent
           if (r === 0) return '0.00%'
+          if (r < 0.1) return r.toFixed(3) + '%'
           if (r < 1) return r.toFixed(2) + '%'
           return r.toFixed(1) + '%'
         })()

@@ -136,113 +136,112 @@ function lognormalScore() {
   return Math.round(Math.max(0.001, Math.min(raw, 0.35)) * 1000) / 1000
 }
 
+function getHourlyTargets() {
+  // 24h distribution with natural troughs at night and peaks morning/evening.
+  return [650, 620, 600, 600, 610, 640, 730, 860, 990, 1020, 1020, 950, 890, 850, 810, 870, 940, 990, 1040, 1000, 940, 860, 790, 730]
+}
+
 function generateMockAlerts(count = 20000) {
   const now = Date.now()
   const dayStr = new Date(now).toISOString().slice(0, 10).replace(/-/g, '')
   const alerts = []
+  const hourlyTargets = getHourlyTargets()
+  const criticalCount = 3
+  const suspiciousCount = 42
+  let globalIndex = 0
+  for (let h = 0; h < hourlyTargets.length; h++) {
+    const bucketCount = hourlyTargets[h]
+    const bucketStart = new Date(now - (23 - h) * 3600 * 1000)
+    bucketStart.setMinutes(0, 0, 0)
 
-  for (let i = 0; i < count; i++) {
-    const hoursAgo = randRange(0, 24)
-    const ts = new Date(now - hoursAgo * 3600 * 1000)
-    const category = pick(CATEGORIES)
+    for (let j = 0; j < bucketCount; j++) {
+      const ts = new Date(bucketStart.getTime() + randInt(0, 59) * 60000 + randInt(0, 59) * 1000)
+      const category = pick(CATEGORIES)
 
-    const baseAmounts = {
-      retail: [10, 500],
-      online: [5, 300],
-      restaurant: [10, 150],
-      gas_station: [20, 100],
-      supermarket: [15, 200],
-      electronics: [50, 2000],
-      travel: [100, 3000],
-      pharmacy: [5, 100],
-    }
-    const [amin, amax] = baseAmounts[category] || [10, 500]
-    const amount = Math.round(randRange(amin, amax) * 100) / 100
+      const baseAmounts = {
+        retail: [10, 500],
+        online: [5, 300],
+        restaurant: [10, 150],
+        gas_station: [20, 100],
+        supermarket: [15, 200],
+        electronics: [50, 2000],
+        travel: [100, 3000],
+        pharmacy: [5, 100],
+      }
+      const [amin, amax] = baseAmounts[category] || [10, 500]
+      const amount = Math.round(randRange(amin, amax) * 100) / 100
 
-    const nifPrefix = pick(NIF_PREFIXES)
-    const nifNumber = randInt(100000000, 999999999)
-    const merchantNif = `${nifPrefix}${nifNumber}`
+      const nifPrefix = pick(NIF_PREFIXES)
+      const nifNumber = randInt(100000000, 999999999)
+      const merchantNif = `${nifPrefix}${nifNumber}`
 
-    const ip = `${pick(IP_PREFIXES)}${randInt(1, 255)}.${randInt(1, 255)}`
+      const ip = `${pick(IP_PREFIXES)}${randInt(1, 255)}.${randInt(1, 255)}`
 
-    let anomalyScore
-    let status
-    let resolution_type = null
+      let anomalyScore
+      let status
+      let resolution_type = null
 
-    if (i < 2) {
-      anomalyScore = Math.round(randRange(0.91, 0.98) * 1000) / 1000
-      status = 'RESOLVED'
-      resolution_type = 'CONFIRMED_FRAUD'
-    } else if (i < 8) {
-      anomalyScore = Math.round(randRange(0.91, 0.98) * 1000) / 1000
-      status = 'PENDING_REVIEW'
-    } else {
-      const roll = rand()
-      if (roll < 0.97) {
-        anomalyScore = lognormalScore()
-        status = 'NORMAL'
-      } else if (roll < 0.995) {
-        anomalyScore = Math.round(randRange(XAI_THRESHOLD, SAR_THRESHOLD - 0.01) * 1000) / 1000
+      if (globalIndex < criticalCount) {
+        anomalyScore = Math.round(randRange(SAR_THRESHOLD, 0.97) * 1000) / 1000
+        status = 'PENDING_REVIEW'
+      } else if (globalIndex < criticalCount + suspiciousCount) {
+        anomalyScore = Math.round(randRange(XAI_THRESHOLD, SAR_THRESHOLD - 0.005) * 1000) / 1000
         status = 'PENDING_REVIEW'
       } else {
-        anomalyScore = Math.round(randRange(SAR_THRESHOLD, 0.995) * 1000) / 1000
-        status = 'PENDING_REVIEW'
+        anomalyScore = lognormalScore()
+        status = 'NORMAL'
       }
 
-      if (status === 'PENDING_REVIEW' && rand() < 0.25) {
-        status = rand() < 0.5 ? 'RESOLVED' : 'FALSE_POSITIVE'
-        resolution_type = status === 'RESOLVED' ? 'ESCALATED' : 'FALSE_POSITIVE'
+      const sarDraft =
+        anomalyScore >= XAI_THRESHOLD
+          ? `# Relatório de Atividade Suspeita\n\n**Transação:** MOCK-${dayStr}-${String(globalIndex).padStart(6, '0')}\n**Merchant NIF:** ${merchantNif}\n**Score:** ${(anomalyScore * 100).toFixed(1)}%\n**Montante:** €${amount.toFixed(2)}\n\n## Análise\nTransação com score de anomalia elevado detectada pelo modelo de ML. Requer análise manual.`
+          : null
+
+      const aiExplanation =
+        anomalyScore >= XAI_THRESHOLD
+          ? {
+              risk_level: anomalyScore > SAR_THRESHOLD ? 'CRÍTICO' : 'ALTO',
+              summary_pt: `Transação de €${amount.toFixed(2)} com score ${(anomalyScore * 100).toFixed(1)}% — padrão anómalo detectado.`,
+              bullets: [
+                { id: '1', icon: '⚡', text: 'Montante acima da média do merchant' },
+                { id: '2', icon: '🌍', text: 'País de origem incomum' },
+                { id: '3', icon: '🕐', text: 'Horário fora do padrão habitual' },
+              ],
+            }
+          : null
+
+      const row = {
+        transaction_id: `MOCK-${dayStr}-${String(globalIndex).padStart(6, '0')}`,
+        amount,
+        merchant_nif: merchantNif,
+        merchant_name: null,
+        category,
+        timestamp: ts.toISOString(),
+        ip_address: ip,
+        merchant_country: pick(COUNTRIES),
+        previous_avg_amount: Math.round(randRange(50, 500) * 100) / 100,
+        hour_of_day: ts.getHours(),
+        day_of_week: ts.getDay(),
+        transactions_last_10min: randInt(0, 10),
+        anomaly_score: anomalyScore,
+        status,
+        processed_at: new Date(ts.getTime() + randInt(1, 30) * 1000).toISOString(),
+        resolved_at: ['RESOLVED', 'FALSE_POSITIVE'].includes(status)
+          ? new Date(ts.getTime() + 3600000).toISOString()
+          : null,
+        resolution_type,
+        analyst_notes: null,
+        ai_explanation: aiExplanation,
+        sar_draft: sarDraft,
       }
+
+      attachBanking(row.merchant_country, row)
+      alerts.push(row)
+      globalIndex += 1
     }
-
-    const sarDraft =
-      anomalyScore >= XAI_THRESHOLD
-        ? `# Relatório de Atividade Suspeita\n\n**Transação:** MOCK-${dayStr}-${String(i).padStart(6, '0')}\n**Merchant NIF:** ${merchantNif}\n**Score:** ${(anomalyScore * 100).toFixed(1)}%\n**Montante:** €${amount.toFixed(2)}\n\n## Análise\nTransação com score de anomalia elevado detectada pelo modelo de ML. Requer análise manual.`
-        : null
-
-    const aiExplanation =
-      anomalyScore >= XAI_THRESHOLD
-        ? {
-            risk_level: anomalyScore > SAR_THRESHOLD ? 'CRÍTICO' : 'ALTO',
-            summary_pt: `Transação de €${amount.toFixed(2)} com score ${(anomalyScore * 100).toFixed(1)}% — padrão anómalo detectado.`,
-            bullets: [
-              { id: '1', icon: '⚡', text: 'Montante acima da média do merchant' },
-              { id: '2', icon: '🌍', text: 'País de origem incomum' },
-              { id: '3', icon: '🕐', text: 'Horário fora do padrão habitual' },
-            ],
-          }
-        : null
-
-    const row = {
-      transaction_id: `MOCK-${dayStr}-${String(i).padStart(6, '0')}`,
-      amount,
-      merchant_nif: merchantNif,
-      merchant_name: null,
-      category,
-      timestamp: ts.toISOString(),
-      ip_address: ip,
-      merchant_country: pick(COUNTRIES),
-      previous_avg_amount: Math.round(randRange(50, 500) * 100) / 100,
-      hour_of_day: ts.getHours(),
-      day_of_week: ts.getDay(),
-      transactions_last_10min: randInt(0, 10),
-      anomaly_score: anomalyScore,
-      status,
-      processed_at: new Date(ts.getTime() + randInt(1, 30) * 1000).toISOString(),
-      resolved_at: ['RESOLVED', 'FALSE_POSITIVE'].includes(status)
-        ? new Date(ts.getTime() + 3600000).toISOString()
-        : null,
-      resolution_type,
-      analyst_notes: null,
-      ai_explanation: aiExplanation,
-      sar_draft: sarDraft,
-    }
-
-    attachBanking(row.merchant_country, row)
-    alerts.push(row)
   }
 
-  return alerts
+  return alerts.slice(0, count)
 }
 
 export const MOCK_ALERTS = generateMockAlerts(20000)
@@ -253,18 +252,14 @@ export const MOCK_STATS = (() => {
   const total = MOCK_ALERTS.length
   const last24h = MOCK_ALERTS.filter((a) => new Date(a.timestamp).getTime() >= cutoff).length
   const pending = MOCK_ALERTS.filter((a) => a.status === 'PENDING_REVIEW').length
-  const critical = MOCK_ALERTS.filter(
-    (a) => Number(a.anomaly_score) > SAR_THRESHOLD && a.status === 'PENDING_REVIEW'
-  ).length
+  const fraud_rate = 0.00015 // 0.015%
+  const critical = Math.ceil(fraud_rate * total)
   const resolved = MOCK_ALERTS.filter((a) => a.status === 'RESOLVED').length
   const falsePositives = MOCK_ALERTS.filter((a) => a.status === 'FALSE_POSITIVE').length
   const rateLimited = 0
   const fpRate = resolved + falsePositives > 0 ? falsePositives / (resolved + falsePositives) : 0
   const avgScore = total > 0 ? MOCK_ALERTS.reduce((s, a) => s + Number(a.anomaly_score), 0) / total : 0
-  const confirmed_fraud = MOCK_ALERTS.filter(
-    (a) => a.status === 'RESOLVED' && a.resolution_type === 'CONFIRMED_FRAUD'
-  ).length
-  const fraud_rate = total > 0 ? confirmed_fraud / total : 0
+  const confirmed_fraud = Math.ceil(fraud_rate * total)
 
   return {
     total,
@@ -277,7 +272,7 @@ export const MOCK_STATS = (() => {
     confirmed_fraud,
     fp_rate: Math.round(fpRate * 1000) / 1000,
     avg_score: Math.round(avgScore * 1000) / 1000,
-    fraud_rate: Math.round(fraud_rate * 1000) / 1000,
+    fraud_rate,
     rate_limits: {},
   }
 })()
