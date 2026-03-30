@@ -26,6 +26,7 @@ export function Header({ isConnected, isIdle, isDark, onToggleDark }) {
   const { lang, setLang, t } = useLanguage()
   const [langOpen, setLangOpen] = useState(false)
   const langRef = useRef(null)
+  const headerRef = useRef(null)
 
   // Resolve breadcrumb label
   let crumbKey = BREADCRUMB_KEYS[pathname]
@@ -56,8 +57,18 @@ export function Header({ isConnected, isIdle, isDark, onToggleDark }) {
     return () => document.removeEventListener('keydown', handleKey)
   }, [langOpen])
 
+  useEffect(() => {
+    const updateHeaderHeightVar = () => {
+      const h = headerRef.current?.offsetHeight ?? 64
+      document.documentElement.style.setProperty('--app-header-height', `${h}px`)
+    }
+    updateHeaderHeightVar()
+    window.addEventListener('resize', updateHeaderHeightVar)
+    return () => window.removeEventListener('resize', updateHeaderHeightVar)
+  }, [])
+
   return (
-    <header className="sticky top-0 z-40 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-4 md:px-6 py-3">
+    <header ref={headerRef} className="sticky top-0 z-40 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-4 md:px-6 py-3">
       <div className="flex items-center justify-between max-w-screen-xl mx-auto">
         {/* Left — brand */}
         <Link to="/" className="flex items-center gap-2 no-underline cursor-pointer">

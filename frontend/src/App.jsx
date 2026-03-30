@@ -116,17 +116,13 @@ export default function App() {
       {/* Demo mode banner — shown when backend API is unreachable */}
       <DemoBanner isMockMode={isMockMode} />
 
-      {/* CSS Grid layout: main-content + ai-sidebar */}
-      <div
-        className="grid"
-        style={{
-          gridTemplateColumns: isSidebarOpen
-            ? `1fr var(--sidebar-width)`
-            : '1fr 0px',
-        }}
-      >
+      <div>
         {/* Main content area */}
-        <main {...swipeHandlers} className="min-w-0 p-4 md:p-6 max-w-screen-xl mx-auto space-y-4">
+        <main
+          {...swipeHandlers}
+          className="min-w-0 p-4 md:p-6 max-w-screen-xl mx-auto space-y-4"
+          style={{ marginRight: isSidebarOpen ? 'var(--sidebar-width)' : '0px', transition: 'margin-right 300ms ease' }}
+        >
           <Suspense fallback={<PageFallback />}>
             <Routes>
               <Route
@@ -151,14 +147,19 @@ export default function App() {
 
         {/* AI Sidebar (US-027) */}
         <aside
+          data-testid="ai-sidebar-container"
           className={cn(
-            'ai-sidebar flex min-h-0 flex-col overflow-hidden bg-card',
+            'ai-sidebar fixed right-0 z-30 flex min-h-0 flex-col overflow-hidden bg-card',
             isSidebarOpen && 'border-l border-border'
           )}
           style={{
             width: isSidebarOpen ? 'var(--sidebar-width)' : '0px',
+            top: 'var(--app-header-height, 64px)',
+            height: 'calc(100vh - var(--app-header-height, 64px))',
             transition: 'width 300ms ease',
+            pointerEvents: isSidebarOpen ? 'auto' : 'none',
           }}
+          aria-hidden={!isSidebarOpen}
         >
           <div className="h-full min-h-0 min-w-[var(--sidebar-width)]">
             <AISidebar />

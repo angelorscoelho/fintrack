@@ -111,7 +111,7 @@ function VolumeTooltip({ active, payload }) {
   )
 }
 
-const defaultVisibility = { critical: true, suspicious: true, normal: true }
+const defaultVisibility = { critical: true, suspicious: true, normal: false }
 
 export function VolumeChart() {
   const { t } = useLanguage()
@@ -154,12 +154,13 @@ export function VolumeChart() {
   const axisTick = { fontSize: 11, fill: 'hsl(var(--muted-foreground))' }
   const gridStroke = 'hsl(var(--border))'
 
-  const chipClass = (active) =>
+  const chipClass = (active, tier) =>
     cn(
-      'h-8 shrink-0 gap-1 rounded-md border px-2.5 text-xs font-medium transition-opacity',
-      active
-        ? 'border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground'
-        : 'border-dashed border-muted-foreground/60 bg-transparent text-muted-foreground opacity-50 hover:opacity-70'
+      'h-8 shrink-0 gap-1 rounded-md border px-2.5 text-xs font-medium transition',
+      active && tier === 'critical' && 'border-red-300 bg-red-500/90 text-white hover:bg-red-500',
+      active && tier === 'suspicious' && 'border-orange-300 bg-orange-500/90 text-white hover:bg-orange-500',
+      active && tier === 'normal' && 'border-slate-300 bg-slate-500/90 text-white hover:bg-slate-500',
+      !active && 'border-dashed border-muted-foreground/60 bg-transparent text-muted-foreground opacity-60 hover:opacity-80'
     )
 
   return (
@@ -275,9 +276,10 @@ export function VolumeChart() {
                 type="button"
                 variant="ghost"
                 size="sm"
-                className={chipClass(visibility.critical)}
+                className={chipClass(visibility.critical, 'critical')}
                 onClick={() => toggleTier('critical')}
                 aria-pressed={visibility.critical}
+                data-testid="volume-filter-critical"
               >
                 {t('dashboard.volumeChipCritical')}
               </Button>
@@ -285,9 +287,10 @@ export function VolumeChart() {
                 type="button"
                 variant="ghost"
                 size="sm"
-                className={chipClass(visibility.suspicious)}
+                className={chipClass(visibility.suspicious, 'suspicious')}
                 onClick={() => toggleTier('suspicious')}
                 aria-pressed={visibility.suspicious}
+                data-testid="volume-filter-suspicious"
               >
                 {t('dashboard.volumeChipSuspicious')}
               </Button>
@@ -295,9 +298,10 @@ export function VolumeChart() {
                 type="button"
                 variant="ghost"
                 size="sm"
-                className={chipClass(visibility.normal)}
+                className={chipClass(visibility.normal, 'normal')}
                 onClick={() => toggleTier('normal')}
                 aria-pressed={visibility.normal}
+                data-testid="volume-filter-normal"
               >
                 {t('dashboard.volumeChipNormal')}
               </Button>

@@ -51,7 +51,7 @@ export function KpiNavigationCard({
   const cardContent = (
     <Card
       className={cn(
-        'relative min-w-[160px] snap-start shrink-0 md:shrink md:min-w-0 transition-shadow duration-200 hover:shadow-lg cursor-pointer h-full',
+        'relative min-w-[160px] snap-start shrink-0 md:shrink md:min-w-0 transition-shadow duration-200 hover:shadow-lg cursor-pointer h-[110px] max-h-[110px]',
         variantClass
       )}
       role={route ? 'link' : undefined}
@@ -63,7 +63,7 @@ export function KpiNavigationCard({
       {aiContext != null && aiLabel && !loading ? (
         <CardAIButton context={aiContext} label={aiLabel} />
       ) : null}
-      <CardContent className="p-4 md:p-6 flex flex-col h-full">
+      <CardContent className="p-3 md:p-3.5 flex flex-col h-full">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide truncate">
             {title}
@@ -96,7 +96,7 @@ export function KpiNavigationCard({
           </div>
         ) : (
           <div className="flex flex-col flex-1 justify-center">
-            <p className="text-xl md:text-2xl font-bold text-foreground leading-none">
+            <p className="text-lg md:text-xl font-bold text-foreground leading-none">
               {value ?? '–'}
             </p>
             {change != null && (
