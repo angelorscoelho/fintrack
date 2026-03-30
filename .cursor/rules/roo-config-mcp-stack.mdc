@@ -1,0 +1,35 @@
+---
+description: Roo-config MCP stack — tool ladder, Cursor paths, session verification (from roo-config)
+alwaysApply: true
+---
+
+# Roo-config MCP stack (Cursor)
+
+This repo uses the **same MCP servers** as `roo-config` (`configs/mcp_settings.json`): serena, fetch, context7, ref.tools, duckduckgo-mcp, crash-mcp, github. Configuration lives in **`.cursor/mcp.json`** (Cursor project MCP — not VS Code / Roo `cline_mcp_settings.json`).
+
+## Session start — verify tools are available
+
+1. **Config on disk:** `.cursor/mcp.json` in this workspace defines the servers.
+2. **Cursor UI:** Settings → **Features** → **Model Context Protocol** — ensure each listed server is **enabled** (toggles on). Disabled servers do not load for Agent.
+3. **Logs:** Output panel → **MCP** / **MCP Logs** — fix startup errors (missing `uv`/`npx`/`docker`, or env vars).
+4. **Environment (optional but recommended):** User env vars `REF_TOOLS_API_KEY`, `GITHUB_PERSONAL_ACCESS_TOKEN` — set in Windows User environment variables and **restart Cursor** so spawned MCP processes inherit them.
+
+## MCP priority ladder (cost — use top-down)
+
+1. **serena** — symbols, references, overview, pattern search (before bulk `read_file`).
+2. **fetch** — known URL → Markdown (before web search).
+3. **ref.tools** — token-efficient docs (when key set).
+4. **context7** — library docs fallback.
+5. **duckduckgo-mcp** — web search when no single URL answers it.
+6. **crash-mcp** — reasoning scaffold for complex analysis.
+7. **github** — issues/PRs when relevant.
+8. **`read_file` / repo tools** — last resort for code when serena cannot answer.
+
+## Security
+
+- Do not read `.env`, key files, or paste secrets into chat.
+- Do not commit API keys into `mcp.json` — use `${env:...}` only.
+
+## Optional global install (Roo / VS Code parity)
+
+To install Roo global rules/modes to VS Code’s Roo extension paths (separate from Cursor), run `python install.py` from a clone of `roo-config`. **Cursor reads MCP only from** `~/.cursor/mcp.json` and **`.cursor/mcp.json`** per [Cursor MCP docs](https://cursor.com/docs/context/mcp).

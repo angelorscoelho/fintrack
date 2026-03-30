@@ -32,6 +32,11 @@ Before implementing features: `git fetch`, then `git checkout main && git pull`,
 
 From repo root: **`python scripts/agent-instructions.py`** (or **`make agent-instructions`** if Make is installed).
 
-## 5. `.cursorrules`
+## 5. MCP (roo-config stack)
+
+- **`.cursor/mcp.json`** — Cursor-native MCP servers (serena, fetch, context7, ref.tools, duckduckgo-mcp, crash-mcp, github). See **`.cursor/rules/roo-config-mcp-stack.mdc`** for ladder and verification.
+- After changing MCP config or env vars, **restart Cursor** or reload the window so servers start cleanly.
+
+## 6. `.cursorrules`
 
 The repo `.cursorrules` file points here; this rule (`alwaysApply: true`) ensures Cursor agents load the same obligations in every chat.
