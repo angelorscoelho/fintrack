@@ -4,20 +4,25 @@
 > Roo reads this at session start to resume without re-investigation.
 
 ## Current Focus
-Dashboard Command Center: **Card 9 (High Risk Transactions / `LiveAlertFeed`)** — US-017 & US-018 fixes on branch `feat/us-017-us-018-high-risk-card`; uncommitted changes in `LiveAlertFeed.jsx` + i18n.
+Railway runtime debugging for endpoint failures on branch `fix/railway-endpoints-debug-2026-03-31` (debug mode with runtime evidence).
 
 ## Recent Changes
-- [2026-03-28] Agent: **Volume chart** (merged on `main`): stacked 24h volume by tier (Normal / Suspicious / Critical), Recharts, tier chips, rolling window, no fraud-rate line; `VolumeChart.jsx`, `CommandCenter`, i18n.
-- [2026-03-28] Agent: **Card 9** — filter `PENDING_REVIEW` + `anomaly_score >= 0.70`, exclude NORMAL/RESOLVED/FALSE_POSITIVE; sort score DESC then timestamp DESC; tier filter chips; counter = visible count; abbreviated tx id, €, badges (destructive + scoped `--high-risk-suspicious*` on Card), VIEW → `TransactionDetailModal`; empty states + i18n. **Branch created from `main`:** `feat/us-017-us-018-high-risk-card`.
+- [2026-03-31] Agent: Session bootstrap completed per rules; created branch from updated `main`: `fix/railway-endpoints-debug-2026-03-31`.
+- [2026-03-31] Agent: Analyzed Railway logs (`logs.1774939433605.json`, `logs.1774940471961.json`) and confirmed repeated startup crash in GenAI service with `botocore.exceptions.NoRegionError: You must specify a region.` Tracebacks reference `backend/genai/main.py` and `backend/genai/graph.py`.
+- [2026-03-31] Agent: Added temporary debug instrumentation to `backend/genai/graph.py`, `backend/genai/main.py`, and `backend/api/main.py` writing NDJSON lines to `debug-64cd1b.log` (session `64cd1b`) for hypothesis testing.
+- [2026-03-31] Agent: Applied evidence-backed fix in `backend/genai/graph.py` to initialize DynamoDB resource with explicit region resolution (`AWS_REGION` -> `AWS_DEFAULT_REGION` -> `eu-west-1`) to remove NoRegionError startup failure.
+- [2026-03-31] User: Shared Railway UI screenshots and confirmed confusion between two similarly named services; requested strict config checklist before redeploy/health checks.
 
 ## Next Steps
-1. Review unstaged diffs on `feat/us-017-us-018-high-risk-card`; run `npm run build` in `frontend/`.
-2. Commit with message referencing GitHub issues #61 / #62 (US-017, US-018).
-3. Push branch and open PR toward `main`.
-4. Reconcile or delete old local branch `feat/improve-charts` if no longer needed.
+1. In Railway, rename services to remove ambiguity (recommended: `fintrack-api-prod` and `fintrack-genai-prod`).
+2. Verify per-service settings exactly: Dockerfile path, Start Command, Healthcheck path, Restart policy, retries, and env vars (`AWS_REGION`/`AWS_DEFAULT_REGION`, DynamoDB table, credentials, `GENAI_SERVICE_URL`).
+3. Verify domain binding maps API domain to API service and GenAI domain to GenAI service.
+4. Redeploy both services.
+5. Run health checks and `/api/stats`, then collect fresh API-service logs for post-fix verification.
 
 ## Known Issues
-- Prior session did not run **git workflow** (fetch, branch from `main`) or **memory-bank updates** at task start — corrected per `.cursorrules` + `.github/copilot-instructions.md`.
+- Current provided Railway logs are from GenAI crash loops and do not yet include API request/access evidence for `/api/stats` 404 diagnosis.
+- Debug instrumentation must remain in place until post-fix verification is complete and user confirms success.
 
 ## Repo workflow (non-negotiable for agents)
 - Read `.github/copilot-instructions.md` and obey **git fetch / branch from up-to-date `main`** for feature work.

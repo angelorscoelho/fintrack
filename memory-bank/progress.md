@@ -15,6 +15,10 @@
 - [x] Railway fintrack-api deployed
 - [x] Railway fintrack-genai deployed
 - [x] Lambda GENAI_SERVICE_URL updated to https://fintrack-genai.railway.app
+- [x] Debug branch created from updated `main`: `fix/railway-endpoints-debug-2026-03-31`.
+- [x] Runtime evidence collected from Railway logs proving GenAI startup crash due to missing AWS region (`NoRegionError`).
+- [x] GenAI region fix implemented in `backend/genai/graph.py` (explicit DynamoDB region resolution fallback).
+- [x] Temporary runtime instrumentation added for debug session `64cd1b` in `backend/genai/graph.py`, `backend/genai/main.py`, and `backend/api/main.py`.
 - [x] Frontend built with base=/poc/fintrack/ (Siemens approach)
 - [x] angelorscoelho.dev vercel.json updated with /poc/fintrack/ rewrite
 - [x] angelorscoelho.dev package.json updated with build:fintrack script
@@ -22,9 +26,10 @@
 - [x] **Dashboard — Card 9 (`LiveAlertFeed`, branch `feat/us-017-us-018-high-risk-card`):** US-017 filtering, US-018 sorting, tier chips, modal VIEW, i18n — **pending git commit**.
 
 ## In Progress
-- [ ] Commit + push `feat/us-017-us-018-high-risk-card` (Card 9 + i18n)
-- [ ] Copy frontend/dist/* to ../angelorscoelho.dev/dist/fintrack/ (if still using Siemens deploy path)
-- [ ] Deploy portfolio: cd ../angelorscoelho.dev && vercel --prod (if applicable)
+- [ ] Railway service normalization: rename services to unambiguous names and verify each service configuration against repo-defined contract.
+- [ ] Redeploy both Railway services after config verification.
+- [ ] Post-fix verification run: confirm health endpoints and `GET /api/stats` behavior with service-specific logs.
+- [ ] Remove debug instrumentation after verified success.
 
 ## Backlog
 - [ ] GitHub Actions: Configure secrets for CI/CD
@@ -32,3 +37,4 @@
 
 ## Known Issues / Tech Debt
 - deploy.sh deletes and recreates stack on every run (could be improved)
+- Railway operational confusion from similarly named services increased risk of deploying or logging from wrong service.

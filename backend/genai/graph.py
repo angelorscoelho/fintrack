@@ -38,6 +38,7 @@ def _agent_debug_log(hypothesis_id: str, location: str, message: str, data: dict
 
 TABLE_NAME = os.environ.get("DYNAMODB_TABLE", "transactions")
 try:
+    region_name = os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION") or "eu-west-1"
     _agent_debug_log(
         "H1",
         "backend/genai/graph.py:dynamodb_init_before",
@@ -46,10 +47,11 @@ try:
             "table": TABLE_NAME,
             "aws_region": os.environ.get("AWS_REGION"),
             "aws_default_region": os.environ.get("AWS_DEFAULT_REGION"),
+            "resolved_region": region_name,
             "has_aws_access_key_id": bool(os.environ.get("AWS_ACCESS_KEY_ID")),
         },
     )
-    dynamodb = boto3.resource("dynamodb")
+    dynamodb = boto3.resource("dynamodb", region_name=region_name)
     _table = dynamodb.Table(TABLE_NAME)
     _agent_debug_log(
         "H1",
