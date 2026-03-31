@@ -5,7 +5,9 @@ Phase 2 (S06E): Conditional edge added — Gemini Pro SAR for scores > SAR_THRES
 """
 import logging
 import os
+import json
 from typing import Optional, TypedDict
+from datetime import datetime, timezone
 
 import boto3
 from langgraph.graph import END, StateGraph
@@ -14,9 +16,55 @@ from shared.project_constants import SAR_THRESHOLD
 
 logger = logging.getLogger(__name__)
 
-dynamodb = boto3.resource("dynamodb")
+
+def _agent_debug_log(hypothesis_id: str, location: str, message: str, data: dict) -> None:
+    # region agent log
+    try:
+        payload = {
+            "sessionId": "64cd1b",
+            "runId": "pre-fix",
+            "hypothesisId": hypothesis_id,
+            "location": location,
+            "message": message,
+            "data": data,
+            "timestamp": int(datetime.now(timezone.utc).timestamp() * 1000),
+        }
+        with open("debug-64cd1b.log", "a", encoding="utf-8") as fh:
+            fh.write(json.dumps(payload, separators=(",", ":")) + "\n")
+    except Exception:
+        pass
+    # endregion
+
+
 TABLE_NAME = os.environ.get("DYNAMODB_TABLE", "transactions")
-_table = dynamodb.Table(TABLE_NAME)
+try:
+    _agent_debug_log(
+        "H1",
+        "backend/genai/graph.py:dynamodb_init_before",
+        "Initializing DynamoDB resource",
+        {
+            "table": TABLE_NAME,
+            "aws_region": os.environ.get("AWS_REGION"),
+            "aws_default_region": os.environ.get("AWS_DEFAULT_REGION"),
+            "has_aws_access_key_id": bool(os.environ.get("AWS_ACCESS_KEY_ID")),
+        },
+    )
+    dynamodb = boto3.resource("dynamodb")
+    _table = dynamodb.Table(TABLE_NAME)
+    _agent_debug_log(
+        "H1",
+        "backend/genai/graph.py:dynamodb_init_after",
+        "Initialized DynamoDB resource and table handle",
+        {"table": TABLE_NAME},
+    )
+except Exception as exc:
+    _agent_debug_log(
+        "H1",
+        "backend/genai/graph.py:dynamodb_init_error",
+        "DynamoDB init failed during import",
+        {"error": str(exc), "error_type": type(exc).__name__},
+    )
+    raise
 
 
 # ── State Schema ──────────────────────────────────────────────────────────────
