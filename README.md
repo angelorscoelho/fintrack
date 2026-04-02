@@ -159,9 +159,18 @@ aws cloudformation describe-stacks \
 1. Go to [Railway](https://railway.app) → Login with GitHub
 2. Create new project → Deploy from GitHub repo: `angelorscoelho/fintrack`
 
-#### 4b. Deploy fintrack-api
-- Root Directory: `backend/api`
-- Start Command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+#### 4b. Deploy fintrack-api (rename the service to e.g. `fintrack-api-prod`)
+
+Use the **Dockerfile** builder — both API and GenAI images are built from the **repository root** so `requirements.txt`, `backend/…`, and `shared/` COPY paths match the Dockerfiles.
+
+| Setting | Value |
+|--------|--------|
+| **Builder** | `Dockerfile` |
+| **Root Directory** | `/` (repo root — **not** `backend/api`) |
+| **Dockerfile Path** | `backend/api/Dockerfile` |
+| **Health Check Path** | `/health` |
+| **Start Command** | *(leave empty — use Dockerfile `CMD`; it runs `uvicorn api.main:app`)* |
+
 - Environment Variables:
   ```
   DYNAMODB_TABLE=transactions
@@ -174,9 +183,18 @@ aws cloudformation describe-stacks \
   ALLOWED_ORIGINS=https://angelorscoelho.dev,https://[FINTRACK_VERCEL_URL]
   ```
 
-#### 4c. Deploy fintrack-genai
-- Root Directory: `backend/genai`
-- Start Command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+#### 4c. Deploy fintrack-genai (rename the service to e.g. `fintrack-genai-prod`)
+
+Same pattern: **repo root** build context, separate Dockerfile. See also `backend/genai/DEPLOYMENT.md`.
+
+| Setting | Value |
+|--------|--------|
+| **Builder** | `Dockerfile` |
+| **Root Directory** | `/` (repo root — **not** `backend/genai`) |
+| **Dockerfile Path** | `backend/genai/Dockerfile` |
+| **Health Check Path** | `/health` |
+| **Start Command** | *(leave empty — Dockerfile `CMD` runs `uvicorn backend.genai.main:app`)* |
+
 - Environment Variables:
   ```
   DYNAMODB_TABLE=transactions

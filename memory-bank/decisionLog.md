@@ -20,3 +20,5 @@ Each entry: `[YYYY-MM-DD] DECISION: ... | RATIONALE: ... | ALTERNATIVES REJECTED
 
 [2026-03-28] DECISION: Suspicious-tier badge/chip styling uses CSS variables `--high-risk-suspicious` and `--high-risk-suspicious-foreground` scoped on the Card (Tailwind arbitrary properties + `dark:` overrides), not global `index.css`. | RATIONALE: Theme-correct orange tier without editing global tokens; destructive tier uses existing `Badge` destructive → `hsl(var(--destructive))`. | ALTERNATIVES REJECTED: Badge `warning` variant (hardcoded amber), global new CSS vars.
 
+[2026-03-31] DECISION: Initialize GenAI DynamoDB resource with explicit region resolution (`AWS_REGION` -> `AWS_DEFAULT_REGION` -> `eu-west-1`) during startup in `backend/genai/graph.py`. | RATIONALE: Railway runtime logs repeatedly proved startup failure with `botocore.exceptions.NoRegionError`, preventing service boot and downstream endpoint calls. | ALTERNATIVES REJECTED: Relying on implicit boto3 region discovery only, delaying DynamoDB initialization to request-time without fixing region source.
+
