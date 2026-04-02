@@ -2,6 +2,7 @@ __pycache__/
 *.py[cod]
 *.so
 .env
+.railway/
 .venv/
 venv/
 env/
@@ -42,6 +43,9 @@ backend/lambda_layer
 .scratch/
 tmp_payload.json
 tmp_lambda_response.json
+
+# Agent / local debug NDJSON (optional FINTRACK_LAYOUT_CHECK_NDJSON_LOG)
+debug-*.log
 
 # Serena MCP — cache files only (memories are committed)
 .serena/*.log
